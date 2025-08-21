@@ -3,91 +3,108 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="BitFighters Launcher" Height="700" Width="1200"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent">
-    <Border CornerRadius="18" BorderBrush="#33FFA726" BorderThickness="1.5" Background="#FF181A1B">
+
+    <Border CornerRadius="18" BorderBrush="#33ffe59f" BorderThickness="1.5">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                <GradientStop Color="#FF2c2f34" Offset="0"/>
+                <GradientStop Color="#FF140e0e" Offset="1"/>
+            </LinearGradientBrush>
+        </Border.Background>
+
         <Grid>
-            <!-- Top orange line -->
-            <Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFFA726" Opacity="0.3"/>
-            <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Height="80" VerticalAlignment="Top" Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Content="&#xE700;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="#FFFFA726"
+                        Background="Transparent" BorderBrush="Transparent" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,21,26,0" Grid.Column="1"/>
+                <DockPanel Grid.Column="1" Margin="392,6,465,12">
+                    <Image Source="/Resources/Logo.png" RenderTransformOrigin="-0.032,0.548" Width="85">
+                        <Image.Effect>
+                            <DropShadowEffect Color="#FFFFA726" BlurRadius="40" ShadowDepth="0" Opacity="1.2"/>
+                        </Image.Effect>
+                    </Image>
+                    <TextBlock Text="BITFIGHTERS" FontSize="28" FontWeight="Bold" Foreground="#FFFFA726" RenderTransformOrigin="0.178,0.513" Width="181" TextAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock.Effect>
+                            <DropShadowEffect ShadowDepth="0" Opacity="1.2" Color="#FFFFA726" BlurRadius="20"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+                </DockPanel>
+            </Grid>
+
+            <Grid Grid.Row="1" Margin="0,0,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="420"/>
                 </Grid.ColumnDefinitions>
-                <!-- Sidebar -->
-                <StackPanel Grid.Column="0" Background="#FF181A1B" VerticalAlignment="Stretch">
-                    <StackPanel.Resources>
-                        <Style x:Key="NavButtonStyle" TargetType="Button">
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="BorderBrush" Value="Transparent"/>
-                            <Setter Property="Foreground" Value="#FFFFA726"/>
-                            <Setter Property="FontSize" Value="28"/>
-                            <Setter Property="Margin" Value="0,18,0,0"/>
-                            <Setter Property="Cursor" Value="Hand"/>
-                        </Style>
-                    </StackPanel.Resources>
-                    <Button Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings"/>
-                    <Button Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Favorites"/>
-                    <Button Style="{StaticResource NavButtonStyle}" Content="&#xEB3C;" FontFamily="Segoe MDL2 Assets" ToolTip="Trophy"/>
-                    <Button Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile"/>
-                    <Button Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Users"/>
-                    <!-- Orange glowing vertical bar -->
-                    <Rectangle Height="60" Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" Margin="32,24,0,0">
-                        <Rectangle.Effect>
-                            <DropShadowEffect Color="#FFFFA726" BlurRadius="16" ShadowDepth="0" Opacity="0.8"/>
-                        </Rectangle.Effect>
-                    </Rectangle>
-                </StackPanel>
-                <!-- Main Center -->
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,32,0,0">
-                        <!-- Logo (replace with your image if available) -->
-                        <Image Source="/Resources/quadra.png" Height="40" Margin="0,0,12,0">
-                            <Image.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="30" ShadowDepth="0" Opacity="1"/>
-                            </Image.Effect>
-                        </Image>
-                        <TextBlock Text="BITFIGHTERS" Foreground="#FFFFA726" FontSize="28" FontWeight="Bold" VerticalAlignment="Center">
-                            <TextBlock.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="10" ShadowDepth="0" Opacity="1"/>
-                            </TextBlock.Effect>
-                        </TextBlock>
+
+                <Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFFA726" Opacity="0.6" Grid.ColumnSpan="3"/>
+
+                <Border Grid.Column="0" CornerRadius="0,0,0,17" Margin="0,2,0,0">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                            <GradientStop Color="#FF2c2f34" Offset="0"/>
+                            <GradientStop Color="#FF181A1B" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <StackPanel VerticalAlignment="Stretch" Background="Transparent" Margin="0,2,0,0">
+                        <StackPanel.Resources>
+                            <Style x:Key="NavButtonStyle" TargetType="Button">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="#FFFFA726"/>
+                                <Setter Property="FontSize" Value="28"/>
+                                <Setter Property="Margin" Value="0,18,0,0"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                            </Style>
+                        </StackPanel.Resources>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Favorites"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xEB3C;" FontFamily="Segoe MDL2 Assets" ToolTip="Trophy"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile"/>
+                        <Rectangle Height="60" Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" Margin="32,24,0,0">
+                            <Rectangle.Effect>
+                                <DropShadowEffect Color="#FFFFA726" BlurRadius="25" ShadowDepth="0" Opacity="1.2"/>
+                            </Rectangle.Effect>
+                        </Rectangle>
                     </StackPanel>
-                    <Rectangle Height="2" Width="320" Fill="#FFFFA726" Opacity="0.2" Margin="0,16,0,32"/>
-                    <!-- Neon Play Button with reddish-orange glowing effect for both borders -->
+                </Border>
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <!-- Outer neon border -->
-                        <Border Width="325" Height="325" CornerRadius="40" BorderThickness="5"
+                        <Border Width="320" Height="320" CornerRadius="45" BorderThickness="3,3,3,3"
                                 BorderBrush="#FFFFA726" Background="Transparent">
                             <Border.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="60" ShadowDepth="0" Opacity="0.9"/>
+                                <DropShadowEffect Color="#FFFFA726" BlurRadius="12" ShadowDepth="0" Opacity="1" RenderingBias="Quality"/>
                             </Border.Effect>
                         </Border>
-                        <!-- Inner neon border with more padding (looser) -->
-                        <Border Width="300" Height="300" CornerRadius="32" BorderThickness="4"
+                        <Border Width="300" Height="300" CornerRadius="37" BorderThickness="3,3,3,3"
                                 BorderBrush="#FFFFA726" Background="#00FFFFFF" Padding="32">
                             <Border.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="30" ShadowDepth="0" Opacity="0.7"/>
+                                <DropShadowEffect Color="#FFFFA726" BlurRadius="10" ShadowDepth="0" Opacity="1.2"/>
                             </Border.Effect>
                             <Viewbox>
                                 <TextBlock Text="PLAY" Foreground="White" FontSize="48" FontWeight="Bold"
                                            VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0,48,0,48">
                                     <TextBlock.Effect>
-                                        <!-- Extra glow for text -->
-                                        <DropShadowEffect Color="#FFFFA040" BlurRadius="18" ShadowDepth="0" Opacity="0.8"/>
+                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="20" ShadowDepth="0" Opacity="1.2"/>
                                     </TextBlock.Effect>
                                 </TextBlock>
                             </Viewbox>
                         </Border>
-                        <!-- Extra inner glow for inner border -->
-                        <Border Width="285" Height="285" CornerRadius="28" BorderThickness="2"
-                                BorderBrush="#33FFD580" Background="Transparent">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#33FFD580" BlurRadius="24" ShadowDepth="0" Opacity="0.6"/>
-                            </Border.Effect>
-                        </Border>
                     </Grid>
                 </StackPanel>
-                <!-- News & Updates -->
+
                 <StackPanel Grid.Column="2" Margin="32,48,32,32">
                     <TextBlock Text="RECENT NEWS &amp; UPDATES" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,0,0,24"/>
                     <StackPanel>
@@ -95,7 +112,7 @@
                             <Style x:Key="NeonGlowRectangle" TargetType="Rectangle">
                                 <Setter Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="16" ShadowDepth="0" Opacity="1"/>
+                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="25" ShadowDepth="0" Opacity="1.2"/>
                                     </Setter.Value>
                                 </Setter>
                             </Style>
@@ -123,9 +140,6 @@
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
-                <!-- Top right hamburger menu -->
-                <Button Grid.Column="2" Content="&#xE700;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="#FFFFA726"
-                        Background="Transparent" BorderBrush="Transparent" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,8,0"/>
             </Grid>
         </Grid>
     </Border>
