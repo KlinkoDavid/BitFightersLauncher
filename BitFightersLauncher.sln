@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36401.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BitFightersLauncher", "BitFightersLauncher\BitFightersLauncher.csproj", "{67C8B4F4-8059-4502-8268-A0DDB5285D68}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{67C8B4F4-8059-4502-8268-A0DDB5285D68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67C8B4F4-8059-4502-8268-A0DDB5285D68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67C8B4F4-8059-4502-8268-A0DDB5285D68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67C8B4F4-8059-4502-8268-A0DDB5285D68}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {963D861F-57CD-46AF-AB35-43D2BF7D99F3}
+	EndGlobalSection
+EndGlobal
