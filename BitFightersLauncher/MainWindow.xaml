@@ -69,7 +69,7 @@
                 </Button>
             </Grid>
 
-            <Grid Grid.Row="1" Margin="0,0,0,0">
+            <Grid Grid.Row="1" Margin="0,0,0,0" Width="1196">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="120"/>
                     <ColumnDefinition Width="*"/>
@@ -96,41 +96,111 @@
                                 <Setter Property="Cursor" Value="Hand"/>
                             </Style>
                         </StackPanel.Resources>
-
-                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE80F;" FontFamily="Segoe MDL2 Assets" ToolTip="Home" Width="35"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE80F;" FontFamily="Segoe MDL2 Assets" ToolTip="Home" Width="37"/>
                         <Button Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings" Width="37"/>
-                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star" Width="38"/>
-                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Width="35"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star" Width="37"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Width="37"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE896;" FontFamily="Segoe MDL2 Assets" ToolTip="Download" Width="37"/>
                     </StackPanel>
                 </Border>
                 <Rectangle Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" Margin="114,16,0,525">
                     <Rectangle.Effect>
-                        <DropShadowEffect Color="#FFFFA726" BlurRadius="25" ShadowDepth="0" Opacity="1.2"/>
+                        <DropShadowEffect Color="#FFFFA726" BlurRadius="12" ShadowDepth="0" Opacity="1.2"/>
                     </Rectangle.Effect>
                 </Rectangle>
-                <StackPanel Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="318,150,0,0">
-                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Border Width="320" Height="320" CornerRadius="45" BorderThickness="3,3,3,3"
-                                BorderBrush="#FFFFA726" Background="Transparent">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="12" ShadowDepth="0" Opacity="1" RenderingBias="Quality"/>
-                            </Border.Effect>
-                        </Border>
-                        <Border Width="300" Height="300" CornerRadius="37" BorderThickness="3,3,3,3"
-                                BorderBrush="#FFFFA726" Background="#00FFFFFF" Padding="32">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="10" ShadowDepth="0" Opacity="1.2"/>
-                            </Border.Effect>
-                            <Viewbox>
-                                <TextBlock Text="PLAY" Foreground="White" FontSize="48" FontWeight="Bold"
-                                           VerticalAlignment="Center" HorizontalAlignment="Center" Padding="0,48,0,48">
+
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="328,0,0,0">
+                    <Button Width="320"
+                            Height="320"
+                            Cursor="Hand"
+                            Click="HandleActionButton_Click">
+                        <Button.Style>
+                            <Style TargetType="{x:Type Button}">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderBrush" Value="Transparent" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type Button}">
+                                            <Grid>
+                                                <Border x:Name="OuterBorder"
+                                                        CornerRadius="45"
+                                                        BorderThickness="4"
+                                                        BorderBrush="#FFFFA726"
+                                                        Margin="-6">
+                                                    <Border.Effect>
+                                                        <DropShadowEffect Color="#FFFFA726"
+                                                                          BlurRadius="12"
+                                                                          ShadowDepth="0"
+                                                                          Opacity="1"
+                                                                          RenderingBias="Quality" />
+                                                    </Border.Effect>
+                                                </Border>
+
+                                                <Border x:Name="InnerBorder"
+                                                        Width="300"
+                                                        Height="300"
+                                                        CornerRadius="37"
+                                                        BorderThickness="4"
+                                                        BorderBrush="#FFFFA726"
+                                                        Padding="32">
+                                                    <Border.Effect>
+                                                        <DropShadowEffect Color="#FFFFA726"
+                                                                          BlurRadius="12"
+                                                                          ShadowDepth="0"
+                                                                          Opacity="1.2" />
+                                                    </Border.Effect>
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                      VerticalAlignment="Center" />
+                                                </Border>
+                                            </Grid>
+
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="InnerBorder"
+                                                            Property="Background"
+                                                            Value="#40FFA726" />
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="InnerBorder"
+                                                            Property="Background"
+                                                            Value="#80FFA726" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+
+                        <Viewbox>
+                            <Grid>
+                                <TextBlock x:Name="ButtonText"
+                                           Text="LETÖLTÉS"
+                                           Foreground="White"
+                                           FontSize="48"
+                                           FontWeight="Bold"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Center">
                                     <TextBlock.Effect>
-                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="20" ShadowDepth="0" Opacity="1.2"/>
+                                        <DropShadowEffect Color="#FFFFA726"
+                                                          BlurRadius="12"
+                                                          ShadowDepth="0"
+                                                          Opacity="1.2" />
                                     </TextBlock.Effect>
                                 </TextBlock>
-                            </Viewbox>
-                        </Border>
-                    </Grid>
+                                <ProgressBar x:Name="DownloadProgressBar"
+                                             Height="40"
+                                             VerticalAlignment="Center"
+                                             HorizontalAlignment="Stretch"
+                                             Maximum="100"
+                                             Value="0"
+                                             Visibility="Collapsed"
+                                             Background="#33ffe59f"
+                                             BorderBrush="#FFFFA726"
+                                             BorderThickness="1" />
+                            </Grid>
+                        </Viewbox>
+                    </Button>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Margin="87,94,32,147">
@@ -149,21 +219,21 @@
                             <Rectangle Width="4" Height="40" Fill="#FFFFA726" RadiusX="2" RadiusY="2" Margin="0,0,12,0" Style="{StaticResource NeonGlowRectangle}"/>
                             <StackPanel>
                                 <TextBlock Text="Soccl Settings" Foreground="White" FontWeight="Bold" FontSize="15"/>
-                                <TextBlock Text="Your central settings strip placed the planning office and options." Foreground="#FFCCCCCC" FontSize="12"/>
+                                <TextBlock Text="Your central settings strip placed the planning office and options." TextWrapping="Wrap" Foreground="#FFCCCCCC" FontSize="12"/>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
                             <Rectangle Width="4" Height="40" Fill="#FFFFA726" RadiusX="2" RadiusY="2" Margin="0,0,12,0" Style="{StaticResource NeonGlowRectangle}"/>
                             <StackPanel>
                                 <TextBlock Text="Shire Prellings" Foreground="White" FontWeight="Bold" FontSize="15"/>
-                                <TextBlock Text="Wear scorrilion procmord four contact trend member blocks to enter sites at two/three to tomorrow." Foreground="#FFCCCCCC" FontSize="12"/>
+                                <TextBlock Text="Wear scorrilion procmord four contact trend member blocks to enter sites at two/three to tomorrow." TextWrapping="Wrap" Foreground="#FFCCCCCC" FontSize="12"/>
                             </StackPanel>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Rectangle Width="4" Height="40" Fill="#FFFFA726" RadiusX="2" RadiusY="2" Margin="0,0,12,0"/>
                             <StackPanel>
                                 <TextBlock Text="Proel New" Foreground="White" FontWeight="Bold" FontSize="15"/>
-                                <TextBlock Text="Code camartishup tiny artcoed the data store vion there yet in." Foreground="#FFCCCCCC" FontSize="12"/>
+                                <TextBlock Text="Code camartishup tiny artcoed the data store vion there yet in." TextWrapping="Wrap" Foreground="#FFCCCCCC" FontSize="12"/>
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
