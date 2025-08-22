@@ -25,15 +25,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center" Grid.ColumnSpan="3" Margin="0,6,0,12" RenderTransformOrigin="0.5,0.5">
-                    <DockPanel.RenderTransform>
-                        <TransformGroup>
-                            <ScaleTransform/>
-                            <SkewTransform AngleY="-0.257"/>
-                            <RotateTransform/>
-                            <TranslateTransform Y="-0.596"/>
-                        </TransformGroup>
-                    </DockPanel.RenderTransform>
+                <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center" Grid.ColumnSpan="3" Margin="0,6,0,12">
                     <Image Source="/Resources/Logo.png" Width="85">
                         <Image.Effect>
                             <DropShadowEffect Color="#FFFFA726" BlurRadius="40" ShadowDepth="0" Opacity="1.2"/>
@@ -51,7 +43,7 @@
                         FontSize="28"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"
-                        Margin="0,21,26,0"
+                        Margin="0,11,11,0"
                         Grid.Column="2"
                         Click="ExitButton_Click">
                     <Button.Style>
@@ -99,24 +91,24 @@
                                 <Setter Property="Background" Value="Transparent"/>
                                 <Setter Property="BorderBrush" Value="Transparent"/>
                                 <Setter Property="Foreground" Value="#FFFFA726"/>
-                                <Setter Property="FontSize" Value="28"/>
-                                <Setter Property="Margin" Value="0,18,0,0"/>
+                                <Setter Property="FontSize" Value="32"/>
+                                <Setter Property="Margin" Value="0,32,0,30"/>
                                 <Setter Property="Cursor" Value="Hand"/>
                             </Style>
                         </StackPanel.Resources>
-                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings"/>
-                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Favorites"/>
-                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xEB3C;" FontFamily="Segoe MDL2 Assets" ToolTip="Trophy"/>
-                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile"/>
-                        <Rectangle Height="60" Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" Margin="32,24,0,0">
-                            <Rectangle.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="25" ShadowDepth="0" Opacity="1.2"/>
-                            </Rectangle.Effect>
-                        </Rectangle>
+
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE80F;" FontFamily="Segoe MDL2 Assets" ToolTip="Home" Width="35"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings" Width="37"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star" Width="38"/>
+                        <Button Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Width="35"/>
                     </StackPanel>
                 </Border>
-
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Rectangle Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" Margin="114,16,0,525">
+                    <Rectangle.Effect>
+                        <DropShadowEffect Color="#FFFFA726" BlurRadius="25" ShadowDepth="0" Opacity="1.2"/>
+                    </Rectangle.Effect>
+                </Rectangle>
+                <StackPanel Grid.Column="1" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="318,150,0,0">
                     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Border Width="320" Height="320" CornerRadius="45" BorderThickness="3,3,3,3"
                                 BorderBrush="#FFFFA726" Background="Transparent">
@@ -141,9 +133,9 @@
                     </Grid>
                 </StackPanel>
 
-                <StackPanel Grid.Column="2" Margin="32,48,32,32">
+                <StackPanel Grid.Column="2" Margin="87,94,32,147">
                     <TextBlock Text="RECENT NEWS &amp; UPDATES" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,0,0,24"/>
-                    <StackPanel>
+                    <StackPanel Height="226">
                         <StackPanel.Resources>
                             <Style x:Key="NeonGlowRectangle" TargetType="Rectangle">
                                 <Setter Property="Effect">
