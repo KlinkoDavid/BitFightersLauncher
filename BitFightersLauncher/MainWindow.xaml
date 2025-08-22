@@ -18,27 +18,63 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Grid Height="80" VerticalAlignment="Top" Grid.Row="0">
+            <Grid Height="80" VerticalAlignment="Top" Grid.Row="0" MouseLeftButtonDown="DragWindow">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <Button Content="&#xE700;" FontFamily="Segoe MDL2 Assets" FontSize="28" Foreground="#FFFFA726"
-                        Background="Transparent" BorderBrush="Transparent" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,21,26,0" Grid.Column="1"/>
-                <DockPanel Grid.Column="1" Margin="392,6,465,12">
-                    <Image Source="/Resources/Logo.png" RenderTransformOrigin="-0.032,0.548" Width="85">
+                <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center" Grid.ColumnSpan="3" Margin="0,6,0,12" RenderTransformOrigin="0.5,0.5">
+                    <DockPanel.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform/>
+                            <SkewTransform AngleY="-0.257"/>
+                            <RotateTransform/>
+                            <TranslateTransform Y="-0.596"/>
+                        </TransformGroup>
+                    </DockPanel.RenderTransform>
+                    <Image Source="/Resources/Logo.png" Width="85">
                         <Image.Effect>
                             <DropShadowEffect Color="#FFFFA726" BlurRadius="40" ShadowDepth="0" Opacity="1.2"/>
                         </Image.Effect>
                     </Image>
-                    <TextBlock Text="BITFIGHTERS" FontSize="28" FontWeight="Bold" Foreground="#FFFFA726" RenderTransformOrigin="0.178,0.513" Width="181" TextAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="BITFIGHTERS" FontSize="28" FontWeight="Bold" Foreground="#FFFFA726" Width="181" TextAlignment="Center" VerticalAlignment="Center">
                         <TextBlock.Effect>
                             <DropShadowEffect ShadowDepth="0" Opacity="1.2" Color="#FFFFA726" BlurRadius="20"/>
                         </TextBlock.Effect>
                     </TextBlock>
                 </DockPanel>
+
+                <Button Content="&#xE711;"
+                        FontFamily="Segoe MDL2 Assets"
+                        FontSize="28"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="0,21,26,0"
+                        Grid.Column="2"
+                        Click="ExitButton_Click">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="#FFFFA726"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Foreground" Value="Red"/>
+                                    <Setter Property="Effect">
+                                        <Setter.Value>
+                                            <DropShadowEffect Color="Red" BlurRadius="20" ShadowDepth="0"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </Grid>
 
             <Grid Grid.Row="1" Margin="0,0,0,0">
