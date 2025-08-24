@@ -29,7 +29,7 @@
         </Border.Background>
 
         <Grid>
-            <Canvas IsHitTestVisible="False">
+            <Canvas IsHitTestVisible="False" x:Name="AnimatedBackground">
                 <Canvas.OpacityMask>
                     <RadialGradientBrush>
                         <GradientStop Color="Black" Offset="0.5"/>

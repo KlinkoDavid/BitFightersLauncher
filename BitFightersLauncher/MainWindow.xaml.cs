@@ -13,6 +13,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Linq;
+using System.Windows.Media.Effects;
 
 namespace BitFightersLauncher
 {
@@ -27,6 +28,7 @@ namespace BitFightersLauncher
 
         private double _targetVerticalOffset;
         private bool _isScrolling;
+        private readonly bool _reducedMotion;
 
         public MainWindow()
         {
@@ -35,14 +37,51 @@ namespace BitFightersLauncher
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             settingsFilePath = Path.Combine(appDataPath, "BitFightersLauncher", "settings.txt");
 
+            // Detect lower rendering tier -> enable reduced motion/effects
+            _reducedMotion = (RenderCapability.Tier >> 16) < 2;
+
             Loaded += async (s, e) =>
             {
                 LoadInstallPath();
                 CheckGameInstallStatus();
                 await LoadNewsUpdatesAsync();
 
-                CompositionTarget.Rendering += CompositionTarget_Rendering;
+                if (!_reducedMotion)
+                {
+                    CompositionTarget.Rendering += CompositionTarget_Rendering;
+                }
+
+                ApplyPerformanceModeIfNeeded();
             };
+        }
+
+        private void ApplyPerformanceModeIfNeeded()
+        {
+            if (!_reducedMotion) return;
+
+            // Hide animated background if present
+            if (AnimatedBackground != null)
+            {
+                AnimatedBackground.Visibility = Visibility.Collapsed;
+            }
+
+            // Remove DropShadowEffects to reduce CPU usage
+            RemoveDropShadows(this);
+        }
+
+        private void RemoveDropShadows(DependencyObject parent)
+        {
+            if (parent is UIElement element && element.Effect is DropShadowEffect)
+            {
+                element.Effect = null;
+            }
+
+            int count = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                RemoveDropShadows(child);
+            }
         }
 
         private async void ShowNotification(string message)
@@ -344,6 +383,17 @@ namespace BitFightersLauncher
 
         private void NewsScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            if (_reducedMotion)
+            {
+                // No smooth scrolling in reduced mode
+                double target = NewsScrollViewer.VerticalOffset - e.Delta;
+                if (target < 0) target = 0;
+                if (target > NewsScrollViewer.ScrollableHeight) target = NewsScrollViewer.ScrollableHeight;
+                NewsScrollViewer.ScrollToVerticalOffset(target);
+                e.Handled = true;
+                return;
+            }
+
             _targetVerticalOffset -= e.Delta * 0.7;
 
             if (_targetVerticalOffset < 0)
