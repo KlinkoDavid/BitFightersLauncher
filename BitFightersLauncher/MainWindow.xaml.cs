@@ -1,13 +1,17 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Dialogs;
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
-using System.Diagnostics;
-using Microsoft.WindowsAPICodePack.Dialogs;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 
 namespace BitFightersLauncher
 {
@@ -17,24 +21,41 @@ namespace BitFightersLauncher
         private const string GameExecutableName = "BitFighters.exe";
         private string gameInstallPath = string.Empty;
 
-        // A beállításfájl helye (pl. C:\Users\Felhasználó\AppData\Local\BitFightersLauncher\settings.txt)
         private readonly string settingsFilePath;
+
+        private double _targetVerticalOffset;
+        private bool _isScrolling;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            // Beállításfájl útvonalának meghatározása
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             settingsFilePath = Path.Combine(appDataPath, "BitFightersLauncher", "settings.txt");
 
-            // Az ablak betöltődésekor betöltjük a beállításokat és ellenőrizzük a játék állapotát
-            Loaded += (s, e) => CheckGameInstallStatus();
+            Loaded += async (s, e) =>
+            {
+                LoadInstallPath();
+                CheckGameInstallStatus();
+                await LoadNewsUpdatesAsync();
+
+                CompositionTarget.Rendering += CompositionTarget_Rendering;
+            };
         }
 
-        /// <summary>
-        /// Betölti a telepítési útvonalat a beállításfájlból.
-        /// </summary>
+        private async void ShowNotification(string message)
+        {
+            NotificationText.Text = message;
+
+            var showStoryboard = (Storyboard)this.FindResource("ShowNotification");
+            showStoryboard.Begin(NotificationBorder);
+
+            await Task.Delay(4000);
+
+            var hideStoryboard = (Storyboard)this.FindResource("HideNotification");
+            hideStoryboard.Begin(NotificationBorder);
+        }
+
         private void LoadInstallPath()
         {
             try
@@ -42,7 +63,6 @@ namespace BitFightersLauncher
                 if (File.Exists(settingsFilePath))
                 {
                     string savedPath = File.ReadAllText(settingsFilePath).Trim();
-                    // Csak akkor fogadjuk el a mentett útvonalat, ha az egy létező könyvtár
                     if (Directory.Exists(savedPath))
                     {
                         gameInstallPath = savedPath;
@@ -51,26 +71,20 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                // Hiba esetén (pl. nincs olvasási jog) a program továbbra is működőképes marad
                 Debug.WriteLine($"Hiba a beállítások betöltésekor: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Elmenti a telepítési útvonalat a beállításfájlba.
-        /// </summary>
         private void SaveInstallPath()
         {
             try
             {
-                // Létrehozzuk a könyvtárat, ha nem létezik
-                Directory.CreateDirectory(Path.GetDirectoryName(settingsFilePath));
+                Directory.CreateDirectory(Path.GetDirectoryName(settingsFilePath)!);
                 File.WriteAllText(settingsFilePath, gameInstallPath);
             }
             catch (Exception ex)
             {
-                // Nem kritikus hiba, ha a mentés nem sikerül, ezért csak jelezzük
-                MessageBox.Show($"A telepítési útvonal mentése nem sikerült. A launcher következő indításkor újra kérni fogja.\nHiba: {ex.Message}", "Mentési Hiba", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ShowNotification($"Hiba a mentés során: {ex.Message}");
             }
         }
 
@@ -86,10 +100,6 @@ namespace BitFightersLauncher
 
         private void CheckGameInstallStatus()
         {
-            // Először megpróbáljuk betölteni a mentett útvonalat
-            LoadInstallPath();
-
-            // Ha a betöltés után sincs érvényes útvonal, akkor használjuk az alapértelmezettet
             if (string.IsNullOrEmpty(gameInstallPath))
             {
                 gameInstallPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "BitFighters");
@@ -98,7 +108,7 @@ namespace BitFightersLauncher
             string? executablePath = FindExecutable(gameInstallPath);
             if (!string.IsNullOrEmpty(executablePath))
             {
-                gameInstallPath = Path.GetDirectoryName(executablePath);
+                gameInstallPath = Path.GetDirectoryName(executablePath)!;
                 ButtonText.Text = "PLAY";
             }
             else
@@ -109,8 +119,14 @@ namespace BitFightersLauncher
 
         private async void HandleActionButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ButtonText.Text == "LETÖLTÉS") await DownloadAndInstallGameAsync();
-            else if (ButtonText.Text == "PLAY") await StartGame();
+            if (ButtonText.Text == "LETÖLTÉS")
+            {
+                await DownloadAndInstallGameAsync();
+            }
+            else if (ButtonText.Text == "PLAY")
+            {
+                await StartGame();
+            }
         }
 
         private async Task DownloadAndInstallGameAsync()
@@ -120,9 +136,14 @@ namespace BitFightersLauncher
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 gameInstallPath = dialog.FileName;
-                ButtonText.Visibility = Visibility.Collapsed;
-                DownloadProgressBar.Visibility = Visibility.Visible;
-                DownloadProgressBar.Value = 0;
+
+                ActionButton.IsEnabled = false;
+                ButtonText.Text = "FOLYAMATBAN";
+                DownloadStatusGrid.Visibility = Visibility.Visible;
+                DownloadProgressBar.IsIndeterminate = false;
+                DownloadStatusText.Text = "Letöltés előkészítése...";
+                ProgressPercentageText.Text = "0%";
+                ProgressDetailsText.Text = "";
 
                 string tempDownloadPath = Path.Combine(Path.GetTempPath(), "game.zip");
 
@@ -139,29 +160,61 @@ namespace BitFightersLauncher
                             var buffer = new byte[81920];
                             long receivedBytes = 0;
                             int bytesRead;
+
+                            var stopwatch = Stopwatch.StartNew();
+                            long lastReceivedBytes = 0;
+
                             while ((bytesRead = await downloadStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                             {
                                 await fileStream.WriteAsync(buffer, 0, bytesRead);
                                 receivedBytes += bytesRead;
+
                                 if (totalBytes > 0)
                                 {
                                     int progressPercentage = (int)((double)receivedBytes / totalBytes * 100);
-                                    Dispatcher.Invoke(() => DownloadProgressBar.Value = progressPercentage);
+                                    string detailsText = $"{(double)receivedBytes / (1024 * 1024):F1} MB / {(double)totalBytes / (1024 * 1024):F1} MB";
+
+                                    string speedText = "";
+                                    if (stopwatch.ElapsedMilliseconds > 500)
+                                    {
+                                        double speed = (receivedBytes - lastReceivedBytes) / stopwatch.Elapsed.TotalSeconds;
+                                        speedText = $"({speed / (1024 * 1024):F2} MB/s)";
+                                        lastReceivedBytes = receivedBytes;
+                                        stopwatch.Restart();
+                                    }
+
+                                    Dispatcher.Invoke(() =>
+                                    {
+                                        DownloadProgressBar.Value = progressPercentage;
+                                        ProgressPercentageText.Text = $"{progressPercentage}%";
+                                        ProgressDetailsText.Text = detailsText;
+                                        DownloadStatusText.Text = $"Letöltés... {speedText}";
+                                    });
                                 }
                             }
                         }
                     }
-                    ButtonText.Text = "TELEPÍTÉS";
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        DownloadStatusText.Text = "Telepítés...";
+                        ProgressPercentageText.Text = "";
+                        ProgressDetailsText.Text = "Kicsomagolás...";
+                        DownloadProgressBar.IsIndeterminate = true;
+                    });
+
                     await InstallGameAsync(tempDownloadPath);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Hiba a letöltés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ShowNotification($"Hiba a letöltés során: {ex.Message}");
                 }
                 finally
                 {
-                    ButtonText.Visibility = Visibility.Visible;
-                    DownloadProgressBar.Visibility = Visibility.Collapsed;
+                    ActionButton.IsEnabled = true;
+                    DownloadStatusGrid.Visibility = Visibility.Collapsed;
+                    DownloadProgressBar.IsIndeterminate = false;
+                    DownloadProgressBar.Value = 0;
                     CheckGameInstallStatus();
                 }
             }
@@ -178,7 +231,7 @@ namespace BitFightersLauncher
                 }
                 catch (Exception ex)
                 {
-                    Dispatcher.Invoke(() => MessageBox.Show($"Hiba a telepítés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error));
+                    Dispatcher.Invoke(() => ShowNotification($"Hiba a telepítés során: {ex.Message}"));
                 }
                 finally
                 {
@@ -188,15 +241,19 @@ namespace BitFightersLauncher
 
             if (!string.IsNullOrEmpty(FindExecutable(gameInstallPath)))
             {
-                MessageBox.Show("A játék telepítése sikeresen befejeződött!", "Siker", MessageBoxButton.OK, MessageBoxImage.Information);
-                // Sikeres telepítés után elmentjük az útvonalat
+                ShowNotification("A játék telepítése sikeresen befejeződött!");
                 SaveInstallPath();
             }
             else
             {
-                MessageBox.Show("A futtatható fájl nem található a telepítési mappában.", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowNotification("Hiba: A futtatható fájl nem található a mappában.");
+                if (File.Exists(settingsFilePath)) File.Delete(settingsFilePath);
+                gameInstallPath = string.Empty;
             }
-            CheckGameInstallStatus();
+
+            Dispatcher.Invoke(() => {
+                CheckGameInstallStatus();
+            });
         }
 
         private string? FindExecutable(string path)
@@ -221,27 +278,106 @@ namespace BitFightersLauncher
                         StartInfo = new ProcessStartInfo(gameExecutablePath)
                         {
                             UseShellExecute = true,
-                            WorkingDirectory = Path.GetDirectoryName(gameExecutablePath)
-                        }
+                            WorkingDirectory = Path.GetDirectoryName(gameExecutablePath)!
+                        },
+                        EnableRaisingEvents = true
                     };
+
+                    process.Exited += (sender, e) =>
+                    {
+                        Dispatcher.Invoke(() => this.Show());
+                    };
+
                     process.Start();
                     this.Hide();
-                    await process.WaitForExitAsync();
-                    this.Show();
                 }
                 else
                 {
-                    MessageBox.Show("A játék nem található. Lehet, hogy törölted, vagy áthelyezted a mappát.", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
-                    // Töröljük a hibás beállítást, hogy a felhasználó újat választhasson
+                    ShowNotification("Hiba: A játékfájl nem található.");
                     if (File.Exists(settingsFilePath)) File.Delete(settingsFilePath);
-                    gameInstallPath = string.Empty; // Töröljük a memóriából is
+                    gameInstallPath = string.Empty;
                     CheckGameInstallStatus();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Hiba a játék indítása során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowNotification($"Hiba a játék indítása során: {ex.Message}");
             }
+        }
+
+        private async Task LoadNewsUpdatesAsync()
+        {
+            string apiUrl = "http://bitfighters.eu/api/get_news.php";
+
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    string jsonResponse = await httpClient.GetStringAsync(apiUrl);
+
+                    var options = new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                    };
+                    var updates = JsonSerializer.Deserialize<System.Collections.Generic.List<NewsUpdate>>(jsonResponse, options);
+
+                    NewsItemsControl.ItemsSource = updates;
+                }
+            }
+            catch (Exception ex)
+            {
+                NewsItemsControl.ItemsSource = new System.Collections.Generic.List<NewsUpdate>
+                {
+                    new NewsUpdate { Title = "Hiba a hírek betöltésekor", Content = "Nem sikerült elérni a szervert: " + ex.Message }
+                };
+            }
+        }
+
+        private void NewsScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            _targetVerticalOffset -= e.Delta * 0.7;
+
+            if (_targetVerticalOffset < 0)
+            {
+                _targetVerticalOffset = 0;
+            }
+            if (_targetVerticalOffset > NewsScrollViewer.ScrollableHeight)
+            {
+                _targetVerticalOffset = NewsScrollViewer.ScrollableHeight;
+            }
+
+            _isScrolling = true;
+
+            e.Handled = true;
+        }
+
+        private void CompositionTarget_Rendering(object? sender, EventArgs e)
+        {
+            if (_isScrolling && NewsScrollViewer != null)
+            {
+                double currentOffset = NewsScrollViewer.VerticalOffset;
+                double difference = _targetVerticalOffset - currentOffset;
+
+                if (Math.Abs(difference) < 1.0)
+                {
+                    NewsScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
+                    _isScrolling = false;
+                    return;
+                }
+
+                NewsScrollViewer.ScrollToVerticalOffset(currentOffset + difference * 0.2);
+            }
+        }
+
+        // --- ÚJ ESEMÉNYKEZELŐ A GÖRGETÉSJELZŐKHÖZ ---
+        private void NewsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            // Felső jelző láthatósága
+            TopScrollIndicator.Opacity = (e.VerticalOffset > 0) ? 1 : 0;
+
+            // Alsó jelző láthatósága
+            // Akkor látható, ha a jelenlegi pozíció kisebb, mint a maximális görgethető magasság
+            BottomScrollIndicator.Opacity = (e.VerticalOffset < NewsScrollViewer.ScrollableHeight - 1) ? 1 : 0;
         }
     }
 }
