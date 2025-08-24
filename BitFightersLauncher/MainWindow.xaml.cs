@@ -66,6 +66,10 @@ namespace BitFightersLauncher
 
             _reducedMotion = (RenderCapability.Tier >> 16) < 2;
 
+            // A lekerekített sarkok vágásának frissítése méretváltozáskor
+            Loaded += (s, e) => UpdateBorderClip();
+            SizeChanged += (s, e) => UpdateBorderClip();
+
             Loaded += async (s, e) =>
             {
                 LoadInstallPath();
@@ -75,6 +79,13 @@ namespace BitFightersLauncher
                 InitializeAnimation();
                 ApplyPerformanceModeIfNeeded();
             };
+        }
+
+        private void UpdateBorderClip()
+        {
+            if (RootBorder == null) return;
+            double radius = RootBorder.CornerRadius.TopLeft;
+            RootBorder.Clip = new RectangleGeometry(new Rect(0, 0, RootBorder.ActualWidth, RootBorder.ActualHeight), radius, radius);
         }
 
         private void InitializeAnimation()

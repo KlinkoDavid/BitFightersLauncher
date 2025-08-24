@@ -23,7 +23,7 @@
         </Storyboard>
     </Window.Resources>
 
-    <Border CornerRadius="18" BorderBrush="#33CCCCCC" BorderThickness="1.5" ClipToBounds="True">
+    <Border x:Name="RootBorder" CornerRadius="18" BorderBrush="#33CCCCCC" BorderThickness="1.5" ClipToBounds="True">
         <Border.Background>
             <SolidColorBrush Color="#FF1A1C20"/>
         </Border.Background>
@@ -31,7 +31,7 @@
         <Grid>
             <Image x:Name="AnimatedBackgroundImage" Stretch="UniformToFill"/>
 
-            <Rectangle Fill="#88000000" />
+            <Rectangle Fill="#88000000" RadiusX="{Binding ElementName=RootBorder, Path=CornerRadius.TopLeft}" RadiusY="{Binding ElementName=RootBorder, Path=CornerRadius.TopLeft}" />
 
             <Grid>
                 <Grid.RowDefinitions>
@@ -39,7 +39,7 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Grid Height="80" VerticalAlignment="Center" MouseLeftButtonDown="DragWindow" HorizontalAlignment="Left" Width="1197">
+                <Grid Height="80" VerticalAlignment="Top" MouseLeftButtonDown="DragWindow" HorizontalAlignment="Stretch" Background="Transparent">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="383*"/>
                         <ColumnDefinition Width="Auto"/>
