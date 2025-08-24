@@ -1,5 +1,6 @@
 ﻿using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -13,11 +14,37 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
+using System.Windows.Media.Imaging;
 
 namespace BitFightersLauncher
 {
     public partial class MainWindow : Window
     {
+        // === ÚJ ANIMÁCIÓS LOGIKA: LEBEGŐ RÉSZECSKÉK (GYORS VERZIÓ) ===
+
+        private class Particle
+        {
+            // Jelenlegi pozíció
+            public double X, Y;
+            // Célpont, ami felé úszik
+            public double TargetX, TargetY;
+            // Áttetszőség a pulzáláshoz
+            public double Opacity;
+            public double OpacityDirection;
+            // Méret és szín
+            public int Size;
+            public byte R, G, B;
+        }
+
+        private WriteableBitmap _writeableBitmap;
+        private List<Particle> _particles;
+        private readonly Random _random = new Random();
+        private byte[] _pixelBuffer;
+        private int _width, _height, _stride;
+
+        // =======================================================
+
+
         public System.Collections.Generic.IEnumerable<int> Numbers { get; } = Enumerable.Range(0, 50);
         private const string GameDownloadUrl = "https://bitfighters.eu/BitFighters/BitFighters.zip";
         private const string GameExecutableName = "BitFighters.exe";
@@ -37,7 +64,6 @@ namespace BitFightersLauncher
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             settingsFilePath = Path.Combine(appDataPath, "BitFightersLauncher", "settings.txt");
 
-            // Detect lower rendering tier -> enable reduced motion/effects
             _reducedMotion = (RenderCapability.Tier >> 16) < 2;
 
             Loaded += async (s, e) =>
@@ -46,9 +72,122 @@ namespace BitFightersLauncher
                 CheckGameInstallStatus();
                 await LoadNewsUpdatesAsync();
 
+                InitializeAnimation();
                 ApplyPerformanceModeIfNeeded();
             };
         }
+
+        private void InitializeAnimation()
+        {
+            _width = (int)this.ActualWidth;
+            _height = (int)this.ActualHeight;
+
+            if (_width == 0 || _height == 0) return;
+
+            _writeableBitmap = new WriteableBitmap(_width, _height, 96, 96, PixelFormats.Pbgra32, null);
+            AnimatedBackgroundImage.Source = _writeableBitmap;
+
+            _stride = _writeableBitmap.BackBufferStride;
+            _pixelBuffer = new byte[_height * _stride];
+
+            _particles = new List<Particle>();
+            int particleCount = _reducedMotion ? 40 : 80; // Kevesebb, de látványosabb részecske
+
+            for (int i = 0; i < particleCount; i++)
+            {
+                _particles.Add(new Particle
+                {
+                    X = _random.Next(0, _width),
+                    Y = _random.Next(0, _height),
+                    TargetX = _random.Next(0, _width),
+                    TargetY = _random.Next(0, _height),
+                    Opacity = _random.NextDouble() * 0.8 + 0.2,
+                    OpacityDirection = (_random.Next(0, 2) == 0) ? 1 : -1,
+                    Size = _random.Next(1, 4),
+                    R = 255,
+                    G = 167,
+                    B = 38
+                });
+            }
+
+            CompositionTarget.Rendering += UpdateAndRenderAnimation;
+        }
+
+        private void UpdateAndRenderAnimation(object sender, EventArgs e)
+        {
+            if (_writeableBitmap == null) return;
+
+            _writeableBitmap.Lock();
+
+            // Töröljük a képet minden képkockán (nincs csóva)
+            Array.Clear(_pixelBuffer, 0, _pixelBuffer.Length);
+
+            foreach (var p in _particles)
+            {
+                // Mozgás a célpont felé (lassított, "easing" mozgás)
+                p.X += (p.TargetX - p.X) * 0.01;
+                p.Y += (p.TargetY - p.Y) * 0.01;
+
+                double distSq = (p.TargetX - p.X) * (p.TargetX - p.X) + (p.TargetY - p.Y) * (p.TargetY - p.Y);
+                // Ha közel ért a célponthoz, újat kap
+                if (distSq < 100)
+                {
+                    p.TargetX = _random.Next(0, _width);
+                    p.TargetY = _random.Next(0, _height);
+                }
+
+                // Áttetszőség pulzálása
+                p.Opacity += p.OpacityDirection * 0.005;
+                if (p.Opacity > 1.0) { p.Opacity = 1.0; p.OpacityDirection = -1; }
+                if (p.Opacity < 0.2) { p.Opacity = 0.2; p.OpacityDirection = 1; }
+
+                // Részecske kirajzolása (puha szélű négyzetként)
+                DrawSoftParticle((int)p.X, (int)p.Y, p.Size, p.R, p.G, p.B, (byte)(p.Opacity * 255));
+            }
+
+            _writeableBitmap.WritePixels(new Int32Rect(0, 0, _width, _height), _pixelBuffer, _stride, 0);
+
+            _writeableBitmap.Unlock();
+        }
+
+        /// <summary>
+        /// Egy "puha" részecskét rajzol a bufferbe. A közepe a legvilágosabb, a szélei felé halványul.
+        /// </summary>
+        private void DrawSoftParticle(int cx, int cy, int size, byte r, byte g, byte b, byte a)
+        {
+            if (a == 0) return;
+            double maxSizeSq = size * size;
+
+            for (int x = -size; x <= size; x++)
+            {
+                for (int y = -size; y <= size; y++)
+                {
+                    int currentX = cx + x;
+                    int currentY = cy + y;
+
+                    if (currentX >= 0 && currentX < _width && currentY >= 0 && currentY < _height)
+                    {
+                        double distSq = x * x + y * y;
+                        if (distSq < maxSizeSq)
+                        {
+                            // A "puhaságot" a távolsággal arányos halványítás adja
+                            double falloff = 1.0 - (distSq / maxSizeSq);
+                            byte finalAlpha = (byte)(a * falloff);
+
+                            int index = currentY * _stride + currentX * 4;
+                            if (_pixelBuffer[index + 3] < finalAlpha) // Csak akkor rajzolunk, ha világosabb lesz
+                            {
+                                _pixelBuffer[index] = b;
+                                _pixelBuffer[index + 1] = g;
+                                _pixelBuffer[index + 2] = r;
+                                _pixelBuffer[index + 3] = finalAlpha;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
 
         private void HookRendering()
         {
@@ -68,13 +207,9 @@ namespace BitFightersLauncher
         {
             if (!_reducedMotion) return;
 
-            // Animated background has been removed from XAML; nothing to hide here.
-
-            // Hide scroll indicators (and their animations)
             if (TopScrollIndicator != null) TopScrollIndicator.Visibility = Visibility.Collapsed;
             if (BottomScrollIndicator != null) BottomScrollIndicator.Visibility = Visibility.Collapsed;
 
-            // Remove DropShadowEffects to reduce CPU usage
             RemoveDropShadows(this);
         }
 
@@ -96,12 +231,9 @@ namespace BitFightersLauncher
         private async void ShowNotification(string message)
         {
             NotificationText.Text = message;
-
             var showStoryboard = (Storyboard)this.FindResource("ShowNotification");
             showStoryboard.Begin(NotificationBorder);
-
             await Task.Delay(4000);
-
             var hideStoryboard = (Storyboard)this.FindResource("HideNotification");
             hideStoryboard.Begin(NotificationBorder);
         }
@@ -154,7 +286,6 @@ namespace BitFightersLauncher
             {
                 gameInstallPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "BitFighters");
             }
-
             string? executablePath = FindExecutable(gameInstallPath);
             if (!string.IsNullOrEmpty(executablePath))
             {
@@ -182,11 +313,9 @@ namespace BitFightersLauncher
         private async Task DownloadAndInstallGameAsync()
         {
             var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "Válassza ki a telepítési mappát" };
-
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 gameInstallPath = dialog.FileName;
-
                 ActionButton.IsEnabled = false;
                 ButtonText.Text = "FOLYAMATBAN";
                 DownloadStatusGrid.Visibility = Visibility.Visible;
@@ -194,9 +323,7 @@ namespace BitFightersLauncher
                 DownloadStatusText.Text = "Letöltés előkészítése...";
                 ProgressPercentageText.Text = "0%";
                 ProgressDetailsText.Text = "";
-
                 string tempDownloadPath = Path.Combine(Path.GetTempPath(), "game.zip");
-
                 try
                 {
                     using (var httpClient = new HttpClient())
@@ -210,22 +337,18 @@ namespace BitFightersLauncher
                             var buffer = new byte[81920];
                             long receivedBytes = 0;
                             int bytesRead;
-
                             var stopwatch = Stopwatch.StartNew();
                             long lastReceivedBytes = 0;
                             DateTime lastUiUpdate = DateTime.Now;
                             const int uiUpdateIntervalMs = 100;
-
                             while ((bytesRead = await downloadStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                             {
                                 await fileStream.WriteAsync(buffer, 0, bytesRead);
                                 receivedBytes += bytesRead;
-
                                 if (totalBytes > 0)
                                 {
                                     int progressPercentage = (int)((double)receivedBytes / totalBytes * 100);
                                     string detailsText = $"{(double)receivedBytes / (1024 * 1024):F1} MB / {(double)totalBytes / (1024 * 1024):F1} MB";
-
                                     string speedText = "";
                                     if (stopwatch.ElapsedMilliseconds > 500)
                                     {
@@ -234,8 +357,6 @@ namespace BitFightersLauncher
                                         lastReceivedBytes = receivedBytes;
                                         stopwatch.Restart();
                                     }
-
-                                    // UI update only every 100ms or on finish
                                     if ((DateTime.Now - lastUiUpdate).TotalMilliseconds > uiUpdateIntervalMs || receivedBytes == totalBytes)
                                     {
                                         Dispatcher.Invoke(() =>
@@ -251,7 +372,6 @@ namespace BitFightersLauncher
                             }
                         }
                     }
-
                     Dispatcher.Invoke(() =>
                     {
                         DownloadStatusText.Text = "Telepítés...";
@@ -259,7 +379,6 @@ namespace BitFightersLauncher
                         ProgressDetailsText.Text = "Kicsomagolás...";
                         DownloadProgressBar.IsIndeterminate = true;
                     });
-
                     await InstallGameAsync(tempDownloadPath);
                 }
                 catch (Exception ex)
@@ -295,7 +414,6 @@ namespace BitFightersLauncher
                     if (File.Exists(downloadedFilePath)) File.Delete(downloadedFilePath);
                 }
             });
-
             if (!string.IsNullOrEmpty(FindExecutable(gameInstallPath)))
             {
                 ShowNotification("A játék telepítése sikeresen befejeződött!");
@@ -307,7 +425,6 @@ namespace BitFightersLauncher
                 if (File.Exists(settingsFilePath)) File.Delete(settingsFilePath);
                 gameInstallPath = string.Empty;
             }
-
             Dispatcher.Invoke(() => {
                 CheckGameInstallStatus();
             });
@@ -339,12 +456,10 @@ namespace BitFightersLauncher
                         },
                         EnableRaisingEvents = true
                     };
-
                     process.Exited += (sender, e) =>
                     {
                         Dispatcher.Invoke(() => this.Show());
                     };
-
                     process.Start();
                     this.Hide();
                 }
@@ -365,19 +480,16 @@ namespace BitFightersLauncher
         private async Task LoadNewsUpdatesAsync()
         {
             string apiUrl = "http://bitfighters.eu/api/get_news.php";
-
             try
             {
                 using (var httpClient = new HttpClient())
                 {
                     string jsonResponse = await httpClient.GetStringAsync(apiUrl);
-
                     var options = new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true,
                     };
                     var updates = JsonSerializer.Deserialize<System.Collections.Generic.List<NewsUpdate>>(jsonResponse, options);
-
                     NewsItemsControl.ItemsSource = updates;
                 }
             }
@@ -394,7 +506,6 @@ namespace BitFightersLauncher
         {
             if (_reducedMotion)
             {
-                // No smooth scrolling in reduced mode
                 double target = NewsScrollViewer.VerticalOffset - e.Delta;
                 if (target < 0) target = 0;
                 if (target > NewsScrollViewer.ScrollableHeight) target = NewsScrollViewer.ScrollableHeight;
@@ -402,9 +513,7 @@ namespace BitFightersLauncher
                 e.Handled = true;
                 return;
             }
-
             _targetVerticalOffset -= e.Delta * 0.7;
-
             if (_targetVerticalOffset < 0)
             {
                 _targetVerticalOffset = 0;
@@ -413,10 +522,8 @@ namespace BitFightersLauncher
             {
                 _targetVerticalOffset = NewsScrollViewer.ScrollableHeight;
             }
-
             _isScrolling = true;
             HookRendering();
-
             e.Handled = true;
         }
 
@@ -426,8 +533,6 @@ namespace BitFightersLauncher
             {
                 double currentOffset = NewsScrollViewer.VerticalOffset;
                 double difference = _targetVerticalOffset - currentOffset;
-
-                // Csak akkor animáljunk, ha a különbség jelentős
                 if (Math.Abs(difference) < 0.5)
                 {
                     NewsScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
@@ -435,18 +540,14 @@ namespace BitFightersLauncher
                     UnhookRendering();
                     return;
                 }
-
-                // Lassabb animáció gyengébb gépeken
                 double step = Math.Max(Math.Abs(difference) * 0.15, 1.0);
                 double newOffset = currentOffset + Math.Sign(difference) * step;
                 if ((difference > 0 && newOffset > _targetVerticalOffset) || (difference < 0 && newOffset < _targetVerticalOffset))
                     newOffset = _targetVerticalOffset;
-
                 NewsScrollViewer.ScrollToVerticalOffset(newOffset);
             }
             else
             {
-                // safety: unhook if no scrolling
                 UnhookRendering();
             }
         }

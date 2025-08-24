@@ -29,6 +29,8 @@
         </Border.Background>
 
         <Grid>
+            <Image x:Name="AnimatedBackgroundImage" Stretch="UniformToFill"/>
+
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
