@@ -165,6 +165,8 @@ namespace BitFightersLauncher
 
                             var stopwatch = Stopwatch.StartNew();
                             long lastReceivedBytes = 0;
+                            DateTime lastUiUpdate = DateTime.Now;
+                            const int uiUpdateIntervalMs = 100;
 
                             while ((bytesRead = await downloadStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                             {
@@ -185,13 +187,18 @@ namespace BitFightersLauncher
                                         stopwatch.Restart();
                                     }
 
-                                    Dispatcher.Invoke(() =>
+                                    // UI update only every 100ms or on finish
+                                    if ((DateTime.Now - lastUiUpdate).TotalMilliseconds > uiUpdateIntervalMs || receivedBytes == totalBytes)
                                     {
-                                        DownloadProgressBar.Value = progressPercentage;
-                                        ProgressPercentageText.Text = $"{progressPercentage}%";
-                                        ProgressDetailsText.Text = detailsText;
-                                        DownloadStatusText.Text = $"Letöltés... {speedText}";
-                                    });
+                                        Dispatcher.Invoke(() =>
+                                        {
+                                            DownloadProgressBar.Value = progressPercentage;
+                                            ProgressPercentageText.Text = $"{progressPercentage}%";
+                                            ProgressDetailsText.Text = detailsText;
+                                            DownloadStatusText.Text = $"Letöltés... {speedText}";
+                                        });
+                                        lastUiUpdate = DateTime.Now;
+                                    }
                                 }
                             }
                         }
@@ -360,14 +367,21 @@ namespace BitFightersLauncher
                 double currentOffset = NewsScrollViewer.VerticalOffset;
                 double difference = _targetVerticalOffset - currentOffset;
 
-                if (Math.Abs(difference) < 1.0)
+                // Csak akkor animáljunk, ha a különbség jelentős
+                if (Math.Abs(difference) < 0.5)
                 {
                     NewsScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
                     _isScrolling = false;
                     return;
                 }
 
-                NewsScrollViewer.ScrollToVerticalOffset(currentOffset + difference * 0.2);
+                // Lassabb animáció gyengébb gépeken
+                double step = Math.Max(Math.Abs(difference) * 0.15, 1.0);
+                double newOffset = currentOffset + Math.Sign(difference) * step;
+                if ((difference > 0 && newOffset > _targetVerticalOffset) || (difference < 0 && newOffset < _targetVerticalOffset))
+                    newOffset = _targetVerticalOffset;
+
+                NewsScrollViewer.ScrollToVerticalOffset(newOffset);
             }
         }
 
