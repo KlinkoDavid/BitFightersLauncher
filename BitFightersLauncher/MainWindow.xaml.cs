@@ -12,7 +12,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Linq;
 using System.Windows.Media.Effects;
 
 namespace BitFightersLauncher
@@ -28,6 +27,7 @@ namespace BitFightersLauncher
 
         private double _targetVerticalOffset;
         private bool _isScrolling;
+        private bool _renderingHooked;
         private readonly bool _reducedMotion;
 
         public MainWindow()
@@ -46,24 +46,33 @@ namespace BitFightersLauncher
                 CheckGameInstallStatus();
                 await LoadNewsUpdatesAsync();
 
-                if (!_reducedMotion)
-                {
-                    CompositionTarget.Rendering += CompositionTarget_Rendering;
-                }
-
                 ApplyPerformanceModeIfNeeded();
             };
+        }
+
+        private void HookRendering()
+        {
+            if (_renderingHooked || _reducedMotion) return;
+            CompositionTarget.Rendering += CompositionTarget_Rendering;
+            _renderingHooked = true;
+        }
+
+        private void UnhookRendering()
+        {
+            if (!_renderingHooked) return;
+            CompositionTarget.Rendering -= CompositionTarget_Rendering;
+            _renderingHooked = false;
         }
 
         private void ApplyPerformanceModeIfNeeded()
         {
             if (!_reducedMotion) return;
 
-            // Hide animated background if present
-            if (AnimatedBackground != null)
-            {
-                AnimatedBackground.Visibility = Visibility.Collapsed;
-            }
+            // Animated background has been removed from XAML; nothing to hide here.
+
+            // Hide scroll indicators (and their animations)
+            if (TopScrollIndicator != null) TopScrollIndicator.Visibility = Visibility.Collapsed;
+            if (BottomScrollIndicator != null) BottomScrollIndicator.Visibility = Visibility.Collapsed;
 
             // Remove DropShadowEffects to reduce CPU usage
             RemoveDropShadows(this);
@@ -406,6 +415,7 @@ namespace BitFightersLauncher
             }
 
             _isScrolling = true;
+            HookRendering();
 
             e.Handled = true;
         }
@@ -422,6 +432,7 @@ namespace BitFightersLauncher
                 {
                     NewsScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
                     _isScrolling = false;
+                    UnhookRendering();
                     return;
                 }
 
@@ -433,16 +444,16 @@ namespace BitFightersLauncher
 
                 NewsScrollViewer.ScrollToVerticalOffset(newOffset);
             }
+            else
+            {
+                // safety: unhook if no scrolling
+                UnhookRendering();
+            }
         }
 
-        // --- ÚJ ESEMÉNYKEZELŐ A GÖRGETÉSJELZŐKHÖZ ---
         private void NewsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            // Felső jelző láthatósága
             TopScrollIndicator.Opacity = (e.VerticalOffset > 0) ? 1 : 0;
-
-            // Alsó jelző láthatósága
-            // Akkor látható, ha a jelenlegi pozíció kisebb, mint a maximális görgethető magasság
             BottomScrollIndicator.Opacity = (e.VerticalOffset < NewsScrollViewer.ScrollableHeight - 1) ? 1 : 0;
         }
     }
