@@ -12,11 +12,13 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Linq;
 
 namespace BitFightersLauncher
 {
     public partial class MainWindow : Window
     {
+        public System.Collections.Generic.IEnumerable<int> Numbers { get; } = Enumerable.Range(0, 50);
         private const string GameDownloadUrl = "https://bitfighters.eu/BitFighters/BitFighters.zip";
         private const string GameExecutableName = "BitFighters.exe";
         private string gameInstallPath = string.Empty;
