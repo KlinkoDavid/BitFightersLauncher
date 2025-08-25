@@ -1,6 +1,5 @@
 ﻿using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -14,38 +13,11 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
-using System.Windows.Media.Imaging;
 
 namespace BitFightersLauncher
 {
     public partial class MainWindow : Window
     {
-        // === ÚJ ANIMÁCIÓS LOGIKA: LEBEGŐ RÉSZECSKÉK (GYORS VERZIÓ) ===
-
-        private class Particle
-        {
-            // Jelenlegi pozíció
-            public double X, Y;
-            // Célpont, ami felé úszik
-            public double TargetX, TargetY;
-            // Áttetszőség a pulzáláshoz
-            public double Opacity;
-            public double OpacityDirection;
-            // Méret és szín
-            public int Size;
-            public byte R, G, B;
-        }
-
-        private WriteableBitmap _writeableBitmap;
-        private List<Particle> _particles;
-        private readonly Random _random = new Random();
-        private byte[] _pixelBuffer;
-        private int _width, _height, _stride;
-
-        // =======================================================
-
-
-        public System.Collections.Generic.IEnumerable<int> Numbers { get; } = Enumerable.Range(0, 50);
         private const string GameDownloadUrl = "https://bitfighters.eu/BitFighters/BitFighters.zip";
         private const string GameExecutableName = "BitFighters.exe";
         private string gameInstallPath = string.Empty;
@@ -66,7 +38,6 @@ namespace BitFightersLauncher
 
             _reducedMotion = (RenderCapability.Tier >> 16) < 2;
 
-            // A lekerekített sarkok vágásának frissítése méretváltozáskor
             Loaded += (s, e) => UpdateBorderClip();
             SizeChanged += (s, e) => UpdateBorderClip();
 
@@ -76,7 +47,6 @@ namespace BitFightersLauncher
                 CheckGameInstallStatus();
                 await LoadNewsUpdatesAsync();
 
-                InitializeAnimation();
                 ApplyPerformanceModeIfNeeded();
             };
         }
@@ -87,118 +57,6 @@ namespace BitFightersLauncher
             double radius = RootBorder.CornerRadius.TopLeft;
             RootBorder.Clip = new RectangleGeometry(new Rect(0, 0, RootBorder.ActualWidth, RootBorder.ActualHeight), radius, radius);
         }
-
-        private void InitializeAnimation()
-        {
-            _width = (int)this.ActualWidth;
-            _height = (int)this.ActualHeight;
-
-            if (_width == 0 || _height == 0) return;
-
-            _writeableBitmap = new WriteableBitmap(_width, _height, 96, 96, PixelFormats.Pbgra32, null);
-            AnimatedBackgroundImage.Source = _writeableBitmap;
-
-            _stride = _writeableBitmap.BackBufferStride;
-            _pixelBuffer = new byte[_height * _stride];
-
-            _particles = new List<Particle>();
-            int particleCount = _reducedMotion ? 40 : 80; // Kevesebb, de látványosabb részecske
-
-            for (int i = 0; i < particleCount; i++)
-            {
-                _particles.Add(new Particle
-                {
-                    X = _random.Next(0, _width),
-                    Y = _random.Next(0, _height),
-                    TargetX = _random.Next(0, _width),
-                    TargetY = _random.Next(0, _height),
-                    Opacity = _random.NextDouble() * 0.8 + 0.2,
-                    OpacityDirection = (_random.Next(0, 2) == 0) ? 1 : -1,
-                    Size = _random.Next(1, 4),
-                    R = 255,
-                    G = 167,
-                    B = 38
-                });
-            }
-
-            CompositionTarget.Rendering += UpdateAndRenderAnimation;
-        }
-
-        private void UpdateAndRenderAnimation(object sender, EventArgs e)
-        {
-            if (_writeableBitmap == null) return;
-
-            _writeableBitmap.Lock();
-
-            // Töröljük a képet minden képkockán (nincs csóva)
-            Array.Clear(_pixelBuffer, 0, _pixelBuffer.Length);
-
-            foreach (var p in _particles)
-            {
-                // Mozgás a célpont felé (lassított, "easing" mozgás)
-                p.X += (p.TargetX - p.X) * 0.01;
-                p.Y += (p.TargetY - p.Y) * 0.01;
-
-                double distSq = (p.TargetX - p.X) * (p.TargetX - p.X) + (p.TargetY - p.Y) * (p.TargetY - p.Y);
-                // Ha közel ért a célponthoz, újat kap
-                if (distSq < 100)
-                {
-                    p.TargetX = _random.Next(0, _width);
-                    p.TargetY = _random.Next(0, _height);
-                }
-
-                // Áttetszőség pulzálása
-                p.Opacity += p.OpacityDirection * 0.005;
-                if (p.Opacity > 1.0) { p.Opacity = 1.0; p.OpacityDirection = -1; }
-                if (p.Opacity < 0.2) { p.Opacity = 0.2; p.OpacityDirection = 1; }
-
-                // Részecske kirajzolása (puha szélű négyzetként)
-                DrawSoftParticle((int)p.X, (int)p.Y, p.Size, p.R, p.G, p.B, (byte)(p.Opacity * 255));
-            }
-
-            _writeableBitmap.WritePixels(new Int32Rect(0, 0, _width, _height), _pixelBuffer, _stride, 0);
-
-            _writeableBitmap.Unlock();
-        }
-
-        /// <summary>
-        /// Egy "puha" részecskét rajzol a bufferbe. A közepe a legvilágosabb, a szélei felé halványul.
-        /// </summary>
-        private void DrawSoftParticle(int cx, int cy, int size, byte r, byte g, byte b, byte a)
-        {
-            if (a == 0) return;
-            double maxSizeSq = size * size;
-
-            for (int x = -size; x <= size; x++)
-            {
-                for (int y = -size; y <= size; y++)
-                {
-                    int currentX = cx + x;
-                    int currentY = cy + y;
-
-                    if (currentX >= 0 && currentX < _width && currentY >= 0 && currentY < _height)
-                    {
-                        double distSq = x * x + y * y;
-                        if (distSq < maxSizeSq)
-                        {
-                            // A "puhaságot" a távolsággal arányos halványítás adja
-                            double falloff = 1.0 - (distSq / maxSizeSq);
-                            byte finalAlpha = (byte)(a * falloff);
-
-                            int index = currentY * _stride + currentX * 4;
-                            if (_pixelBuffer[index + 3] < finalAlpha) // Csak akkor rajzolunk, ha világosabb lesz
-                            {
-                                _pixelBuffer[index] = b;
-                                _pixelBuffer[index + 1] = g;
-                                _pixelBuffer[index + 2] = r;
-                                _pixelBuffer[index + 3] = finalAlpha;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
 
         private void HookRendering()
         {
@@ -301,7 +159,7 @@ namespace BitFightersLauncher
             if (!string.IsNullOrEmpty(executablePath))
             {
                 gameInstallPath = Path.GetDirectoryName(executablePath)!;
-                ButtonText.Text = "PLAY";
+                ButtonText.Text = "JÁTÉK";
             }
             else
             {
@@ -315,7 +173,7 @@ namespace BitFightersLauncher
             {
                 await DownloadAndInstallGameAsync();
             }
-            else if (ButtonText.Text == "PLAY")
+            else if (ButtonText.Text == "JÁTÉK")
             {
                 await StartGame();
             }
