@@ -28,21 +28,10 @@ namespace BitFightersLauncher
         public string created_at { get; set; } = string.Empty;
     }
 
-    public class SavedLoginData
-    {
-        public string Username { get; set; } = string.Empty;
-        public string PasswordHash { get; set; } = string.Empty;
-        public bool RememberMe { get; set; } = false;
-    }
-
     public partial class LoginWindow : Window
     {
         // MySQL Proxy API
         private const string ApiUrl = "https://bitfighters.eu/api/mysql_proxy.php";
-        
-        // Biztonságos mentési útvonal
-        private readonly string savedLoginPath;
-        private const string EncryptionKey = "BitFighters_Secure_2024_Key_v1";
         
         public bool LoginSuccessful { get; private set; } = false;
         public string LoggedInUsername { get; private set; } = string.Empty;
@@ -54,12 +43,6 @@ namespace BitFightersLauncher
         public LoginWindow()
         {
             InitializeComponent();
-            
-            // Biztonságos elérési út
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            string launcherDataPath = Path.Combine(appDataPath, "BitFightersLauncher");
-            Directory.CreateDirectory(launcherDataPath);
-            savedLoginPath = Path.Combine(launcherDataPath, "login.dat");
             
             // Mentett adatok betöltése
             LoadSavedLogin();
@@ -85,55 +68,19 @@ namespace BitFightersLauncher
 
         private void LoadSavedLogin()
         {
-            try
+            var saved = AuthStorage.Load();
+            if (saved != null && saved.RememberMe && !string.IsNullOrEmpty(saved.Username))
             {
-                if (File.Exists(savedLoginPath))
-                {
-                    string encryptedData = File.ReadAllText(savedLoginPath);
-                    string decryptedJson = DecryptString(encryptedData);
-                    var savedData = JsonSerializer.Deserialize<SavedLoginData>(decryptedJson);
-                    
-                    if (savedData != null && savedData.RememberMe)
-                    {
-                        UsernameTextBox.Text = savedData.Username;
-                        // Jelszót nem töltjük be biztonsági okokból, csak a username-t
-                        RememberMeCheckBox.IsChecked = true;
-                        
-                        // Focus a jelszó mezőre, ha van mentett username
-                        if (!string.IsNullOrEmpty(savedData.Username))
-                        {
-                            PasswordBox.Focus();
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Mentett adatok betöltési hiba: {ex.Message}");
-                // Ha hiba van, töröljük a sérült fájlt
-                try { File.Delete(savedLoginPath); } catch { }
+                // Auto-login UX: előtöltünk és opcionálisan automatikus belépést végzünk
+                UsernameTextBox.Text = saved.Username;
+                RememberMeCheckBox.IsChecked = true;
+                PasswordBox.Focus();
             }
         }
 
         private void SaveLogin(string username, string password, bool remember)
         {
-            try
-            {
-                var saveData = new SavedLoginData
-                {
-                    Username = remember ? username : string.Empty,
-                    PasswordHash = remember ? HashForStorage(password) : string.Empty,
-                    RememberMe = remember
-                };
-
-                string jsonData = JsonSerializer.Serialize(saveData);
-                string encryptedData = EncryptString(jsonData);
-                File.WriteAllText(savedLoginPath, encryptedData);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Mentési hiba: {ex.Message}");
-            }
+            AuthStorage.Save(username, password, remember, UserId, UserCreatedAt);
         }
 
         private void FocusPassword()
@@ -277,68 +224,6 @@ namespace BitFightersLauncher
             {
                 System.Diagnostics.Debug.WriteLine($"MySQL Proxy login error: {ex.Message}");
                 return false;
-            }
-        }
-
-        // Biztonságos titkosítás
-        private string EncryptString(string plainText)
-        {
-            byte[] iv = new byte[16];
-            byte[] array;
-
-            using (Aes aes = Aes.Create())
-            {
-                aes.Key = Encoding.UTF8.GetBytes(EncryptionKey.PadRight(32).Substring(0, 32));
-                aes.IV = iv;
-
-                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
-
-                using (MemoryStream memoryStream = new MemoryStream())
-                {
-                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
-                    {
-                        using (StreamWriter streamWriter = new StreamWriter(cryptoStream))
-                        {
-                            streamWriter.Write(plainText);
-                        }
-                        array = memoryStream.ToArray();
-                    }
-                }
-            }
-
-            return Convert.ToBase64String(array);
-        }
-
-        private string DecryptString(string cipherText)
-        {
-            byte[] iv = new byte[16];
-            byte[] buffer = Convert.FromBase64String(cipherText);
-
-            using (Aes aes = Aes.Create())
-            {
-                aes.Key = Encoding.UTF8.GetBytes(EncryptionKey.PadRight(32).Substring(0, 32));
-                aes.IV = iv;
-                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-
-                using (MemoryStream memoryStream = new MemoryStream(buffer))
-                {
-                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
-                    {
-                        using (StreamReader streamReader = new StreamReader(cryptoStream))
-                        {
-                            return streamReader.ReadToEnd();
-                        }
-                    }
-                }
-            }
-        }
-
-        private string HashForStorage(string input)
-        {
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(input + "BitFighters_Salt_2024"));
-                return Convert.ToBase64String(bytes);
             }
         }
 
