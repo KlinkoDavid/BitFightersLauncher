@@ -1,0 +1,401 @@
+﻿using System;
+using System.IO;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
+
+namespace BitFightersLauncher
+{
+    public class LoginApiResponse
+    {
+        public bool success { get; set; }
+        public string message { get; set; } = string.Empty;
+        public UserData? user { get; set; }
+    }
+
+    public class UserData
+    {
+        public int id { get; set; }
+        public string username { get; set; } = string.Empty;
+        public int highest_score { get; set; }
+        public string created_at { get; set; } = string.Empty;
+    }
+
+    public class SavedLoginData
+    {
+        public string Username { get; set; } = string.Empty;
+        public string PasswordHash { get; set; } = string.Empty;
+        public bool RememberMe { get; set; } = false;
+    }
+
+    public partial class LoginWindow : Window
+    {
+        // MySQL Proxy API
+        private const string ApiUrl = "https://bitfighters.eu/api/mysql_proxy.php";
+        
+        // Biztonságos mentési útvonal
+        private readonly string savedLoginPath;
+        private const string EncryptionKey = "BitFighters_Secure_2024_Key_v1";
+        
+        public bool LoginSuccessful { get; private set; } = false;
+        public string LoggedInUsername { get; private set; } = string.Empty;
+        public int UserId { get; private set; } = 0;
+        public string UserCreatedAt { get; private set; } = string.Empty;
+
+        private bool isPasswordVisible = false;
+
+        public LoginWindow()
+        {
+            InitializeComponent();
+            
+            // Biztonságos elérési út
+            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string launcherDataPath = Path.Combine(appDataPath, "BitFightersLauncher");
+            Directory.CreateDirectory(launcherDataPath);
+            savedLoginPath = Path.Combine(launcherDataPath, "login.dat");
+            
+            // Mentett adatok betöltése
+            LoadSavedLogin();
+            
+            // Enter billentyűk
+            UsernameTextBox.KeyDown += (s, e) => { if (e.Key == Key.Enter) FocusPassword(); };
+            PasswordBox.KeyDown += (s, e) => { if (e.Key == Key.Enter) LoginButton_Click(null, null); };
+            PasswordTextBox.KeyDown += (s, e) => { if (e.Key == Key.Enter) LoginButton_Click(null, null); };
+            
+            // Jelszó szinkronizálás
+            PasswordBox.PasswordChanged += (s, e) =>
+            {
+                if (!isPasswordVisible)
+                    PasswordTextBox.Text = PasswordBox.Password;
+            };
+            
+            PasswordTextBox.TextChanged += (s, e) =>
+            {
+                if (isPasswordVisible)
+                    PasswordBox.Password = PasswordTextBox.Text;
+            };
+        }
+
+        private void LoadSavedLogin()
+        {
+            try
+            {
+                if (File.Exists(savedLoginPath))
+                {
+                    string encryptedData = File.ReadAllText(savedLoginPath);
+                    string decryptedJson = DecryptString(encryptedData);
+                    var savedData = JsonSerializer.Deserialize<SavedLoginData>(decryptedJson);
+                    
+                    if (savedData != null && savedData.RememberMe)
+                    {
+                        UsernameTextBox.Text = savedData.Username;
+                        // Jelszót nem töltjük be biztonsági okokból, csak a username-t
+                        RememberMeCheckBox.IsChecked = true;
+                        
+                        // Focus a jelszó mezőre, ha van mentett username
+                        if (!string.IsNullOrEmpty(savedData.Username))
+                        {
+                            PasswordBox.Focus();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Mentett adatok betöltési hiba: {ex.Message}");
+                // Ha hiba van, töröljük a sérült fájlt
+                try { File.Delete(savedLoginPath); } catch { }
+            }
+        }
+
+        private void SaveLogin(string username, string password, bool remember)
+        {
+            try
+            {
+                var saveData = new SavedLoginData
+                {
+                    Username = remember ? username : string.Empty,
+                    PasswordHash = remember ? HashForStorage(password) : string.Empty,
+                    RememberMe = remember
+                };
+
+                string jsonData = JsonSerializer.Serialize(saveData);
+                string encryptedData = EncryptString(jsonData);
+                File.WriteAllText(savedLoginPath, encryptedData);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Mentési hiba: {ex.Message}");
+            }
+        }
+
+        private void FocusPassword()
+        {
+            if (isPasswordVisible)
+                PasswordTextBox.Focus();
+            else
+                PasswordBox.Focus();
+        }
+
+        private void TogglePasswordButton_Click(object sender, RoutedEventArgs e)
+        {
+            isPasswordVisible = !isPasswordVisible;
+            
+            var button = sender as Button;
+            var iconText = FindChild<TextBlock>(button, "IconText");
+            
+            if (isPasswordVisible)
+            {
+                PasswordTextBox.Text = PasswordBox.Password;
+                PasswordTextBox.Visibility = Visibility.Visible;
+                PasswordBox.Visibility = Visibility.Collapsed;
+                
+                if (iconText != null)
+                    iconText.Text = "🙈";
+                
+                PasswordTextBox.Focus();
+                PasswordTextBox.CaretIndex = PasswordTextBox.Text.Length;
+            }
+            else
+            {
+                PasswordBox.Password = PasswordTextBox.Text;
+                PasswordBox.Visibility = Visibility.Visible;
+                PasswordTextBox.Visibility = Visibility.Collapsed;
+                
+                if (iconText != null)
+                    iconText.Text = "👁";
+                
+                PasswordBox.Focus();
+            }
+        }
+
+        private string GetCurrentPassword()
+        {
+            return isPasswordVisible ? PasswordTextBox.Text : PasswordBox.Password;
+        }
+
+        private void DragWindow(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left) this.DragMove();
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            string username = UsernameTextBox.Text.Trim();
+            string password = GetCurrentPassword();
+            bool rememberMe = RememberMeCheckBox.IsChecked ?? false;
+
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                ShowError("Kerem toltsd ki az osszes mezot!");
+                return;
+            }
+
+            LoginButton.IsEnabled = false;
+            LoginButtonText.Text = "BEJELENTKEZES...";
+
+            try
+            {
+                bool success = await LoginWithProxyAsync(username, password);
+                
+                if (success)
+                {
+                    // Mentés csak sikeres bejelentkezés után
+                    SaveLogin(username, password, rememberMe);
+                    
+                    LoginSuccessful = true;
+                    this.DialogResult = true;
+                    this.Close();
+                }
+                else
+                {
+                    ShowError("Hibás felhasználónév vagy jelszó!");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError($"Bejelentkezési hiba: {ex.Message}");
+            }
+            finally
+            {
+                LoginButton.IsEnabled = true;
+                LoginButtonText.Text = "BEJELENTKEZÉS";
+            }
+        }
+
+        private async Task<bool> LoginWithProxyAsync(string username, string password)
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.Timeout = TimeSpan.FromSeconds(10);
+                    
+                    var loginData = new 
+                    { 
+                        action = "login",
+                        username = username, 
+                        password = password 
+                    };
+                    
+                    string jsonContent = JsonSerializer.Serialize(loginData);
+                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                    
+                    var response = await httpClient.PostAsync(ApiUrl, content);
+                    string responseText = await response.Content.ReadAsStringAsync();
+                    
+                    System.Diagnostics.Debug.WriteLine($"MySQL Proxy Response: {responseText}");
+                    
+                    var apiResponse = JsonSerializer.Deserialize<LoginApiResponse>(responseText);
+                    
+                    if (apiResponse?.success == true && apiResponse.user != null)
+                    {
+                        UserId = apiResponse.user.id;
+                        LoggedInUsername = apiResponse.user.username;
+                        UserCreatedAt = apiResponse.user.created_at;
+                        
+                        System.Diagnostics.Debug.WriteLine($"MySQL Proxy bejelentkezes sikeres: {LoggedInUsername} (ID: {UserId}, Created: {UserCreatedAt})");
+                        return true;
+                    }
+                    
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MySQL Proxy login error: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Biztonságos titkosítás
+        private string EncryptString(string plainText)
+        {
+            byte[] iv = new byte[16];
+            byte[] array;
+
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = Encoding.UTF8.GetBytes(EncryptionKey.PadRight(32).Substring(0, 32));
+                aes.IV = iv;
+
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter streamWriter = new StreamWriter(cryptoStream))
+                        {
+                            streamWriter.Write(plainText);
+                        }
+                        array = memoryStream.ToArray();
+                    }
+                }
+            }
+
+            return Convert.ToBase64String(array);
+        }
+
+        private string DecryptString(string cipherText)
+        {
+            byte[] iv = new byte[16];
+            byte[] buffer = Convert.FromBase64String(cipherText);
+
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = Encoding.UTF8.GetBytes(EncryptionKey.PadRight(32).Substring(0, 32));
+                aes.IV = iv;
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+
+                using (MemoryStream memoryStream = new MemoryStream(buffer))
+                {
+                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader streamReader = new StreamReader(cryptoStream))
+                        {
+                            return streamReader.ReadToEnd();
+                        }
+                    }
+                }
+            }
+        }
+
+        private string HashForStorage(string input)
+        {
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(input + "BitFighters_Salt_2024"));
+                return Convert.ToBase64String(bytes);
+            }
+        }
+
+        private void ShowError(string message)
+        {
+            ErrorText.Text = message;
+            var showStoryboard = (Storyboard)this.FindResource("ShowError");
+            showStoryboard.Begin(ErrorBorder);
+            
+            Task.Delay(4000).ContinueWith(_ =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    var hideStoryboard = (Storyboard)this.FindResource("HideError");
+                    hideStoryboard.Begin(ErrorBorder);
+                });
+            });
+        }
+
+        // Helper method to find child controls in templates
+        private T? FindChild<T>(DependencyObject parent, string childName) where T : DependencyObject
+        {
+            if (parent == null) return null;
+
+            T? foundChild = null;
+
+            int childrenCount = VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                T? childType = child as T;
+                if (childType == null)
+                {
+                    foundChild = FindChild<T>(child, childName);
+                    if (foundChild != null) break;
+                }
+                else if (!string.IsNullOrEmpty(childName))
+                {
+                    var frameworkElement = child as FrameworkElement;
+                    if (frameworkElement != null && frameworkElement.Name == childName)
+                    {
+                        foundChild = (T)child;
+                        break;
+                    }
+                    else
+                    {
+                        foundChild = FindChild<T>(child, childName);
+                        if (foundChild != null) break;
+                    }
+                }
+                else
+                {
+                    foundChild = (T)child;
+                    break;
+                }
+            }
+            return foundChild;
+        }
+    }
+}

@@ -15,6 +15,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
     <PackageReference Include="MySql.Data" Version="9.4.0" />
+    <PackageReference Include="System.Text.Json" Version="9.0.8" />
     <PackageReference Include="WindowsAPICodePack" Version="8.0.9" />
   </ItemGroup>
 
