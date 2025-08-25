@@ -28,6 +28,13 @@
                            From="0.5" To="1.0" Duration="0:0:1.8" 
                            AutoReverse="True"/>
         </Storyboard>
+        
+        <!-- Verzió gomb pulzálás új verzió esetén -->
+        <Storyboard x:Key="UpdateAvailablePulse" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
+                           From="0.7" To="1.0" Duration="0:0:1.0" 
+                           AutoReverse="True"/>
+        </Storyboard>
     </Window.Resources>
 
     <Border x:Name="RootBorder" CornerRadius="18" BorderBrush="#33CCCCCC" BorderThickness="1.5" ClipToBounds="True">
@@ -62,6 +69,47 @@
                             </TextBlock.Effect>
                         </TextBlock>
                     </DockPanel>
+                    
+                    <!-- Stílusos verzió megjelenítő -->
+                    <Border x:Name="VersionDisplay" Background="#22FFFFFF" CornerRadius="12" 
+                            HorizontalAlignment="Left" VerticalAlignment="Center" 
+                            Margin="25,0,0,0" Padding="12,6">
+                        <Border.Effect>
+                            <DropShadowEffect Color="Black" BlurRadius="8" ShadowDepth="2" Opacity="0.3"/>
+                        </Border.Effect>
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Fehér gaming ikon MDL2 Assets-ből -->
+                            <TextBlock x:Name="VersionIcon" Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" 
+                                     FontSize="16" Foreground="White" 
+                                     VerticalAlignment="Center" Margin="0,0,8,0">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect Color="White" BlurRadius="4" ShadowDepth="0" Opacity="0.6"/>
+                                </TextBlock.Effect>
+                            </TextBlock>
+                            <StackPanel>
+                                <TextBlock x:Name="VersionCurrentText" Text="v1.0.0" 
+                                         FontSize="12" FontWeight="Bold" 
+                                         Foreground="#FFFFA726" Margin="0,-2,0,0">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="4" ShadowDepth="0" Opacity="0.8"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                                <TextBlock x:Name="VersionStatusText" Text="aktuális" 
+                                         FontSize="9" Foreground="#CCCCCC" 
+                                         Margin="0,-3,0,0" Opacity="0.8"/>
+                            </StackPanel>
+                            <!-- Frissítés elérhető indikátor -->
+                            <Border x:Name="UpdateIndicator" Width="8" Height="8" 
+                                  Background="#FF4CAF50" CornerRadius="4" 
+                                  Margin="8,0,0,0" VerticalAlignment="Center"
+                                  Visibility="Collapsed">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#FF4CAF50" BlurRadius="6" ShadowDepth="0" Opacity="1"/>
+                                </Border.Effect>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                    
                     <Button Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0" Grid.Column="2" Click="ExitButton_Click" Height="28" Width="28">
                         <Button.Style>
                             <Style TargetType="Button">
@@ -148,7 +196,7 @@
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
-                        <TextBlock x:Name="StatusTextBlock" Text="" Foreground="#FFCCCCCC" FontSize="14" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" />
+                        
                         <Button x:Name="ActionButton" Cursor="Hand" Click="HandleActionButton_Click" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5" Width="310" Height="310" Margin="324,0,0,0">
                             <Button.RenderTransform>
                                 <TransformGroup>

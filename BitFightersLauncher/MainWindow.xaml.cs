@@ -19,8 +19,10 @@ namespace BitFightersLauncher
     public partial class MainWindow : Window
     {
         private const string GameDownloadUrl = "https://bitfighters.eu/BitFighters/BitFighters.zip";
+        private const string VersionCheckUrl = "https://bitfighters.eu/BitFighters/version.txt";
         private const string GameExecutableName = "BitFighters.exe";
         private string gameInstallPath = string.Empty;
+        private string serverGameVersion = "0.0.0";
 
         private readonly string settingsFilePath;
 
@@ -34,7 +36,8 @@ namespace BitFightersLauncher
             InitializeComponent();
 
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            settingsFilePath = Path.Combine(appDataPath, "BitFightersLauncher", "settings.txt");
+            string launcherDataPath = Path.Combine(appDataPath, "BitFightersLauncher");
+            settingsFilePath = Path.Combine(launcherDataPath, "settings.txt");
 
             _reducedMotion = (RenderCapability.Tier >> 16) < 2;
 
@@ -44,9 +47,9 @@ namespace BitFightersLauncher
             Loaded += async (s, e) =>
             {
                 LoadInstallPath();
+                await LoadServerVersionAsync();
                 CheckGameInstallStatus();
                 await LoadNewsUpdatesAsync();
-
                 ApplyPerformanceModeIfNeeded();
             };
         }
@@ -126,6 +129,53 @@ namespace BitFightersLauncher
             }
         }
 
+        private async Task LoadServerVersionAsync()
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.Timeout = TimeSpan.FromSeconds(10);
+                    string url = $"{VersionCheckUrl}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+                    string versionString = await httpClient.GetStringAsync(url);
+                    serverGameVersion = versionString.Trim();
+                    Debug.WriteLine($"Szerver verzió betöltve: {serverGameVersion}");
+                    UpdateVersionDisplay();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Hiba a szerver verzió betöltésekor: {ex.Message}");
+                serverGameVersion = "Ismeretlen";
+                UpdateVersionDisplay();
+            }
+        }
+
+        private void UpdateVersionDisplay()
+        {
+            if (VersionCurrentText != null && VersionStatusText != null && UpdateIndicator != null)
+            {
+                VersionCurrentText.Text = $"v{serverGameVersion}";
+
+                string? executablePath = FindExecutable(gameInstallPath);
+                bool gameInstalled = !string.IsNullOrEmpty(executablePath);
+
+                if (gameInstalled)
+                {
+                    VersionStatusText.Text = "Telepítve";
+                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80)); // Zöld
+                    UpdateIndicator.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    VersionStatusText.Text = "Nincs telepítve";
+                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)); // Szürke
+                    UpdateIndicator.Visibility = Visibility.Visible;
+                    UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0)); // Narancssárga
+                }
+            }
+        }
+
         private void SaveInstallPath()
         {
             try
@@ -155,6 +205,7 @@ namespace BitFightersLauncher
             {
                 gameInstallPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "BitFighters");
             }
+
             string? executablePath = FindExecutable(gameInstallPath);
             if (!string.IsNullOrEmpty(executablePath))
             {
@@ -165,17 +216,20 @@ namespace BitFightersLauncher
             {
                 ButtonText.Text = "LETÖLTÉS";
             }
+
+            UpdateVersionDisplay();
         }
 
         private async void HandleActionButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ButtonText.Text == "LETÖLTÉS")
+            switch (ButtonText.Text)
             {
-                await DownloadAndInstallGameAsync();
-            }
-            else if (ButtonText.Text == "JÁTÉK")
-            {
-                await StartGame();
+                case "LETÖLTÉS":
+                    await DownloadAndInstallGameAsync();
+                    break;
+                case "JÁTÉK":
+                    await StartGame();
+                    break;
             }
         }
 
@@ -193,6 +247,7 @@ namespace BitFightersLauncher
                 ProgressPercentageText.Text = "0%";
                 ProgressDetailsText.Text = "";
                 string tempDownloadPath = Path.Combine(Path.GetTempPath(), "game.zip");
+
                 try
                 {
                     using (var httpClient = new HttpClient())
@@ -200,6 +255,7 @@ namespace BitFightersLauncher
                         var response = await httpClient.GetAsync(GameDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
                         response.EnsureSuccessStatusCode();
                         var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+
                         using (var downloadStream = await response.Content.ReadAsStreamAsync())
                         using (var fileStream = new FileStream(tempDownloadPath, FileMode.Create, FileAccess.Write, FileShare.None))
                         {
@@ -210,15 +266,18 @@ namespace BitFightersLauncher
                             long lastReceivedBytes = 0;
                             DateTime lastUiUpdate = DateTime.Now;
                             const int uiUpdateIntervalMs = 100;
+
                             while ((bytesRead = await downloadStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                             {
                                 await fileStream.WriteAsync(buffer, 0, bytesRead);
                                 receivedBytes += bytesRead;
+
                                 if (totalBytes > 0)
                                 {
                                     int progressPercentage = (int)((double)receivedBytes / totalBytes * 100);
                                     string detailsText = $"{(double)receivedBytes / (1024 * 1024):F1} MB / {(double)totalBytes / (1024 * 1024):F1} MB";
                                     string speedText = "";
+
                                     if (stopwatch.ElapsedMilliseconds > 500)
                                     {
                                         double speed = (receivedBytes - lastReceivedBytes) / stopwatch.Elapsed.TotalSeconds;
@@ -226,6 +285,7 @@ namespace BitFightersLauncher
                                         lastReceivedBytes = receivedBytes;
                                         stopwatch.Restart();
                                     }
+
                                     if ((DateTime.Now - lastUiUpdate).TotalMilliseconds > uiUpdateIntervalMs || receivedBytes == totalBytes)
                                     {
                                         Dispatcher.Invoke(() =>
@@ -241,6 +301,7 @@ namespace BitFightersLauncher
                             }
                         }
                     }
+
                     Dispatcher.Invoke(() =>
                     {
                         DownloadStatusText.Text = "Telepítés...";
@@ -248,6 +309,7 @@ namespace BitFightersLauncher
                         ProgressDetailsText.Text = "Kicsomagolás...";
                         DownloadProgressBar.IsIndeterminate = true;
                     });
+
                     await InstallGameAsync(tempDownloadPath);
                 }
                 catch (Exception ex)
@@ -283,10 +345,11 @@ namespace BitFightersLauncher
                     if (File.Exists(downloadedFilePath)) File.Delete(downloadedFilePath);
                 }
             });
+
             if (!string.IsNullOrEmpty(FindExecutable(gameInstallPath)))
             {
-                ShowNotification("A játék telepítése sikeresen befejeződött!");
                 SaveInstallPath();
+                ShowNotification($"A játék sikeresen telepítve! Verzió: v{serverGameVersion}");
             }
             else
             {
@@ -294,7 +357,9 @@ namespace BitFightersLauncher
                 if (File.Exists(settingsFilePath)) File.Delete(settingsFilePath);
                 gameInstallPath = string.Empty;
             }
-            Dispatcher.Invoke(() => {
+
+            Dispatcher.Invoke(() =>
+            {
                 CheckGameInstallStatus();
             });
         }
