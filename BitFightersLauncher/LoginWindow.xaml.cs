@@ -282,5 +282,87 @@ namespace BitFightersLauncher
             }
             return foundChild;
         }
+
+        #region Floating Label Event Handlers
+
+        private void UsernameTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            var storyboard = (Storyboard)this.FindResource("FloatLabelUp");
+            storyboard.Begin();
+            UsernameBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFA726"));
+        }
+
+        private void UsernameTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(UsernameTextBox.Text))
+            {
+                var storyboard = (Storyboard)this.FindResource("FloatLabelDown");
+                storyboard.Begin();
+            }
+            UsernameBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#33FFFFFF"));
+        }
+
+        private void UsernameTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(UsernameTextBox.Text) && UsernameLabel != null)
+            {
+                var storyboard = (Storyboard)this.FindResource("FloatLabelUp");
+                storyboard.Begin();
+            }
+        }
+
+        private void PasswordBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            var storyboard = (Storyboard)this.FindResource("FloatPasswordLabelUp");
+            storyboard.Begin();
+            PasswordBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFA726"));
+        }
+
+        private void PasswordBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(PasswordBox.Password))
+            {
+                var storyboard = (Storyboard)this.FindResource("FloatPasswordLabelDown");
+                storyboard.Begin();
+            }
+            PasswordBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#33FFFFFF"));
+        }
+
+        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(PasswordBox.Password) && PasswordLabel != null)
+            {
+                var storyboard = (Storyboard)this.FindResource("FloatPasswordLabelUp");
+                storyboard.Begin();
+            }
+        }
+
+        private void PasswordTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            var storyboard = (Storyboard)this.FindResource("FloatPasswordLabelUp");
+            storyboard.Begin();
+            PasswordBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFFFA726"));
+        }
+
+        private void PasswordTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(PasswordTextBox.Text))
+            {
+                var storyboard = (Storyboard)this.FindResource("FloatPasswordLabelDown");
+                storyboard.Begin();
+            }
+            PasswordBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#33FFFFFF"));
+        }
+
+        private void PasswordTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(PasswordTextBox.Text) && PasswordLabel != null)
+            {
+                var storyboard = (Storyboard)this.FindResource("FloatPasswordLabelUp");
+                storyboard.Begin();
+            }
+        }
+
+        #endregion
     }
 }

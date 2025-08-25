@@ -1,34 +1,126 @@
 ﻿<Window x:Class="BitFightersLauncher.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="BitFighters Launcher" Height="450" Width="400"
+        Title="BitFighters Launcher" Height="650" Width="500"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Icon="/Resources/Logo.png"
         WindowStartupLocation="CenterScreen"
         x:Name="LoginWindowRoot">
 
     <Window.Resources>
+        <!-- Optimalizált Animation Storyboards - csökkentett időtartam és komplexitás -->
         <Storyboard x:Key="ShowError">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.3"/>
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
+            <ThicknessAnimation Storyboard.TargetProperty="Margin" 
+                               From="0,-5,0,15" To="0,0,0,15" Duration="0:0:0.2"/>
             <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" Duration="0">
                 <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}"/>
             </ObjectAnimationUsingKeyFrames>
         </Storyboard>
+        
         <Storyboard x:Key="HideError">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.3"/>
-            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" BeginTime="0:0:0.3" Duration="0">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
+            <ThicknessAnimation Storyboard.TargetProperty="Margin" 
+                               To="0,-5,0,15" Duration="0:0:0.2"/>
+            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" BeginTime="0:0:0.2" Duration="0">
                 <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Collapsed}"/>
             </ObjectAnimationUsingKeyFrames>
         </Storyboard>
+
+        <!-- VÉGLEGESEN TISZTÍTOTT Floating Label Animations -->
+        <Storyboard x:Key="FloatLabelUp" Storyboard.TargetName="UsernameLabel">
+            <DoubleAnimation Storyboard.TargetProperty="(Canvas.Top)" To="-15" Duration="0:0:0.2"/>
+            <DoubleAnimation Storyboard.TargetProperty="FontSize" To="12" Duration="0:0:0.2"/>
+            <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" 
+                           To="#FFFFA726" Duration="0:0:0.2"/>
+        </Storyboard>
+        
+        <Storyboard x:Key="FloatLabelDown" Storyboard.TargetName="UsernameLabel">
+            <DoubleAnimation Storyboard.TargetProperty="(Canvas.Top)" To="17" Duration="0:0:0.2"/>
+            <DoubleAnimation Storyboard.TargetProperty="FontSize" To="14" Duration="0:0:0.2"/>
+            <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" 
+                           To="#AACCCCCC" Duration="0:0:0.2"/>
+        </Storyboard>
+
+        <Storyboard x:Key="FloatPasswordLabelUp" Storyboard.TargetName="PasswordLabel">
+            <DoubleAnimation Storyboard.TargetProperty="(Canvas.Top)" To="-15" Duration="0:0:0.2"/>
+            <DoubleAnimation Storyboard.TargetProperty="FontSize" To="12" Duration="0:0:0.2"/>
+            <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" 
+                           To="#FFFFA726" Duration="0:0:0.2"/>
+        </Storyboard>
+        
+        <Storyboard x:Key="FloatPasswordLabelDown" Storyboard.TargetName="PasswordLabel">
+            <DoubleAnimation Storyboard.TargetProperty="(Canvas.Top)" To="17" Duration="0:0:0.2"/>
+            <DoubleAnimation Storyboard.TargetProperty="FontSize" To="14" Duration="0:0:0.2"/>
+            <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" 
+                           To="#AACCCCCC" Duration="0:0:0.2"/>
+        </Storyboard>
     </Window.Resources>
 
-    <Border x:Name="RootBorder" CornerRadius="15" BorderBrush="#33CCCCCC" BorderThickness="1.5" ClipToBounds="True">
+    <Border x:Name="RootBorder" CornerRadius="25" BorderBrush="#44CCCCCC" BorderThickness="2" ClipToBounds="True">
         <Border.Background>
-            <SolidColorBrush Color="#FF1A1C20"/>
+            <!-- Visszatért a gyönyörű radial gradient -->
+            <RadialGradientBrush Center="0.5,0.3">
+                <GradientStop Color="#FF0F1419" Offset="0"/>
+                <GradientStop Color="#FF1A1C20" Offset="0.6"/>
+                <GradientStop Color="#FF0A0C10" Offset="1"/>
+            </RadialGradientBrush>
         </Border.Background>
+        <!-- Visszatettem a szép shadow-t is -->
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="40" ShadowDepth="0" Opacity="0.8"/>
+        </Border.Effect>
 
+        <!-- Ambient Light Effect - még menőbb fényjáték! -->
         <Grid>
-            <Rectangle Fill="#88000000" RadiusX="{Binding ElementName=RootBorder, Path=CornerRadius.TopLeft}" RadiusY="{Binding ElementName=RootBorder, Path=CornerRadius.TopLeft}" />
+            <!-- Fő narancssárga ambient fény -->
+            <Ellipse Width="400" Height="200" VerticalAlignment="Top" Margin="0,-100,0,0" HorizontalAlignment="Center">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#33FFA726" Offset="0"/>
+                        <GradientStop Color="#00FFA726" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            
+            <!-- Extra ragyogó fényeffekt középen -->
+            <Ellipse Width="300" Height="150" VerticalAlignment="Top" Margin="0,-75,0,0" HorizontalAlignment="Center">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#22FFCC44" Offset="0"/>
+                        <GradientStop Color="#00FFCC44" Offset="0.8"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            
+            <!-- Alsó menő fényeffekt -->
+            <Ellipse Width="500" Height="100" VerticalAlignment="Bottom" Margin="0,0,0,-50" HorizontalAlignment="Center">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#11FF8F00" Offset="0"/>
+                        <GradientStop Color="#00FF8F00" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            
+            <!-- Oldalsó színes fények -->
+            <Ellipse Width="200" Height="300" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="-100,0,0,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#11CC7A00" Offset="0"/>
+                        <GradientStop Color="#00CC7A00" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+            
+            <Ellipse Width="200" Height="300" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,-100,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#11FFAA26" Offset="0"/>
+                        <GradientStop Color="#00FFAA26" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
 
             <Grid>
                 <Grid.RowDefinitions>
@@ -36,38 +128,65 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header -->
-                <Grid Height="50" VerticalAlignment="Top" MouseLeftButtonDown="DragWindow" Background="Transparent">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Image Source="/Resources/Logo.png" Width="30" Margin="0,0,10,0">
-                            <Image.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="20" ShadowDepth="0" Opacity="0.8"/>
-                            </Image.Effect>
-                        </Image>
-                        <TextBlock Text="BITFIGHTERS" FontSize="18" FontWeight="Bold" Foreground="#FFFFA726" VerticalAlignment="Center">
-                            <TextBlock.Effect>
-                                <DropShadowEffect ShadowDepth="0" Opacity="0.8" Color="#FFFFA726" BlurRadius="10"/>
-                            </TextBlock.Effect>
-                        </TextBlock>
+                <!-- Optimalizált Header - középre igazított logo és név -->
+                <Grid Height="80" VerticalAlignment="Top" MouseLeftButtonDown="DragWindow" Background="Transparent">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="50"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Középre igazított Logo és Title -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <!-- Visszatért a menő logo konténer több effekttel -->
+                        <Border Background="#22FFA726" CornerRadius="20" Padding="8" Margin="0,0,15,0">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#FFFFA726" BlurRadius="20" ShadowDepth="0" Opacity="0.6"/>
+                            </Border.Effect>
+                            <Image x:Name="LogoImage" Source="/Resources/Logo.png" Width="40" Height="40">
+                                <!-- Visszatett erősebb effekt -->
+                                <Image.Effect>
+                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
+                                </Image.Effect>
+                            </Image>
+                        </Border>
+                        
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="BITFIGHTERS" FontSize="24" FontWeight="Bold" Foreground="#FFFFA726" 
+                                     Margin="0,-2,0,0" VerticalAlignment="Center">
+                                <!-- Visszatett erősebb glow effekt -->
+                                <TextBlock.Effect>
+                                    <DropShadowEffect ShadowDepth="0" Opacity="1.0" Color="#FFFFA726" BlurRadius="15"/>
+                                </TextBlock.Effect>
+                            </TextBlock>
+                            <TextBlock Text="Game Launcher" FontSize="11" Foreground="#AAFFA726" 
+                                     FontWeight="SemiBold" Margin="0,-4,0,0"/>
+                        </StackPanel>
                     </StackPanel>
                     
-                    <Button Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="18" 
+                    <!-- Egyszerűsített Close Button -->
+                    <Button Grid.Column="2" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
                             HorizontalAlignment="Right" VerticalAlignment="Center" 
                             Margin="0,0,15,0" Click="CloseButton_Click" 
-                            Height="20" Width="20">
+                            Height="30" Width="30">
                         <Button.Style>
                             <Style TargetType="Button">
-                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Background" Value="#22FFFFFF"/>
                                 <Setter Property="BorderBrush" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="#FFFFA726"/>
+                                <Setter Property="Foreground" Value="#CCFFA726"/>
                                 <Setter Property="Cursor" Value="Hand"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
+                                                    CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Foreground" Value="Red"/>
+                                                    <Setter Property="Foreground" Value="#FFFF4444"/>
+                                                    <Setter TargetName="ButtonBorder" Property="Background" Value="#33FF4444"/>
+                                                    <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFFF4444"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -78,41 +197,77 @@
                     </Button>
                 </Grid>
 
-                <!-- Login Form -->
-                <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="280">
+                <!-- Optimalizált Login Form -->
+                <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="350" Margin="0,0,0,40">
                     
-                    <!-- Title -->
-                    <TextBlock Text="Bejelentkezés" FontSize="24" FontWeight="Bold" 
-                               Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,30">
-                        <TextBlock.Effect>
-                            <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
-                        </TextBlock.Effect>
-                    </TextBlock>
-
-                    <!-- Username -->
-                    <TextBlock Text="Felhasználónév:" Foreground="#CCCCCC" FontSize="14" Margin="0,0,0,5"/>
-                    <Border Background="#22FFFFFF" CornerRadius="8" BorderBrush="#44FFFFFF" BorderThickness="1" Margin="0,0,0,15">
-                        <TextBox x:Name="UsernameTextBox" Background="Transparent" Foreground="White" 
-                                 FontSize="14" Padding="12,10" BorderThickness="0"
-                                 CaretBrush="White"/>
+                    <!-- Egyszerűsített Welcome Section -->
+                    <Border Background="Transparent" CornerRadius="15" Padding="20,15" Margin="0,0,0,40">
+                        <!-- Visszatett erősebb effekt -->
+                        <Border.Effect>
+                            <DropShadowEffect Color="#FFFFA726" BlurRadius="15" ShadowDepth="0" Opacity="0.3"/>
+                        </Border.Effect>
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="Üdvözöljük!" FontSize="28" FontWeight="Bold" 
+                                       Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5">
+                                <!-- Visszatett erősebb glow effekt -->
+                                <TextBlock.Effect>
+                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="10" ShadowDepth="0" Opacity="0.8"/>
+                                </TextBlock.Effect>
+                            </TextBlock>
+                            <TextBlock Text="Jelentkezzen be a folytatáshoz" FontSize="14" 
+                                       Foreground="#CCCCCCCC" HorizontalAlignment="Center"/>
+                        </StackPanel>
                     </Border>
 
-                    <!-- Password -->
-                    <TextBlock Text="Jelszó:" Foreground="#CCCCCC" FontSize="14" Margin="0,0,0,5"/>
-                    <Grid Margin="0,0,0,20">
-                        <Border Background="#22FFFFFF" CornerRadius="8" BorderBrush="#44FFFFFF" BorderThickness="1">
+                    <!-- VÉGLEGESEN TISZTÍTOTT Username Field -->
+                    <Border Margin="0,0,0,25">
+                        <Grid>
+                            <Border x:Name="UsernameBorder" Background="#15000000" CornerRadius="12" 
+                                    BorderBrush="#33FFFFFF" BorderThickness="2" Height="50"/>
+                
+                            <Canvas Margin="15,8">
+                                <TextBlock x:Name="UsernameLabel" Text="Felhasználónév" 
+                                          Canvas.Top="17" Canvas.Left="-5"
+                                          Foreground="#AACCCCCC" FontSize="14" IsHitTestVisible="False"/>
+                            </Canvas>
+                
+                            <TextBox x:Name="UsernameTextBox" Background="Transparent" Foreground="White" 
+                                     FontSize="16" Padding="20,24" BorderThickness="0" Height="70"
+                                     CaretBrush="#FFFFA726" FontWeight="Medium"
+                                     GotFocus="UsernameTextBox_GotFocus" LostFocus="UsernameTextBox_LostFocus"
+                                     TextChanged="UsernameTextBox_TextChanged"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- VÉGLEGESEN TISZTÍTOTT Password Field -->
+                    <Border Margin="0,0,0,30">
+                        <Grid>
+                            <Border x:Name="PasswordBorder" Background="#15000000" CornerRadius="12" 
+                                    BorderBrush="#33FFFFFF" BorderThickness="2" Height="50"/>
+                
+                            <Canvas Margin="15,8">
+                                <TextBlock x:Name="PasswordLabel" Text="Jelszó" 
+                                          Canvas.Top="17" Canvas.Left="-5"
+                                          Foreground="#AACCCCCC" FontSize="14" IsHitTestVisible="False"/>
+                            </Canvas>
+                
                             <Grid>
                                 <PasswordBox x:Name="PasswordBox" Background="Transparent" Foreground="White" 
-                                             FontSize="14" Padding="12,10,45,10" BorderThickness="0"
-                                             CaretBrush="White" Visibility="Visible"/>
+                                             FontSize="16" Padding="15,24,50,17" BorderThickness="0" Height="70"
+                                             CaretBrush="#FFFFA726" FontWeight="Medium" Visibility="Visible"
+                                             GotFocus="PasswordBox_GotFocus" LostFocus="PasswordBox_LostFocus"
+                                             PasswordChanged="PasswordBox_PasswordChanged"/>
                                 <TextBox x:Name="PasswordTextBox" Background="Transparent" Foreground="White" 
-                                         FontSize="14" Padding="12,10,45,10" BorderThickness="0"
-                                         CaretBrush="White" Visibility="Collapsed"/>
-                                
-                                <!-- Show/Hide Password Button -->
+                                         FontSize="16" Padding="15,24,50,17" BorderThickness="0" Height="70"
+                                         CaretBrush="#FFFFA726" FontWeight="Medium" Visibility="Collapsed"
+                                         GotFocus="PasswordTextBox_GotFocus" LostFocus="PasswordTextBox_LostFocus"
+                                         TextChanged="PasswordTextBox_TextChanged"/>
+                            
+
+                                <!-- Toggle Button -->
                                 <Button x:Name="TogglePasswordButton" 
                                         HorizontalAlignment="Right" VerticalAlignment="Center" 
-                                        Width="35" Height="35" Margin="0,0,5,0"
+                                        Width="40" Height="40" Margin="0,0,10,0"
                                         Click="TogglePasswordButton_Click"
                                         Background="Transparent" BorderThickness="0" Cursor="Hand">
                                     <Button.Style>
@@ -120,31 +275,19 @@
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="Button">
-                                                        <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
-                                                                CornerRadius="18" BorderBrush="#44FFFFFF" BorderThickness="1">
-                                                            <Border.Effect>
-                                                                <DropShadowEffect Color="White" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
-                                                            </Border.Effect>
+                                                        <Border x:Name="ButtonBorder" Background="Transparent" 
+                                                                CornerRadius="20" BorderBrush="Transparent" BorderThickness="1">
                                                             <TextBlock x:Name="IconText" Text="👁" 
                                                                        FontSize="18" 
-                                                                       Foreground="White" 
+                                                                       Foreground="#AAFFA726" 
                                                                        HorizontalAlignment="Center" 
                                                                        VerticalAlignment="Center"
-                                                                       FontWeight="Bold">
-                                                                <TextBlock.Effect>
-                                                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="4" ShadowDepth="0" Opacity="0.8"/>
-                                                                </TextBlock.Effect>
-                                                            </TextBlock>
+                                                                       FontWeight="Bold"/>
                                                         </Border>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter TargetName="ButtonBorder" Property="Background" Value="#33FFFFFF"/>
-                                                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFFFA726"/>
+                                                                <Setter TargetName="ButtonBorder" Property="Background" Value="#22FFA726"/>
                                                                 <Setter TargetName="IconText" Property="Foreground" Value="#FFFFA726"/>
-                                                            </Trigger>
-                                                            <Trigger Property="IsPressed" Value="True">
-                                                                <Setter TargetName="ButtonBorder" Property="Background" Value="#55FFFFFF"/>
-                                                                <Setter TargetName="IconText" Property="Foreground" Value="#FFFF8F00"/>
                                                             </Trigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
@@ -154,39 +297,38 @@
                                     </Button.Style>
                                 </Button>
                             </Grid>
-                        </Border>
-                    </Grid>
-
-                    <!-- Error Message -->
-                    <Border x:Name="ErrorBorder" Background="#AAFF4444" CornerRadius="6" 
-                            Padding="10,8" Margin="0,0,0,15" Opacity="0" Visibility="Collapsed">
-                        <TextBlock x:Name="ErrorText" Text="Hiba uzenet" 
-                                   Foreground="White" FontSize="12" HorizontalAlignment="Center"/>
+                        </Grid>
                     </Border>
 
-                    <!-- Remember Me Checkbox -->
-                    <CheckBox x:Name="RememberMeCheckBox" Margin="0,0,0,20" HorizontalAlignment="Center">
+                    <!-- Optimalizált Error Message -->
+                    <Border x:Name="ErrorBorder" Background="#22FF4444" CornerRadius="10" 
+                            BorderBrush="#FFFF4444" BorderThickness="1"
+                            Padding="15,12" Margin="0,-5,0,15" Opacity="0" Visibility="Collapsed">
+                        <!-- Eltávolított DropShadowEffect -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="⚠" FontSize="16" Foreground="#FFFF4444" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="ErrorText" Text="Hiba üzenet" 
+                                       Foreground="White" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Egyszerűsített Remember Me Checkbox -->
+                    <CheckBox x:Name="RememberMeCheckBox" Margin="0,0,0,30" HorizontalAlignment="Center">
                         <CheckBox.Style>
                             <Style TargetType="CheckBox">
                                 <Setter Property="Foreground" Value="#CCCCCC"/>
                                 <Setter Property="FontSize" Value="14"/>
+                                <Setter Property="FontWeight" Value="Medium"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="CheckBox">
                                             <StackPanel Orientation="Horizontal">
-                                                <Border x:Name="CheckBorder" Width="20" Height="20" 
-                                                        Background="#22FFFFFF" BorderBrush="#44FFFFFF" 
-                                                        BorderThickness="1" CornerRadius="4" Margin="0,0,8,0">
-                                                    <Border.Effect>
-                                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
-                                                    </Border.Effect>
+                                                <Border x:Name="CheckBorder" Width="22" Height="22" 
+                                                        Background="#15FFFFFF" BorderBrush="#44FFFFFF" 
+                                                        BorderThickness="2" CornerRadius="6" Margin="0,0,12,0">
                                                     <TextBlock x:Name="CheckMark" Text="✓" FontSize="14" FontWeight="Bold"
                                                                Foreground="#FFFFA726" HorizontalAlignment="Center" 
-                                                               VerticalAlignment="Center" Opacity="0">
-                                                        <TextBlock.Effect>
-                                                            <DropShadowEffect Color="#FFFFA726" BlurRadius="4" ShadowDepth="0" Opacity="0.8"/>
-                                                        </TextBlock.Effect>
-                                                    </TextBlock>
+                                                               VerticalAlignment="Center" Opacity="0"/>
                                                 </Border>
                                                 <ContentPresenter VerticalAlignment="Center"/>
                                             </StackPanel>
@@ -198,23 +340,31 @@
                                                 </Trigger>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#FFFFA726"/>
-                                                    <Setter TargetName="CheckBorder" Property="Background" Value="#11FFFFFF"/>
+                                                    <Setter TargetName="CheckBorder" Property="Background" Value="#11FFA726"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
                                     </Setter.Value>
                                 </Setter>
                                 <Setter Property="Cursor" Value="Hand"/>
-                                <Setter Property="Content" Value="Jegyezz meg"/>
+                                <Setter Property="Content" Value="Emlékezzen rám"/>
                             </Style>
                         </CheckBox.Style>
                     </CheckBox>
 
-                    <!-- Login Button -->
-                    <Button x:Name="LoginButton" Click="LoginButton_Click" Height="45" Margin="0,0,0,15" Cursor="Hand">
+                    <!-- Login Button - visszatért a menő gradienttel -->
+                    <Button x:Name="LoginButton" Click="LoginButton_Click" Height="55" Margin="0,0,0,15" Cursor="Hand">
                         <Button.Style>
                             <Style TargetType="Button">
-                                <Setter Property="Background" Value="#FFFFA726"/>
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <!-- Visszatért a gyönyörű gradient -->
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#FFFFA726" Offset="0"/>
+                                            <GradientStop Color="#FFFF8F00" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Setter.Value>
+                                </Setter>
                                 <Setter Property="BorderBrush" Value="Transparent"/>
                                 <Setter Property="Foreground" Value="#FF1A1C20"/>
                                 <Setter Property="FontWeight" Value="Bold"/>
@@ -222,19 +372,34 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
-                                            <Border x:Name="border" CornerRadius="8" Background="{TemplateBinding Background}" 
+                                            <Border x:Name="border" CornerRadius="12" Background="{TemplateBinding Background}" 
                                                     BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0">
+                                                <!-- Visszatett glow a gombra -->
                                                 <Border.Effect>
-                                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.6"/>
+                                                    <DropShadowEffect x:Name="ButtonGlow" Color="#FFFFA726" BlurRadius="15" ShadowDepth="0" Opacity="0.8"/>
                                                 </Border.Effect>
                                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="border" Property="Background" Value="#FFFF8F00"/>
+                                                    <Setter TargetName="border" Property="Background">
+                                                        <Setter.Value>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                <GradientStop Color="#FFFF8F00" Offset="0"/>
+                                                                <GradientStop Color="#FFCC7A00" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </Setter.Value>
+                                                    </Setter>
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter TargetName="border" Property="Background" Value="#FFCC7A00"/>
+                                                    <Setter TargetName="border" Property="Background">
+                                                        <Setter.Value>
+                                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                <GradientStop Color="#FFCC7A00" Offset="0"/>
+                                                                <GradientStop Color="#FF996600" Offset="1"/>
+                                                            </LinearGradientBrush>
+                                                        </Setter.Value>
+                                                    </Setter>
                                                 </Trigger>
                                                 <Trigger Property="IsEnabled" Value="False">
                                                     <Setter TargetName="border" Property="Background" Value="#77FFA726"/>
@@ -246,8 +411,12 @@
                                 </Setter>
                             </Style>
                         </Button.Style>
-                        <TextBlock x:Name="LoginButtonText" Text="BEJELENTKEZÉS"/>
+                        <TextBlock x:Name="LoginButtonText" Text="BEJELENTKEZÉS" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
+
+                    <!-- Footer Text -->
+                    <TextBlock Text="BitFighters © 2024" FontSize="12" Foreground="#66CCCCCC" 
+                               HorizontalAlignment="Center" FontWeight="Medium"/>
 
                 </StackPanel>
             </Grid>

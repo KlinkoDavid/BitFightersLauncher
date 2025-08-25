@@ -21,32 +21,26 @@ namespace BitFightersLauncher
             // Disable automatic window creation
             this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-            // Ha van Remember Me és érvényes mentés, lépjünk be automatikusan
-            var saved = AuthStorage.Load();
-            if (saved != null && saved.RememberMe && !string.IsNullOrEmpty(saved.Username))
+            try
             {
-                var mainWindow = new MainWindow();
-                mainWindow.SetUserInfo(saved.Username, saved.UserId, saved.UserCreatedAt);
-                this.MainWindow = mainWindow;
+                // Most újra az eredeti LoginWindow-t próbáljuk
+                var loginWindow = new LoginWindow();
+                
+                System.Diagnostics.Debug.WriteLine("LoginWindow létrehozva");
+                
+                // Beállítjuk főablakként
+                this.MainWindow = loginWindow;
                 this.ShutdownMode = ShutdownMode.OnMainWindowClose;
-                mainWindow.Show();
-                return;
+                
+                // Megjelenítjük
+                loginWindow.Show();
+                
+                System.Diagnostics.Debug.WriteLine("LoginWindow.Show() meghívva");
             }
-            
-            // Egyébként login ablak
-            var loginWindow = new LoginWindow();
-            bool? loginResult = loginWindow.ShowDialog();
-            
-            if (loginResult == true)
+            catch (Exception ex)
             {
-                var mainWindow = new MainWindow();
-                mainWindow.SetUserInfo(loginWindow.LoggedInUsername, loginWindow.UserId, loginWindow.UserCreatedAt);
-                this.MainWindow = mainWindow;
-                this.ShutdownMode = ShutdownMode.OnMainWindowClose;
-                mainWindow.Show();
-            }
-            else
-            {
+                System.Diagnostics.Debug.WriteLine($"Hiba az ablak létrehozásakor: {ex.Message}");
+                MessageBox.Show($"Hiba az ablak létrehozásakor: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
             }
         }
