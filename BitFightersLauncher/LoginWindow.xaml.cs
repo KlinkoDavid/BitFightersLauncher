@@ -40,11 +40,11 @@ namespace BitFightersLauncher
     {
         // MySQL Proxy API
         private const string ApiUrl = "https://bitfighters.eu/api/mysql_proxy.php";
-        
+
         // Events for login success/failure
         public event EventHandler<LoginEventArgs>? LoginSucceeded;
         public event EventHandler? LoginCancelled;
-        
+
         public bool LoginSuccessful { get; private set; } = false;
         public string LoggedInUsername { get; private set; } = string.Empty;
         public int UserId { get; private set; } = 0;
@@ -55,22 +55,19 @@ namespace BitFightersLauncher
         public LoginWindow()
         {
             InitializeComponent();
-            
-            // Mentett adatok betöltése
+
             LoadSavedLogin();
-            
-            // Enter billentyűk
+
             UsernameTextBox.KeyDown += (s, e) => { if (e.Key == Key.Enter) FocusPassword(); };
             PasswordBox.KeyDown += (s, e) => { if (e.Key == Key.Enter) LoginButton_Click(null, null); };
             PasswordTextBox.KeyDown += (s, e) => { if (e.Key == Key.Enter) LoginButton_Click(null, null); };
-            
-            // Jelszó szinkronizálás
+
             PasswordBox.PasswordChanged += (s, e) =>
             {
                 if (!isPasswordVisible)
                     PasswordTextBox.Text = PasswordBox.Password;
             };
-            
+
             PasswordTextBox.TextChanged += (s, e) =>
             {
                 if (isPasswordVisible)
@@ -83,7 +80,6 @@ namespace BitFightersLauncher
             var saved = AuthStorage.Load();
             if (saved != null && saved.RememberMe && !string.IsNullOrEmpty(saved.Username))
             {
-                // Auto-login UX: előtöltünk és opcionálisan automatikus belépést végzünk
                 UsernameTextBox.Text = saved.Username;
                 RememberMeCheckBox.IsChecked = true;
                 PasswordBox.Focus();
@@ -106,19 +102,19 @@ namespace BitFightersLauncher
         private void TogglePasswordButton_Click(object sender, RoutedEventArgs e)
         {
             isPasswordVisible = !isPasswordVisible;
-            
+
             var button = sender as Button;
             var iconText = FindChild<TextBlock>(button, "IconText");
-            
+
             if (isPasswordVisible)
             {
                 PasswordTextBox.Text = PasswordBox.Password;
                 PasswordTextBox.Visibility = Visibility.Visible;
                 PasswordBox.Visibility = Visibility.Collapsed;
-                
+
                 if (iconText != null)
                     iconText.Text = "🙈";
-                
+
                 PasswordTextBox.Focus();
                 PasswordTextBox.CaretIndex = PasswordTextBox.Text.Length;
             }
@@ -127,10 +123,10 @@ namespace BitFightersLauncher
                 PasswordBox.Password = PasswordTextBox.Text;
                 PasswordBox.Visibility = Visibility.Visible;
                 PasswordTextBox.Visibility = Visibility.Collapsed;
-                
+
                 if (iconText != null)
                     iconText.Text = "👁";
-                
+
                 PasswordBox.Focus();
             }
         }
@@ -147,7 +143,6 @@ namespace BitFightersLauncher
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            // Raise login cancelled event instead of shutting down directly
             LoginCancelled?.Invoke(this, EventArgs.Empty);
         }
 
@@ -169,33 +164,34 @@ namespace BitFightersLauncher
             try
             {
                 bool success = await LoginWithProxyAsync(username, password);
-                
+
                 if (success)
                 {
-                    // Mentés csak sikeres bejelentkezés után
                     SaveLogin(username, password, rememberMe);
-                    
+
                     LoginSuccessful = true;
-                    
-                    // Fire login succeeded event instead of setting DialogResult
-                    LoginSucceeded?.Invoke(this, new LoginEventArgs 
-                    { 
-                        Username = LoggedInUsername, 
-                        UserId = UserId, 
-                        UserCreatedAt = UserCreatedAt 
+
+                    LoginSucceeded?.Invoke(this, new LoginEventArgs
+                    {
+                        Username = LoggedInUsername,
+                        UserId = UserId,
+                        UserCreatedAt = UserCreatedAt
                     });
+
+                    var fadeOutAnimation = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300));
+                    fadeOutAnimation.Completed += (s, a) => { this.Close(); };
+                    this.BeginAnimation(Window.OpacityProperty, fadeOutAnimation);
                 }
                 else
                 {
                     ShowError("Hibás felhasználónév vagy jelszó!");
+                    LoginButton.IsEnabled = true;
+                    LoginButtonText.Text = "BEJELENTKEZÉS";
                 }
             }
             catch (Exception ex)
             {
                 ShowError($"Bejelentkezési hiba: {ex.Message}");
-            }
-            finally
-            {
                 LoginButton.IsEnabled = true;
                 LoginButtonText.Text = "BEJELENTKEZÉS";
             }
@@ -208,34 +204,31 @@ namespace BitFightersLauncher
                 using (var httpClient = new HttpClient())
                 {
                     httpClient.Timeout = TimeSpan.FromSeconds(10);
-                    
-                    var loginData = new 
-                    { 
+
+                    var loginData = new
+                    {
                         action = "login",
-                        username = username, 
-                        password = password 
+                        username = username,
+                        password = password
                     };
-                    
+
                     string jsonContent = JsonSerializer.Serialize(loginData);
                     var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                    
+
                     var response = await httpClient.PostAsync(ApiUrl, content);
                     string responseText = await response.Content.ReadAsStringAsync();
-                    
-                    System.Diagnostics.Debug.WriteLine($"MySQL Proxy Response: {responseText}");
-                    
+
                     var apiResponse = JsonSerializer.Deserialize<LoginApiResponse>(responseText);
-                    
+
                     if (apiResponse?.success == true && apiResponse.user != null)
                     {
                         UserId = apiResponse.user.id;
                         LoggedInUsername = apiResponse.user.username;
                         UserCreatedAt = apiResponse.user.created_at;
-                        
-                        System.Diagnostics.Debug.WriteLine($"MySQL Proxy bejelentkezes sikeres: {LoggedInUsername} (ID: {UserId}, Created: {UserCreatedAt})");
+
                         return true;
                     }
-                    
+
                     return false;
                 }
             }
@@ -251,7 +244,7 @@ namespace BitFightersLauncher
             ErrorText.Text = message;
             var showStoryboard = (Storyboard)this.FindResource("ShowError");
             showStoryboard.Begin(ErrorBorder);
-            
+
             Task.Delay(4000).ContinueWith(_ =>
             {
                 Dispatcher.Invoke(() =>
@@ -262,7 +255,6 @@ namespace BitFightersLauncher
             });
         }
 
-        // Helper method to find child controls in templates
         private T? FindChild<T>(DependencyObject parent, string childName) where T : DependencyObject
         {
             if (parent == null) return null;

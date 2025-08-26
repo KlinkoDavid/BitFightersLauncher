@@ -5,10 +5,20 @@
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Icon="/Resources/Logo.png"
         WindowStartupLocation="CenterScreen"
-        x:Name="LoginWindowRoot">
+        x:Name="LoginWindowRoot"
+        Opacity="0">
+
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.5"/>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </Window.Triggers>
 
     <Window.Resources>
-        <!-- Optimalizált Animation Storyboards - csökkentett időtartam és komplexitás -->
         <Storyboard x:Key="ShowError">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
             <ThicknessAnimation Storyboard.TargetProperty="Margin" 
@@ -17,7 +27,7 @@
                 <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}"/>
             </ObjectAnimationUsingKeyFrames>
         </Storyboard>
-        
+
         <Storyboard x:Key="HideError">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
             <ThicknessAnimation Storyboard.TargetProperty="Margin" 
@@ -27,14 +37,13 @@
             </ObjectAnimationUsingKeyFrames>
         </Storyboard>
 
-        <!-- VÉGLEGESEN TISZTÍTOTT Floating Label Animations -->
         <Storyboard x:Key="FloatLabelUp" Storyboard.TargetName="UsernameLabel">
             <DoubleAnimation Storyboard.TargetProperty="(Canvas.Top)" To="-15" Duration="0:0:0.2"/>
             <DoubleAnimation Storyboard.TargetProperty="FontSize" To="12" Duration="0:0:0.2"/>
             <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" 
                            To="#FFFFA726" Duration="0:0:0.2"/>
         </Storyboard>
-        
+
         <Storyboard x:Key="FloatLabelDown" Storyboard.TargetName="UsernameLabel">
             <DoubleAnimation Storyboard.TargetProperty="(Canvas.Top)" To="17" Duration="0:0:0.2"/>
             <DoubleAnimation Storyboard.TargetProperty="FontSize" To="14" Duration="0:0:0.2"/>
@@ -48,7 +57,7 @@
             <ColorAnimation Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)" 
                            To="#FFFFA726" Duration="0:0:0.2"/>
         </Storyboard>
-        
+
         <Storyboard x:Key="FloatPasswordLabelDown" Storyboard.TargetName="PasswordLabel">
             <DoubleAnimation Storyboard.TargetProperty="(Canvas.Top)" To="17" Duration="0:0:0.2"/>
             <DoubleAnimation Storyboard.TargetProperty="FontSize" To="14" Duration="0:0:0.2"/>
@@ -59,21 +68,17 @@
 
     <Border x:Name="RootBorder" CornerRadius="25" BorderBrush="#44CCCCCC" BorderThickness="2" ClipToBounds="True">
         <Border.Background>
-            <!-- Visszatért a gyönyörű radial gradient -->
             <RadialGradientBrush Center="0.5,0.3">
                 <GradientStop Color="#FF0F1419" Offset="0"/>
                 <GradientStop Color="#FF1A1C20" Offset="0.6"/>
                 <GradientStop Color="#FF0A0C10" Offset="1"/>
             </RadialGradientBrush>
         </Border.Background>
-        <!-- Visszatettem a szép shadow-t is -->
         <Border.Effect>
             <DropShadowEffect Color="#000000" BlurRadius="0" ShadowDepth="0" Opacity="1"/>
         </Border.Effect>
 
-        <!-- Ambient Light Effect - még menőbb fényjáték! -->
         <Grid>
-            <!-- Fő narancssárga ambient fény -->
             <Ellipse Width="400" Height="200" VerticalAlignment="Top" Margin="0,-100,0,0" HorizontalAlignment="Center">
                 <Ellipse.Fill>
                     <RadialGradientBrush>
@@ -82,8 +87,7 @@
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            
-            <!-- Extra ragyogó fényeffekt középen -->
+
             <Ellipse Width="300" Height="150" VerticalAlignment="Top" Margin="0,-75,0,0" HorizontalAlignment="Center">
                 <Ellipse.Fill>
                     <RadialGradientBrush>
@@ -92,8 +96,7 @@
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            
-            <!-- Alsó menő fényeffekt -->
+
             <Ellipse Width="500" Height="100" VerticalAlignment="Bottom" Margin="0,0,0,-50" HorizontalAlignment="Center">
                 <Ellipse.Fill>
                     <RadialGradientBrush>
@@ -102,8 +105,7 @@
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            
-            <!-- Oldalsó színes fények -->
+
             <Ellipse Width="200" Height="300" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="-100,0,0,0">
                 <Ellipse.Fill>
                     <RadialGradientBrush>
@@ -112,7 +114,7 @@
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
-            
+
             <Ellipse Width="200" Height="300" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,-100,0">
                 <Ellipse.Fill>
                     <RadialGradientBrush>
@@ -128,33 +130,28 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- Optimalizált Header - középre igazított logo és név -->
                 <Grid Height="80" VerticalAlignment="Top" MouseLeftButtonDown="DragWindow" Background="Transparent">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="50"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="50"/>
                     </Grid.ColumnDefinitions>
-                    
-                    <!-- Középre igazított Logo és Title -->
+
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <!-- Visszatért a menő logo konténer több effekttel -->
                         <Border Background="#22FFA726" CornerRadius="20" Padding="8" Margin="0,0,15,0">
                             <Border.Effect>
                                 <DropShadowEffect Color="#FFFFA726" BlurRadius="20" ShadowDepth="0" Opacity="0.6"/>
                             </Border.Effect>
                             <Image x:Name="LogoImage" Source="/Resources/Logo.png" Width="40" Height="40">
-                                <!-- Visszatett erősebb effekt -->
                                 <Image.Effect>
                                     <DropShadowEffect Color="#FFFFA726" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
                                 </Image.Effect>
                             </Image>
                         </Border>
-                        
+
                         <StackPanel VerticalAlignment="Center">
                             <TextBlock Text="BITFIGHTERS" FontSize="24" FontWeight="Bold" Foreground="#FFFFA726" 
                                      Margin="0,-2,0,0" VerticalAlignment="Center">
-                                <!-- Visszatett erősebb glow effekt -->
                                 <TextBlock.Effect>
                                     <DropShadowEffect ShadowDepth="0" Opacity="1.0" Color="#FFFFA726" BlurRadius="15"/>
                                 </TextBlock.Effect>
@@ -163,8 +160,7 @@
                                      FontWeight="SemiBold" Margin="0,-4,0,0"/>
                         </StackPanel>
                     </StackPanel>
-                    
-                    <!-- Egyszerűsített Close Button -->
+
                     <Button Grid.Column="2" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
                             HorizontalAlignment="Right" VerticalAlignment="Center" 
                             Margin="0,0,15,0" Click="CloseButton_Click" 
@@ -197,19 +193,15 @@
                     </Button>
                 </Grid>
 
-                <!-- Optimalizált Login Form -->
                 <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Width="350" Margin="0,0,0,40">
-                    
-                    <!-- Egyszerűsített Welcome Section -->
+
                     <Border Background="Transparent" CornerRadius="15" Padding="20,15" Margin="0,0,0,40">
-                        <!-- Visszatett erősebb effekt -->
                         <Border.Effect>
                             <DropShadowEffect Color="#FFFFA726" BlurRadius="15" ShadowDepth="0" Opacity="0.3"/>
                         </Border.Effect>
                         <StackPanel HorizontalAlignment="Center">
                             <TextBlock Text="Üdvözöljük!" FontSize="28" FontWeight="Bold" 
                                        Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,5">
-                                <!-- Visszatett erősebb glow effekt -->
                                 <TextBlock.Effect>
                                     <DropShadowEffect Color="#FFFFA726" BlurRadius="10" ShadowDepth="0" Opacity="0.8"/>
                                 </TextBlock.Effect>
@@ -219,18 +211,17 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- VÉGLEGESEN TISZTÍTOTT Username Field -->
                     <Border Margin="0,0,0,25">
                         <Grid>
                             <Border x:Name="UsernameBorder" Background="#15000000" CornerRadius="12" 
                                     BorderBrush="#33FFFFFF" BorderThickness="2" Height="50"/>
-                
+
                             <Canvas Margin="15,8">
                                 <TextBlock x:Name="UsernameLabel" Text="Felhasználónév" 
                                           Canvas.Top="17" Canvas.Left="-5"
                                           Foreground="#AACCCCCC" FontSize="14" IsHitTestVisible="False"/>
                             </Canvas>
-                
+
                             <TextBox x:Name="UsernameTextBox" Background="Transparent" Foreground="White" 
                                      FontSize="16" Padding="20,24" BorderThickness="0" Height="70"
                                      CaretBrush="#FFFFA726" FontWeight="Medium"
@@ -239,18 +230,17 @@
                         </Grid>
                     </Border>
 
-                    <!-- VÉGLEGESEN TISZTÍTOTT Password Field -->
                     <Border Margin="0,0,0,30">
                         <Grid>
                             <Border x:Name="PasswordBorder" Background="#15000000" CornerRadius="12" 
                                     BorderBrush="#33FFFFFF" BorderThickness="2" Height="50"/>
-                
+
                             <Canvas Margin="15,8">
                                 <TextBlock x:Name="PasswordLabel" Text="Jelszó" 
                                           Canvas.Top="17" Canvas.Left="-5"
                                           Foreground="#AACCCCCC" FontSize="14" IsHitTestVisible="False"/>
                             </Canvas>
-                
+
                             <Grid>
                                 <PasswordBox x:Name="PasswordBox" Background="Transparent" Foreground="White" 
                                              FontSize="16" Padding="15,24,50,17" BorderThickness="0" Height="70"
@@ -262,9 +252,8 @@
                                          CaretBrush="#FFFFA726" FontWeight="Medium" Visibility="Collapsed"
                                          GotFocus="PasswordTextBox_GotFocus" LostFocus="PasswordTextBox_LostFocus"
                                          TextChanged="PasswordTextBox_TextChanged"/>
-                            
 
-                                <!-- Toggle Button -->
+
                                 <Button x:Name="TogglePasswordButton" 
                                         HorizontalAlignment="Right" VerticalAlignment="Center" 
                                         Width="40" Height="40" Margin="0,0,10,0"
@@ -300,11 +289,9 @@
                         </Grid>
                     </Border>
 
-                    <!-- Optimalizált Error Message -->
                     <Border x:Name="ErrorBorder" Background="#22FF4444" CornerRadius="10" 
                             BorderBrush="#FFFF4444" BorderThickness="1"
                             Padding="15,12" Margin="0,-5,0,15" Opacity="0" Visibility="Collapsed">
-                        <!-- Eltávolított DropShadowEffect -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <TextBlock Text="⚠" FontSize="16" Foreground="#FFFF4444" Margin="0,0,8,0" VerticalAlignment="Center"/>
                             <TextBlock x:Name="ErrorText" Text="Hiba üzenet" 
@@ -312,7 +299,6 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Egyszerűsített Remember Me Checkbox -->
                     <CheckBox x:Name="RememberMeCheckBox" Margin="0,0,0,30" HorizontalAlignment="Center">
                         <CheckBox.Style>
                             <Style TargetType="CheckBox">
@@ -352,13 +338,11 @@
                         </CheckBox.Style>
                     </CheckBox>
 
-                    <!-- Login Button - visszatért a menő gradienttel -->
                     <Button x:Name="LoginButton" Click="LoginButton_Click" Height="55" Margin="0,0,0,15" Cursor="Hand">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Background">
                                     <Setter.Value>
-                                        <!-- Visszatért a gyönyörű gradient -->
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="#FFFFA726" Offset="0"/>
                                             <GradientStop Color="#FFFF8F00" Offset="1"/>
@@ -374,7 +358,6 @@
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="border" CornerRadius="12" Background="{TemplateBinding Background}" 
                                                     BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0">
-                                                <!-- Visszatett glow a gombra -->
                                                 <Border.Effect>
                                                     <DropShadowEffect x:Name="ButtonGlow" Color="#FFFFA726" BlurRadius="15" ShadowDepth="0" Opacity="0.8"/>
                                                 </Border.Effect>
@@ -414,7 +397,6 @@
                         <TextBlock x:Name="LoginButtonText" Text="BEJELENTKEZÉS" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                     </Button>
 
-                    <!-- Footer Text -->
                     <TextBlock Text="BitFighters © 2024" FontSize="12" Foreground="#66CCCCCC" 
                                HorizontalAlignment="Center" FontWeight="Medium"/>
 

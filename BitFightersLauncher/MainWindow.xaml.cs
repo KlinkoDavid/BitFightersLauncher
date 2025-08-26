@@ -19,11 +19,11 @@ namespace BitFightersLauncher
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         public string ShortContent => Content.Length > 100 ? Content.Substring(0, 100) + "..." : Content;
-        
+
         [JsonPropertyName("created_at")]
-        public string? CreatedAtString 
-        { 
-            set 
+        public string? CreatedAtString
+        {
+            set
             {
                 if (!string.IsNullOrEmpty(value))
                 {
@@ -34,7 +34,7 @@ namespace BitFightersLauncher
                 }
             }
         }
-        
+
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public string FormattedDate => CreatedAt.ToString("yyyy.MM.dd");
     }
@@ -58,10 +58,12 @@ namespace BitFightersLauncher
         private string loggedInUsername = string.Empty;
         private int loggedInUserId = 0;
         private string loggedInUserCreatedAt = string.Empty;
-        private int loggedInUserHighestScore = 0; // Új mez? a legmagasabb pontszámhoz
+        private int loggedInUserHighestScore = 0;
 
         // Navigation state
-        private string currentView = "home"; // Track current view: "home", "profile", etc.
+        private string currentView = "home";
+        private double _targetNavIndicatorY;
+        private bool _isNavigating;
 
         public MainWindow()
         {
@@ -83,14 +85,12 @@ namespace BitFightersLauncher
                 CheckGameInstallStatus();
                 await LoadNewsUpdatesAsync();
                 ApplyPerformanceModeIfNeeded();
-                
-                // Set default view to home
+
                 ShowHomeView();
-                
-                // Initialize navigation indicator position
+
                 if (NavIndicatorTransform != null)
                 {
-                    NavIndicatorTransform.Y = 0; // Home position
+                    NavIndicatorTransform.Y = 0;
                 }
             };
         }
@@ -100,19 +100,16 @@ namespace BitFightersLauncher
             loggedInUsername = username;
             loggedInUserId = userId;
             loggedInUserCreatedAt = createdAt;
-            
-            // Update window title with username
+
             this.Title = $"BitFighters Launcher - {username}";
-            
-            // Update username display
+
             if (UsernameText != null)
             {
                 UsernameText.Text = username;
             }
-            
+
             Debug.WriteLine($"Bejelentkezett felhasználó: {username} (ID: {userId}, Created: {createdAt})");
-            
-            // Load user's highest score (ezt kés?bb API-ból töltjük be)
+
             LoadUserProfile();
         }
 
@@ -120,11 +117,8 @@ namespace BitFightersLauncher
         {
             try
             {
-                // Itt kés?bb API hívás lesz a felhasználó pontszámáért
-                // Most példa adatot használunk
-                loggedInUserHighestScore = 1250; // Példa pontszám
-                
-                // Ha profil nézet aktív, frissítsük a megjelenítést
+                loggedInUserHighestScore = 1250;
+
                 if (currentView == "profile")
                 {
                     UpdateProfileView();
@@ -140,38 +134,26 @@ namespace BitFightersLauncher
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("Logout() metódus kezdete");
-                
-                // Disable the shutdown mode temporarily
                 var originalShutdownMode = Application.Current.ShutdownMode;
                 Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-                
-                // Csak kijelentkezés, NE töröljük a mentett adatokat
-                // A felhasználó dönthet, hogy szeretné-e megtartani az "Emlékezzen rám" beállítást
+
                 var loginWindow = new LoginWindow();
-                System.Diagnostics.Debug.WriteLine("LoginWindow létrehozva");
-                
-                // Subscribe to login events
+
                 loginWindow.LoginSucceeded += LoginWindow_LoginSucceeded;
                 loginWindow.LoginCancelled += LoginWindow_LoginCancelled;
-                System.Diagnostics.Debug.WriteLine("Login event handlerek hozzáadva");
-                
-                // Set the login window as the main window BEFORE showing it
+
                 Application.Current.MainWindow = loginWindow;
-                System.Diagnostics.Debug.WriteLine("LoginWindow beállítva MainWindow-ként");
-                
-                System.Diagnostics.Debug.WriteLine("LoginWindow.Show() hívás...");
+
                 loginWindow.Show();
-                
-                // Restore shutdown mode
+
                 Application.Current.ShutdownMode = originalShutdownMode;
-                
-                System.Diagnostics.Debug.WriteLine("MainWindow.Close() hívás...");
-                this.Close();
+
+                var fadeOutAnimation = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300));
+                fadeOutAnimation.Completed += (s, a) => { this.Close(); };
+                this.BeginAnimation(Window.OpacityProperty, fadeOutAnimation);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Hiba a Logout() metódusban: {ex.Message}");
                 MessageBox.Show($"Hiba a kijelentkezés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -180,31 +162,20 @@ namespace BitFightersLauncher
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("LoginWindow_LoginSucceeded kezdete");
-                
-                // Create and show new main window
                 var mainWindow = new MainWindow();
                 mainWindow.SetUserInfo(e.Username, e.UserId, e.UserCreatedAt);
-                
-                // Set new main window
+
                 Application.Current.MainWindow = mainWindow;
-                System.Diagnostics.Debug.WriteLine("Új MainWindow beállítva");
-                
+
                 mainWindow.Show();
-                System.Diagnostics.Debug.WriteLine("Új MainWindow megjelenítve");
-                
-                // Close login window
+
                 if (sender is LoginWindow loginWindow)
                 {
-                    loginWindow.Close();
-                    System.Diagnostics.Debug.WriteLine("LoginWindow bezárva");
+                    // The login window will handle its own closing after its fade-out animation.
                 }
-                
-                System.Diagnostics.Debug.WriteLine($"Újra bejelentkezés sikeres: {e.Username}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Hiba az újra bejelentkezésnél: {ex.Message}");
                 MessageBox.Show($"Hiba az újra bejelentkezésnél: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
                 Application.Current.Shutdown();
             }
@@ -212,7 +183,6 @@ namespace BitFightersLauncher
 
         private void LoginWindow_LoginCancelled(object? sender, EventArgs e)
         {
-            // Ha a felhasználó mégsem akar bejelentkezni, lépjen ki az alkalmazásból
             Application.Current.Shutdown();
         }
 
@@ -241,15 +211,13 @@ namespace BitFightersLauncher
         {
             if (!_reducedMotion) return;
 
-            // Performance mode esetén tüntessük el a nyilakat
             if (TopScrollIndicator != null) TopScrollIndicator.Visibility = Visibility.Collapsed;
             if (BottomScrollIndicator != null) BottomScrollIndicator.Visibility = Visibility.Collapsed;
 
-            // Reduce navigation indicator glow for better performance
             if (NavIndicator?.Effect is DropShadowEffect navGlow)
             {
-                navGlow.BlurRadius = 6; // Reduced from 12
-                navGlow.Opacity = 0.8; // Reduced from 1.2
+                navGlow.BlurRadius = 6;
+                navGlow.Opacity = 0.8;
             }
 
             RemoveDropShadows(this);
@@ -309,7 +277,6 @@ namespace BitFightersLauncher
                     string url = $"{VersionCheckUrl}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
                     string versionString = await httpClient.GetStringAsync(url);
                     serverGameVersion = versionString.Trim();
-                    Debug.WriteLine($"Szerver verzió betöltve: {serverGameVersion}");
                     UpdateVersionDisplay();
                 }
             }
@@ -333,15 +300,15 @@ namespace BitFightersLauncher
                 if (gameInstalled)
                 {
                     VersionStatusText.Text = "Telepítve";
-                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80)); // Zöld
+                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80));
                     UpdateIndicator.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
                     VersionStatusText.Text = "Nincs telepítve";
-                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204)); // Szürke
+                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204));
                     UpdateIndicator.Visibility = Visibility.Visible;
-                    UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0)); // Narancssárga
+                    UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
                 }
             }
         }
@@ -366,7 +333,6 @@ namespace BitFightersLauncher
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
         {
-            // Kontextus menü megnyitása az Exit gombon (lenyíló a jobb felsõ X-nél, balra nyílva)
             if (sender is FrameworkElement fe && fe.ContextMenu != null)
             {
                 fe.ContextMenu.PlacementTarget = fe;
@@ -380,14 +346,12 @@ namespace BitFightersLauncher
 
         private void ExitContextMenu_Opened(object sender, RoutedEventArgs e)
         {
-            // Háttér elsötétítése
             if (DimOverlay != null)
                 DimOverlay.Visibility = Visibility.Visible;
         }
 
         private void ExitContextMenu_Closed(object sender, RoutedEventArgs e)
         {
-            // Háttér visszaállítása
             if (DimOverlay != null)
                 DimOverlay.Visibility = Visibility.Collapsed;
         }
@@ -401,19 +365,11 @@ namespace BitFightersLauncher
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("Kijelentkezés gombra nyomás...");
-                
-                // Teljes kijelentkezés: törli a mentett adatokat
                 AuthStorage.Clear();
-                System.Diagnostics.Debug.WriteLine("AuthStorage törölve");
-                
-                // Visszatér a LoginWindow-hoz
-                System.Diagnostics.Debug.WriteLine("Logout() metódus hívása...");
                 Logout();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Hiba a kijelentkezés során: {ex.Message}");
                 MessageBox.Show($"Hiba a kijelentkezés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
@@ -441,9 +397,8 @@ namespace BitFightersLauncher
 
         private async void HandleActionButton_Click(object sender, RoutedEventArgs e)
         {
-            // Only handle downloads in home view
             if (currentView != "home") return;
-            
+
             switch (ButtonText.Text)
             {
                 case "LETÖLTÉS":
@@ -457,29 +412,27 @@ namespace BitFightersLauncher
 
         private async Task DownloadAndInstallGameAsync()
         {
-            // Only allow downloads in home view
             if (currentView != "home") return;
-            
+
             var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "Válassza ki a telepítési mappát" };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 gameInstallPath = dialog.FileName;
                 ActionButton.IsEnabled = false;
                 ButtonText.Text = "FOLYAMATBAN";
-                
-                // Safe access to download elements
+
                 var downloadGrid = this.FindName("DownloadStatusGrid") as Grid;
                 var downloadBar = this.FindName("DownloadProgressBar") as ProgressBar;
                 var downloadStatusText = this.FindName("DownloadStatusText") as TextBlock;
                 var progressPercentageText = this.FindName("ProgressPercentageText") as TextBlock;
                 var progressDetailsText = this.FindName("ProgressDetailsText") as TextBlock;
-                
+
                 if (downloadGrid != null) downloadGrid.Visibility = Visibility.Visible;
                 if (downloadBar != null) downloadBar.IsIndeterminate = false;
                 if (downloadStatusText != null) downloadStatusText.Text = "Letöltés el?készítése...";
                 if (progressPercentageText != null) progressPercentageText.Text = "0%";
                 if (progressDetailsText != null) progressDetailsText.Text = "";
-                
+
                 string tempDownloadPath = Path.Combine(Path.GetTempPath(), "game.zip");
 
                 try
@@ -554,7 +507,7 @@ namespace BitFightersLauncher
                 {
                     ActionButton.IsEnabled = true;
                     if (downloadGrid != null) downloadGrid.Visibility = Visibility.Collapsed;
-                    if (downloadBar != null) 
+                    if (downloadBar != null)
                     {
                         downloadBar.IsIndeterminate = false;
                         downloadBar.Value = 0;
@@ -624,7 +577,6 @@ namespace BitFightersLauncher
                         {
                             UseShellExecute = true,
                             WorkingDirectory = Path.GetDirectoryName(gameExecutablePath)!,
-                            // Pass user info as command line arguments including creation date
                             Arguments = $"-username \"{loggedInUsername}\" -userid {loggedInUserId} -created \"{loggedInUserCreatedAt}\""
                         },
                         EnableRaisingEvents = true
@@ -658,22 +610,20 @@ namespace BitFightersLauncher
                 using (var httpClient = new HttpClient())
                 {
                     string jsonResponse = await httpClient.GetStringAsync(apiUrl);
-                    System.Diagnostics.Debug.WriteLine($"News API Response: {jsonResponse}");
-                    
+
                     var options = new JsonSerializerOptions
                     {
                         PropertyNameCaseInsensitive = true
                     };
                     var updates = JsonSerializer.Deserialize<System.Collections.Generic.List<NewsUpdate>>(jsonResponse, options);
-                    
-                    // Ha nincs adat vagy üres a lista, adjunk hozzá teszt elemeket
+
                     if (updates == null || updates.Count == 0)
                     {
                         updates = new System.Collections.Generic.List<NewsUpdate>
                         {
-                            new NewsUpdate 
-                            { 
-                                Title = "Üdvözöljük a BitFighters Launcher-ben!", 
+                            new NewsUpdate
+                            {
+                                Title = "Üdvözöljük a BitFighters Launcher-ben!",
                                 Content = "A launcher sikeresen betöltött. Itt fognak megjelenni a legfrissebb hírek és frissítések a játékról.",
                                 CreatedAt = DateTime.Now
                             }
@@ -681,7 +631,6 @@ namespace BitFightersLauncher
                     }
                     else
                     {
-                        // Ensure all items have a valid date
                         foreach (var update in updates)
                         {
                             if (update.CreatedAt == DateTime.MinValue)
@@ -690,18 +639,17 @@ namespace BitFightersLauncher
                             }
                         }
                     }
-                    
+
                     NewsItemsControl.ItemsSource = updates;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"News loading error: {ex.Message}");
                 NewsItemsControl.ItemsSource = new System.Collections.Generic.List<NewsUpdate>
                 {
-                    new NewsUpdate 
-                    { 
-                        Title = "Hiba a hírek betöltésekor", 
+                    new NewsUpdate
+                    {
+                        Title = "Hiba a hírek betöltésekor",
                         Content = "Nem sikerült elérni a szervert: " + ex.Message,
                         CreatedAt = DateTime.Now
                     }
@@ -736,24 +684,45 @@ namespace BitFightersLauncher
 
         private void CompositionTarget_Rendering(object? sender, EventArgs e)
         {
+            bool stillAnimating = false;
+
             if (_isScrolling && NewsScrollViewer != null)
             {
                 double currentOffset = NewsScrollViewer.VerticalOffset;
                 double difference = _targetVerticalOffset - currentOffset;
+
                 if (Math.Abs(difference) < 0.5)
                 {
                     NewsScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
                     _isScrolling = false;
-                    UnhookRendering();
-                    return;
                 }
-                double step = Math.Max(Math.Abs(difference) * 0.15, 1.0);
-                double newOffset = currentOffset + Math.Sign(difference) * step;
-                if ((difference > 0 && newOffset > _targetVerticalOffset) || (difference < 0 && newOffset < _targetVerticalOffset))
-                    newOffset = _targetVerticalOffset;
-                NewsScrollViewer.ScrollToVerticalOffset(newOffset);
+                else
+                {
+                    double step = Math.Max(Math.Abs(difference) * 0.15, 1.0);
+                    NewsScrollViewer.ScrollToVerticalOffset(currentOffset + Math.Sign(difference) * step);
+                    stillAnimating = true;
+                }
             }
-            else
+
+            if (_isNavigating && NavIndicatorTransform != null)
+            {
+                double currentY = NavIndicatorTransform.Y;
+                double difference = _targetNavIndicatorY - currentY;
+
+                if (Math.Abs(difference) < 0.5)
+                {
+                    NavIndicatorTransform.Y = _targetNavIndicatorY;
+                    _isNavigating = false;
+                }
+                else
+                {
+                    double step = Math.Max(Math.Abs(difference) * 0.20, 0.5);
+                    NavIndicatorTransform.Y = currentY + Math.Sign(difference) * step;
+                    stillAnimating = true;
+                }
+            }
+
+            if (!stillAnimating)
             {
                 UnhookRendering();
             }
@@ -768,78 +737,60 @@ namespace BitFightersLauncher
         private void ShowHomeView()
         {
             currentView = "home";
-            
-            // Show home elements
+
             if (ActionButton != null) ActionButton.Visibility = Visibility.Visible;
-            
-            // Hide profile elements
+            if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Visible;
+
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
-            
-            // Animate navigation indicator to Home position (first button)
+
             AnimateNavIndicator(0);
         }
 
         private void ShowProfileView()
         {
             currentView = "profile";
-            
-            // Hide home elements
+
             if (ActionButton != null) ActionButton.Visibility = Visibility.Collapsed;
-            
-            // Show profile elements
-            if (ProfileViewGrid != null) 
+            if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Collapsed;
+
+            if (ProfileViewGrid != null)
             {
                 ProfileViewGrid.Visibility = Visibility.Visible;
                 UpdateProfileView();
             }
-            
-            // Animate navigation indicator to Profile position (fourth button)
+
             AnimateNavIndicator(3);
         }
 
         private void AnimateNavIndicator(int buttonIndex)
         {
             if (NavIndicatorTransform == null) return;
-            
-            // Calculate Y position based on button index
-            // Each button: 32px margin top + 62px height + 30px margin bottom = 124px spacing
+
             double targetY = buttonIndex * 124;
-            
+
             if (_reducedMotion)
             {
-                // No animation for reduced motion - instant position change
                 NavIndicatorTransform.Y = targetY;
                 return;
             }
-            
-            // Check if position is already correct to avoid unnecessary animations
+
             if (Math.Abs(NavIndicatorTransform.Y - targetY) < 1.0)
                 return;
-            
-            // Smooth animation for normal performance
-            var animation = new DoubleAnimation
-            {
-                To = targetY,
-                Duration = TimeSpan.FromMilliseconds(300),
-                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
-            };
-            
-            // Enable hardware acceleration for better performance
-            Timeline.SetDesiredFrameRate(animation, 60);
-            
-            NavIndicatorTransform.BeginAnimation(TranslateTransform.YProperty, animation);
+
+            _targetNavIndicatorY = targetY;
+            _isNavigating = true;
+            HookRendering();
         }
 
         private void UpdateProfileView()
         {
             if (ProfileViewGrid?.Visibility != Visibility.Visible) return;
-            
-            // Update profile information
+
             if (ProfileUsernameText != null) ProfileUsernameText.Text = loggedInUsername;
             if (ProfileHighestScoreText != null) ProfileHighestScoreText.Text = loggedInUserHighestScore.ToString();
             if (ProfileUserIdText != null) ProfileUserIdText.Text = loggedInUserId.ToString();
             if (ProfileRankText != null) ProfileRankText.Text = GetUserRank(loggedInUserHighestScore);
-            if (ProfileJoinDateText != null) 
+            if (ProfileJoinDateText != null)
             {
                 if (DateTime.TryParse(loggedInUserCreatedAt, out DateTime joinDate))
                 {
