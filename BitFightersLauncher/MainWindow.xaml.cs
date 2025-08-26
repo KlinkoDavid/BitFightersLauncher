@@ -102,11 +102,82 @@ namespace BitFightersLauncher
 
         public void Logout()
         {
-            // Clear saved login and return to login screen
-            AuthStorage.Clear();
-            var loginWindow = new LoginWindow();
-            loginWindow.Show();
-            this.Close();
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("Logout() metódus kezdete");
+                
+                // Disable the shutdown mode temporarily
+                var originalShutdownMode = Application.Current.ShutdownMode;
+                Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                
+                // Csak kijelentkezés, NE töröljük a mentett adatokat
+                // A felhasználó dönthet, hogy szeretné-e megtartani az "Emlékezzen rám" beállítást
+                var loginWindow = new LoginWindow();
+                System.Diagnostics.Debug.WriteLine("LoginWindow létrehozva");
+                
+                // Subscribe to login events
+                loginWindow.LoginSucceeded += LoginWindow_LoginSucceeded;
+                loginWindow.LoginCancelled += LoginWindow_LoginCancelled;
+                System.Diagnostics.Debug.WriteLine("Login event handlerek hozzáadva");
+                
+                // Set the login window as the main window BEFORE showing it
+                Application.Current.MainWindow = loginWindow;
+                System.Diagnostics.Debug.WriteLine("LoginWindow beállítva MainWindow-ként");
+                
+                System.Diagnostics.Debug.WriteLine("LoginWindow.Show() hívás...");
+                loginWindow.Show();
+                
+                // Restore shutdown mode
+                Application.Current.ShutdownMode = originalShutdownMode;
+                
+                System.Diagnostics.Debug.WriteLine("MainWindow.Close() hívás...");
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Hiba a Logout() metódusban: {ex.Message}");
+                MessageBox.Show($"Hiba a kijelentkezés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void LoginWindow_LoginSucceeded(object? sender, LoginEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("LoginWindow_LoginSucceeded kezdete");
+                
+                // Create and show new main window
+                var mainWindow = new MainWindow();
+                mainWindow.SetUserInfo(e.Username, e.UserId, e.UserCreatedAt);
+                
+                // Set new main window
+                Application.Current.MainWindow = mainWindow;
+                System.Diagnostics.Debug.WriteLine("Új MainWindow beállítva");
+                
+                mainWindow.Show();
+                System.Diagnostics.Debug.WriteLine("Új MainWindow megjelenítve");
+                
+                // Close login window
+                if (sender is LoginWindow loginWindow)
+                {
+                    loginWindow.Close();
+                    System.Diagnostics.Debug.WriteLine("LoginWindow bezárva");
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"Újra bejelentkezés sikeres: {e.Username}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Hiba az újra bejelentkezésnél: {ex.Message}");
+                MessageBox.Show($"Hiba az újra bejelentkezésnél: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                Application.Current.Shutdown();
+            }
+        }
+
+        private void LoginWindow_LoginCancelled(object? sender, EventArgs e)
+        {
+            // Ha a felhasználó mégsem akar bejelentkezni, lépjen ki az alkalmazásból
+            Application.Current.Shutdown();
         }
 
         private void UpdateBorderClip()
@@ -285,8 +356,23 @@ namespace BitFightersLauncher
 
         private void LogoutExitMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            AuthStorage.Clear();
-            Application.Current.Shutdown();
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("Kijelentkezés gombra nyomás...");
+                
+                // Teljes kijelentkezés: törli a mentett adatokat
+                AuthStorage.Clear();
+                System.Diagnostics.Debug.WriteLine("AuthStorage törölve");
+                
+                // Visszatér a LoginWindow-hoz
+                System.Diagnostics.Debug.WriteLine("Logout() metódus hívása...");
+                Logout();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Hiba a kijelentkezés során: {ex.Message}");
+                MessageBox.Show($"Hiba a kijelentkezés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void CheckGameInstallStatus()

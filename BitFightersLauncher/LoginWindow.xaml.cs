@@ -28,10 +28,22 @@ namespace BitFightersLauncher
         public string created_at { get; set; } = string.Empty;
     }
 
+    // Event args for login events
+    public class LoginEventArgs : EventArgs
+    {
+        public string Username { get; set; } = string.Empty;
+        public int UserId { get; set; }
+        public string UserCreatedAt { get; set; } = string.Empty;
+    }
+
     public partial class LoginWindow : Window
     {
         // MySQL Proxy API
         private const string ApiUrl = "https://bitfighters.eu/api/mysql_proxy.php";
+        
+        // Events for login success/failure
+        public event EventHandler<LoginEventArgs>? LoginSucceeded;
+        public event EventHandler? LoginCancelled;
         
         public bool LoginSuccessful { get; private set; } = false;
         public string LoggedInUsername { get; private set; } = string.Empty;
@@ -135,7 +147,8 @@ namespace BitFightersLauncher
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            Application.Current.Shutdown();
+            // Raise login cancelled event instead of shutting down directly
+            LoginCancelled?.Invoke(this, EventArgs.Empty);
         }
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
@@ -163,8 +176,14 @@ namespace BitFightersLauncher
                     SaveLogin(username, password, rememberMe);
                     
                     LoginSuccessful = true;
-                    this.DialogResult = true;
-                    this.Close();
+                    
+                    // Fire login succeeded event instead of setting DialogResult
+                    LoginSucceeded?.Invoke(this, new LoginEventArgs 
+                    { 
+                        Username = LoggedInUsername, 
+                        UserId = UserId, 
+                        UserCreatedAt = UserCreatedAt 
+                    });
                 }
                 else
                 {

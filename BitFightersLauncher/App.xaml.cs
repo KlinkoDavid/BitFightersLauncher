@@ -23,19 +23,47 @@ namespace BitFightersLauncher
 
             try
             {
-                // Most újra az eredeti LoginWindow-t próbáljuk
-                var loginWindow = new LoginWindow();
+                // Ellenőrizzük, hogy van-e mentett bejelentkezési adat "Emlékezzen rám" beállítással
+                var savedLogin = AuthStorage.Load();
                 
-                System.Diagnostics.Debug.WriteLine("LoginWindow létrehozva");
-                
-                // Beállítjuk főablakként
-                this.MainWindow = loginWindow;
-                this.ShutdownMode = ShutdownMode.OnMainWindowClose;
-                
-                // Megjelenítjük
-                loginWindow.Show();
-                
-                System.Diagnostics.Debug.WriteLine("LoginWindow.Show() meghívva");
+                if (savedLogin != null && savedLogin.RememberMe && 
+                    !string.IsNullOrEmpty(savedLogin.Username) && 
+                    savedLogin.UserId > 0)
+                {
+                    // Van mentett adat és "Emlékezzen rám" be van kapcsolva
+                    // Közvetlenül a főablakot nyitjuk meg
+                    System.Diagnostics.Debug.WriteLine($"Auto-login: {savedLogin.Username}");
+                    
+                    var mainWindow = new MainWindow();
+                    mainWindow.SetUserInfo(savedLogin.Username, savedLogin.UserId, savedLogin.UserCreatedAt);
+                    
+                    this.MainWindow = mainWindow;
+                    this.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                    mainWindow.Show();
+                    
+                    System.Diagnostics.Debug.WriteLine("Főablak megnyitva auto-login-nal");
+                }
+                else
+                {
+                    // Nincs mentett adat vagy nincs "Emlékezzen rám" bekapcsolva
+                    // Normál bejelentkezési folyamat
+                    var loginWindow = new LoginWindow();
+                    
+                    // Subscribe to login events
+                    loginWindow.LoginSucceeded += LoginWindow_LoginSucceeded;
+                    loginWindow.LoginCancelled += LoginWindow_LoginCancelled;
+                    
+                    System.Diagnostics.Debug.WriteLine("LoginWindow létrehozva");
+                    
+                    // Set as main window
+                    this.MainWindow = loginWindow;
+                    this.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                    
+                    // Show the login window
+                    loginWindow.Show();
+                    
+                    System.Diagnostics.Debug.WriteLine("LoginWindow.Show() meghívva");
+                }
             }
             catch (Exception ex)
             {
@@ -43,6 +71,46 @@ namespace BitFightersLauncher
                 MessageBox.Show($"Hiba az ablak létrehozásakor: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
             }
+        }
+
+        private void LoginWindow_LoginSucceeded(object? sender, LoginEventArgs e)
+        {
+            try
+            {
+                // Close login window
+                if (sender is LoginWindow loginWindow)
+                {
+                    loginWindow.Hide();
+                }
+                
+                // Create and show main window
+                var mainWindow = new MainWindow();
+                mainWindow.SetUserInfo(e.Username, e.UserId, e.UserCreatedAt);
+                
+                // Set new main window
+                this.MainWindow = mainWindow;
+                mainWindow.Show();
+                
+                // Close login window
+                if (sender is LoginWindow loginWin)
+                {
+                    loginWin.Close();
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"Sikeres bejelentkezés: {e.Username}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Hiba a főablak megnyitásakor: {ex.Message}");
+                MessageBox.Show($"Hiba a főablak megnyitásakor: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+            }
+        }
+
+        private void LoginWindow_LoginCancelled(object? sender, EventArgs e)
+        {
+            // User cancelled login, shutdown application
+            Shutdown();
         }
 
         private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

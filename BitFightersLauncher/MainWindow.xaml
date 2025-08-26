@@ -450,13 +450,13 @@
 
                                     <MenuItem Style="{StaticResource BaseMenuItemStyle}"
                                               Header="Kilépés"
-                                              ToolTip="Program bezárása"
+                                              ToolTip="Program bezárása bejelentkezve maradással"
                                               Tag="&#xE711;"
                                               Click="ExitOnlyMenuItem_Click"/>
 
                                     <MenuItem Style="{StaticResource DangerMenuItemStyle}"
-                                              Header="Kilépés és kijelentkezés"
-                                              ToolTip="Kilépés előtt kijelentkezés"
+                                              Header="Kijelentkezés"
+                                              ToolTip="Adatok törlése és visszatérés a bejelentkezési képernyőhöz"
                                               Tag="&#xE7E8;"
                                               Click="LogoutExitMenuItem_Click"/>
                                 </ContextMenu>

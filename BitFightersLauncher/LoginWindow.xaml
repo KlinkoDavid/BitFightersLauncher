@@ -68,7 +68,7 @@
         </Border.Background>
         <!-- Visszatettem a szép shadow-t is -->
         <Border.Effect>
-            <DropShadowEffect Color="#000000" BlurRadius="40" ShadowDepth="0" Opacity="0.8"/>
+            <DropShadowEffect Color="#000000" BlurRadius="0" ShadowDepth="0" Opacity="1"/>
         </Border.Effect>
 
         <!-- Ambient Light Effect - még menőbb fényjáték! -->
