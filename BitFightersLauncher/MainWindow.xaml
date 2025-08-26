@@ -476,29 +476,39 @@
 
                     <!-- Navigation Panel -->
                     <Border Grid.Column="0" CornerRadius="0,0,0,17" Margin="0,2,0,0" Background="Transparent">
-                        <StackPanel VerticalAlignment="Stretch" Margin="0,2,0,0">
-                            <StackPanel.Resources>
-                                <Style x:Key="NavButtonStyle" TargetType="Button">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="BorderBrush" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#FFFFA726"/>
-                                    <Setter Property="FontSize" Value="32"/>
-                                    <Setter Property="Margin" Value="0,32,0,30"/>
-                                    <Setter Property="Cursor" Value="Hand"/>
-                                </Style>
-                            </StackPanel.Resources>
-                            <Button Style="{StaticResource NavButtonStyle}" Content="&#xE80F;" FontFamily="Segoe MDL2 Assets" ToolTip="Home" Width="37"/>
-                            <Button Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings" Width="37"/>
-                            <Button Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star" Width="37"/>
-                            <Button Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Width="37"/>
-                            <Button Style="{StaticResource NavButtonStyle}" Content="&#xE896;" FontFamily="Segoe MDL2 Assets" ToolTip="Download" Width="37"/>
-                        </StackPanel>
+                        <Grid>
+                            <StackPanel x:Name="NavButtonsPanel" VerticalAlignment="Stretch" Margin="0,2,0,0">
+                                <StackPanel.Resources>
+                                    <Style x:Key="NavButtonStyle" TargetType="Button">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="#FFFFA726"/>
+                                        <Setter Property="FontSize" Value="32"/>
+                                        <Setter Property="Margin" Value="0,32,0,30"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Height" Value="62"/>
+                                        <Setter Property="Width" Value="37"/>
+                                    </Style>
+                                </StackPanel.Resources>
+                                <Button x:Name="HomeNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE80F;" FontFamily="Segoe MDL2 Assets" ToolTip="Home" Click="HomeButton_Click"/>
+                                <Button x:Name="SettingsNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings"/>
+                                <Button x:Name="StarNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star"/>
+                                <Button x:Name="ProfileNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Click="ProfileButton_Click"/>
+                                <Button x:Name="DownloadNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE896;" FontFamily="Segoe MDL2 Assets" ToolTip="Download"/>
+                            </StackPanel>
+                            
+                            <!-- Animated Navigation Indicator -->
+                            <Rectangle x:Name="NavIndicator" Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" 
+                                     HorizontalAlignment="Right" Margin="0,28,0,509">
+                                <Rectangle.RenderTransform>
+                                    <TranslateTransform x:Name="NavIndicatorTransform" Y="0"/>
+                                </Rectangle.RenderTransform>
+                                <Rectangle.Effect>
+                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="12" ShadowDepth="0" Opacity="1.2"/>
+                                </Rectangle.Effect>
+                            </Rectangle>
+                        </Grid>
                     </Border>
-                    <Rectangle Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" Margin="114,16,0,525">
-                        <Rectangle.Effect>
-                            <DropShadowEffect Color="#FFFFA726" BlurRadius="12" ShadowDepth="0" Opacity="1.2"/>
-                        </Rectangle.Effect>
-                    </Rectangle>
 
                     <!-- Main Action Button Area -->
                     <Grid Grid.Column="1">
@@ -507,6 +517,7 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         
+                        <!-- Home View - Action Button -->
                         <Button x:Name="ActionButton" Cursor="Hand" Click="HandleActionButton_Click" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5" Width="310" Height="310" Margin="324,0,0,0">
                             <Button.RenderTransform>
                                 <TransformGroup>
@@ -580,44 +591,95 @@
                             </Viewbox>
                         </Button>
                         
-                        <!-- Download Progress -->
-                        <Grid x:Name="DownloadStatusGrid" Grid.Row="0" VerticalAlignment="Bottom" Margin="200,0,-120,40" Visibility="Collapsed">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Border Grid.RowSpan="2" Background="#991c1e22" CornerRadius="10" BorderBrush="#A7FFA726" BorderThickness="3">
-                                <Border.Effect>
-                                    <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="0" Opacity="0.5"/>
-                                </Border.Effect>
-                            </Border>
-                            <Grid Grid.Row="0" Margin="15,10">
-                                <TextBlock x:Name="DownloadStatusText" Text="Letoltes..." Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="ProgressDetailsText" Text="0 MB / 0 MB" Foreground="#CCCCCC" FontSize="14" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                            </Grid>
-                            <Grid Grid.Row="1" Margin="15,0,15,15">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <ProgressBar x:Name="DownloadProgressBar" VerticalAlignment="Center" Height="10">
-                                    <ProgressBar.Style>
-                                        <Style TargetType="ProgressBar">
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="ProgressBar">
-                                                        <Grid>
-                                                            <Border x:Name="PART_Track" CornerRadius="5" Background="#55ffe59f"/>
-                                                            <Border x:Name="PART_Indicator" CornerRadius="5" Background="#FFFFA726" HorizontalAlignment="Left"/>
-                                                        </Grid>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </ProgressBar.Style>
-                                </ProgressBar>
-                                <TextBlock x:Name="ProgressPercentageText" Text="0%" Grid.Column="1" Foreground="White" FontWeight="Bold" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                            </Grid>
+                        <!-- Profile View -->
+                        <Grid x:Name="ProfileViewGrid" Grid.Row="0" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <StackPanel Width="600">
+                                <!-- Profile Header -->
+                                <Border Background="#22FFFFFF" CornerRadius="20" Padding="30" Margin="0,0,0,30">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="15" ShadowDepth="0" Opacity="0.3"/>
+                                    </Border.Effect>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <!-- Profile Picture -->
+                                        <Border Grid.Column="0" Width="120" Height="120" CornerRadius="60" 
+                                                Background="#FFFFA726" Margin="0,0,30,0">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="#FFFFA726" BlurRadius="20" ShadowDepth="0" Opacity="0.8"/>
+                                            </Border.Effect>
+                                            <TextBlock Text="👤" FontSize="60" HorizontalAlignment="Center" 
+                                                     VerticalAlignment="Center" Foreground="#FF1A1C20"/>
+                                        </Border>
+                                        
+                                        <!-- Profile Info -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock x:Name="ProfileUsernameText" Text="Felhasználó" 
+                                                     FontSize="32" FontWeight="Bold" Foreground="#FFFFA726" 
+                                                     Margin="0,0,0,10">
+                                                <TextBlock.Effect>
+                                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
+                                                </TextBlock.Effect>
+                                            </TextBlock>
+                                            
+                                            <TextBlock x:Name="ProfileRankText" Text="🔰 Kezdő" 
+                                                     FontSize="18" FontWeight="SemiBold" Foreground="White" 
+                                                     Margin="0,0,0,5"/>
+                                            
+                                            <TextBlock x:Name="ProfileJoinDateText" Text="Csatlakozás: 2024" 
+                                                     FontSize="14" Foreground="#CCCCCC"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                                
+                                <!-- Stats Cards -->
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="20"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Highest Score Card -->
+                                    <Border Grid.Column="0" Background="#22FFFFFF" CornerRadius="15" Padding="25">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                                        </Border.Effect>
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="🏆" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                            <TextBlock Text="Legmagasabb pontszám" FontSize="16" FontWeight="SemiBold" 
+                                                     Foreground="#FFFFA726" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                            <TextBlock x:Name="ProfileHighestScoreText" Text="0" FontSize="28" FontWeight="Bold" 
+                                                     Foreground="White" HorizontalAlignment="Center">
+                                                <TextBlock.Effect>
+                                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="5" ShadowDepth="0" Opacity="0.8"/>
+                                                </TextBlock.Effect>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+                                    
+                                    <!-- User ID Card -->
+                                    <Border Grid.Column="2" Background="#22FFFFFF" CornerRadius="15" Padding="25">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                                        </Border.Effect>
+                                        <StackPanel HorizontalAlignment="Center">
+                                            <TextBlock Text="🆔" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                            <TextBlock Text="Felhasználó ID" FontSize="16" FontWeight="SemiBold" 
+                                                     Foreground="#FFFFA726" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                            <TextBlock x:Name="ProfileUserIdText" Text="0" FontSize="28" FontWeight="Bold" 
+                                                     Foreground="White" HorizontalAlignment="Center">
+                                                <TextBlock.Effect>
+                                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="5" ShadowDepth="0" Opacity="0.8"/>
+                                                </TextBlock.Effect>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                            </StackPanel>
                         </Grid>
                     </Grid>
 

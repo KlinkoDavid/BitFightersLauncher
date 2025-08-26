@@ -58,6 +58,10 @@ namespace BitFightersLauncher
         private string loggedInUsername = string.Empty;
         private int loggedInUserId = 0;
         private string loggedInUserCreatedAt = string.Empty;
+        private int loggedInUserHighestScore = 0; // Új mez? a legmagasabb pontszámhoz
+
+        // Navigation state
+        private string currentView = "home"; // Track current view: "home", "profile", etc.
 
         public MainWindow()
         {
@@ -79,6 +83,15 @@ namespace BitFightersLauncher
                 CheckGameInstallStatus();
                 await LoadNewsUpdatesAsync();
                 ApplyPerformanceModeIfNeeded();
+                
+                // Set default view to home
+                ShowHomeView();
+                
+                // Initialize navigation indicator position
+                if (NavIndicatorTransform != null)
+                {
+                    NavIndicatorTransform.Y = 0; // Home position
+                }
             };
         }
 
@@ -98,6 +111,29 @@ namespace BitFightersLauncher
             }
             
             Debug.WriteLine($"Bejelentkezett felhasználó: {username} (ID: {userId}, Created: {createdAt})");
+            
+            // Load user's highest score (ezt kés?bb API-ból töltjük be)
+            LoadUserProfile();
+        }
+
+        private async void LoadUserProfile()
+        {
+            try
+            {
+                // Itt kés?bb API hívás lesz a felhasználó pontszámáért
+                // Most példa adatot használunk
+                loggedInUserHighestScore = 1250; // Példa pontszám
+                
+                // Ha profil nézet aktív, frissítsük a megjelenítést
+                if (currentView == "profile")
+                {
+                    UpdateProfileView();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Hiba a profil betöltésekor: {ex.Message}");
+            }
         }
 
         public void Logout()
@@ -208,6 +244,13 @@ namespace BitFightersLauncher
             // Performance mode esetén tüntessük el a nyilakat
             if (TopScrollIndicator != null) TopScrollIndicator.Visibility = Visibility.Collapsed;
             if (BottomScrollIndicator != null) BottomScrollIndicator.Visibility = Visibility.Collapsed;
+
+            // Reduce navigation indicator glow for better performance
+            if (NavIndicator?.Effect is DropShadowEffect navGlow)
+            {
+                navGlow.BlurRadius = 6; // Reduced from 12
+                navGlow.Opacity = 0.8; // Reduced from 1.2
+            }
 
             RemoveDropShadows(this);
         }
@@ -398,6 +441,9 @@ namespace BitFightersLauncher
 
         private async void HandleActionButton_Click(object sender, RoutedEventArgs e)
         {
+            // Only handle downloads in home view
+            if (currentView != "home") return;
+            
             switch (ButtonText.Text)
             {
                 case "LETÖLTÉS":
@@ -411,17 +457,29 @@ namespace BitFightersLauncher
 
         private async Task DownloadAndInstallGameAsync()
         {
+            // Only allow downloads in home view
+            if (currentView != "home") return;
+            
             var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "Válassza ki a telepítési mappát" };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 gameInstallPath = dialog.FileName;
                 ActionButton.IsEnabled = false;
                 ButtonText.Text = "FOLYAMATBAN";
-                DownloadStatusGrid.Visibility = Visibility.Visible;
-                DownloadProgressBar.IsIndeterminate = false;
-                DownloadStatusText.Text = "Letöltés elõkészítése...";
-                ProgressPercentageText.Text = "0%";
-                ProgressDetailsText.Text = "";
+                
+                // Safe access to download elements
+                var downloadGrid = this.FindName("DownloadStatusGrid") as Grid;
+                var downloadBar = this.FindName("DownloadProgressBar") as ProgressBar;
+                var downloadStatusText = this.FindName("DownloadStatusText") as TextBlock;
+                var progressPercentageText = this.FindName("ProgressPercentageText") as TextBlock;
+                var progressDetailsText = this.FindName("ProgressDetailsText") as TextBlock;
+                
+                if (downloadGrid != null) downloadGrid.Visibility = Visibility.Visible;
+                if (downloadBar != null) downloadBar.IsIndeterminate = false;
+                if (downloadStatusText != null) downloadStatusText.Text = "Letöltés el?készítése...";
+                if (progressPercentageText != null) progressPercentageText.Text = "0%";
+                if (progressDetailsText != null) progressDetailsText.Text = "";
+                
                 string tempDownloadPath = Path.Combine(Path.GetTempPath(), "game.zip");
 
                 try
@@ -466,10 +524,10 @@ namespace BitFightersLauncher
                                     {
                                         Dispatcher.Invoke(() =>
                                         {
-                                            DownloadProgressBar.Value = progressPercentage;
-                                            ProgressPercentageText.Text = $"{progressPercentage}%";
-                                            ProgressDetailsText.Text = detailsText;
-                                            DownloadStatusText.Text = $"Letöltés... {speedText}";
+                                            if (downloadBar != null) downloadBar.Value = progressPercentage;
+                                            if (progressPercentageText != null) progressPercentageText.Text = $"{progressPercentage}%";
+                                            if (progressDetailsText != null) progressDetailsText.Text = detailsText;
+                                            if (downloadStatusText != null) downloadStatusText.Text = $"Letöltés... {speedText}";
                                         });
                                         lastUiUpdate = DateTime.Now;
                                     }
@@ -480,10 +538,10 @@ namespace BitFightersLauncher
 
                     Dispatcher.Invoke(() =>
                     {
-                        DownloadStatusText.Text = "Telepítés...";
-                        ProgressPercentageText.Text = "";
-                        ProgressDetailsText.Text = "Kicsomagolás...";
-                        DownloadProgressBar.IsIndeterminate = true;
+                        if (downloadStatusText != null) downloadStatusText.Text = "Telepítés...";
+                        if (progressPercentageText != null) progressPercentageText.Text = "";
+                        if (progressDetailsText != null) progressDetailsText.Text = "Kicsomagolás...";
+                        if (downloadBar != null) downloadBar.IsIndeterminate = true;
                     });
 
                     await InstallGameAsync(tempDownloadPath);
@@ -495,9 +553,12 @@ namespace BitFightersLauncher
                 finally
                 {
                     ActionButton.IsEnabled = true;
-                    DownloadStatusGrid.Visibility = Visibility.Collapsed;
-                    DownloadProgressBar.IsIndeterminate = false;
-                    DownloadProgressBar.Value = 0;
+                    if (downloadGrid != null) downloadGrid.Visibility = Visibility.Collapsed;
+                    if (downloadBar != null) 
+                    {
+                        downloadBar.IsIndeterminate = false;
+                        downloadBar.Value = 0;
+                    }
                     CheckGameInstallStatus();
                 }
             }
@@ -702,6 +763,112 @@ namespace BitFightersLauncher
         {
             TopScrollIndicator.Opacity = (e.VerticalOffset > 0) ? 1 : 0;
             BottomScrollIndicator.Opacity = (e.VerticalOffset < NewsScrollViewer.ScrollableHeight - 1) ? 1 : 0;
+        }
+
+        private void ShowHomeView()
+        {
+            currentView = "home";
+            
+            // Show home elements
+            if (ActionButton != null) ActionButton.Visibility = Visibility.Visible;
+            
+            // Hide profile elements
+            if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
+            
+            // Animate navigation indicator to Home position (first button)
+            AnimateNavIndicator(0);
+        }
+
+        private void ShowProfileView()
+        {
+            currentView = "profile";
+            
+            // Hide home elements
+            if (ActionButton != null) ActionButton.Visibility = Visibility.Collapsed;
+            
+            // Show profile elements
+            if (ProfileViewGrid != null) 
+            {
+                ProfileViewGrid.Visibility = Visibility.Visible;
+                UpdateProfileView();
+            }
+            
+            // Animate navigation indicator to Profile position (fourth button)
+            AnimateNavIndicator(3);
+        }
+
+        private void AnimateNavIndicator(int buttonIndex)
+        {
+            if (NavIndicatorTransform == null) return;
+            
+            // Calculate Y position based on button index
+            // Each button: 32px margin top + 62px height + 30px margin bottom = 124px spacing
+            double targetY = buttonIndex * 124;
+            
+            if (_reducedMotion)
+            {
+                // No animation for reduced motion - instant position change
+                NavIndicatorTransform.Y = targetY;
+                return;
+            }
+            
+            // Check if position is already correct to avoid unnecessary animations
+            if (Math.Abs(NavIndicatorTransform.Y - targetY) < 1.0)
+                return;
+            
+            // Smooth animation for normal performance
+            var animation = new DoubleAnimation
+            {
+                To = targetY,
+                Duration = TimeSpan.FromMilliseconds(300),
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+            };
+            
+            // Enable hardware acceleration for better performance
+            Timeline.SetDesiredFrameRate(animation, 60);
+            
+            NavIndicatorTransform.BeginAnimation(TranslateTransform.YProperty, animation);
+        }
+
+        private void UpdateProfileView()
+        {
+            if (ProfileViewGrid?.Visibility != Visibility.Visible) return;
+            
+            // Update profile information
+            if (ProfileUsernameText != null) ProfileUsernameText.Text = loggedInUsername;
+            if (ProfileHighestScoreText != null) ProfileHighestScoreText.Text = loggedInUserHighestScore.ToString();
+            if (ProfileUserIdText != null) ProfileUserIdText.Text = loggedInUserId.ToString();
+            if (ProfileRankText != null) ProfileRankText.Text = GetUserRank(loggedInUserHighestScore);
+            if (ProfileJoinDateText != null) 
+            {
+                if (DateTime.TryParse(loggedInUserCreatedAt, out DateTime joinDate))
+                {
+                    ProfileJoinDateText.Text = $"Csatlakozás: {joinDate:yyyy. MMMM dd.}";
+                }
+                else
+                {
+                    ProfileJoinDateText.Text = "Csatlakozás: Ismeretlen";
+                }
+            }
+        }
+
+        private string GetUserRank(int score)
+        {
+            if (score >= 2000) return "?? Mester";
+            if (score >= 1500) return "?? Haladó";
+            if (score >= 1000) return "?? Tapasztalt";
+            if (score >= 500) return "?? Kezd?+";
+            return "?? Kezd?";
+        }
+
+        private void ProfileButton_Click(object sender, RoutedEventArgs e)
+        {
+            ShowProfileView();
+        }
+
+        private void HomeButton_Click(object sender, RoutedEventArgs e)
+        {
+            ShowHomeView();
         }
     }
 }
