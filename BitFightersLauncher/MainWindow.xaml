@@ -526,52 +526,24 @@
                                                         </ContentPresenter.Effect>
                                                     </ContentPresenter>
                                                     <ControlTemplate.Triggers>
-                                                        <MultiTrigger>
-                                                            <MultiTrigger.Conditions>
-                                                                <Condition Property="IsMouseOver" Value="True" />
-                                                                <Condition Property="Tag" Value="{x:Null}" />
-                                                            </MultiTrigger.Conditions>
-                                                            <MultiTrigger.EnterActions>
-                                                                <BeginStoryboard Name="HoverIn">
-                                                                    <Storyboard>
-                                                                        <ColorAnimation Storyboard.TargetProperty="Foreground.Color" To="White" Duration="0:0:0.2"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Opacity" To="1" Duration="0:0:0.2"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).BlurRadius" To="15" Duration="0:0:0.2"/>
-                                                                        <ColorAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Color" To="White" Duration="0:0:0.2"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </MultiTrigger.EnterActions>
-                                                            <MultiTrigger.ExitActions>
-                                                                <BeginStoryboard Name="HoverOut">
-                                                                    <Storyboard>
-                                                                        <ColorAnimation Storyboard.TargetProperty="Foreground.Color" To="#FFFFA726" Duration="0:0:0.3"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Opacity" To="0" Duration="0:0:0.3"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).BlurRadius" To="0" Duration="0:0:0.3"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </MultiTrigger.ExitActions>
-                                                        </MultiTrigger>
+                                                        <!-- Active state trigger - alapértelmezett fehér állapot aktív gomboknál -->
                                                         <Trigger Property="Tag" Value="Active">
-                                                            <Trigger.EnterActions>
-                                                                <StopStoryboard BeginStoryboardName="HoverOut"/>
-                                                                <BeginStoryboard Name="Activate">
-                                                                    <Storyboard>
-                                                                        <ColorAnimation Storyboard.TargetProperty="Foreground.Color" To="White" Duration="0:0:0.1"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Opacity" To="1" Duration="0:0:0.1"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).BlurRadius" To="15" Duration="0:0:0.1"/>
-                                                                        <ColorAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Color" To="White" Duration="0:0:0.1"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.EnterActions>
-                                                            <Trigger.ExitActions>
-                                                                <BeginStoryboard Name="Deactivate">
-                                                                    <Storyboard>
-                                                                        <ColorAnimation Storyboard.TargetProperty="Foreground.Color" To="#FFFFA726" Duration="0:0:0.3"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Opacity" To="0" Duration="0:0:0.3"/>
-                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).BlurRadius" To="0" Duration="0:0:0.3"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.ExitActions>
+                                                            <Setter Property="Foreground" Value="White"/>
+                                                            <Setter TargetName="contentPresenter" Property="Effect">
+                                                                <Setter.Value>
+                                                                    <DropShadowEffect Color="White" BlurRadius="15" ShadowDepth="0" Opacity="1"/>
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                        </Trigger>
+                                                        
+                                                        <!-- Hover effect MINDEN gombra (aktív és inaktív is) -->
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Foreground" Value="White"/>
+                                                            <Setter TargetName="contentPresenter" Property="Effect">
+                                                                <Setter.Value>
+                                                                    <DropShadowEffect Color="White" BlurRadius="20" ShadowDepth="0" Opacity="1.3"/>
+                                                                </Setter.Value>
+                                                            </Setter>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -797,27 +769,26 @@
                                                                 <DropShadowEffect Color="#FFFFA726" BlurRadius="20" ShadowDepth="0" Opacity="1.0"/>
                                                             </Rectangle.Effect>
                                                         </Rectangle>
-                                                        <Grid Grid.Column="1" Width="279" VerticalAlignment="Center">
-                                                            <StackPanel>
-                                                                <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="Bold" FontSize="15" 
-                                                                           TextWrapping="Wrap" HorizontalAlignment="Left"
-                                                                           UseLayoutRounding="True" SnapsToDevicePixels="True"
-                                                                           TextOptions.TextFormattingMode="Display"
-                                                                           TextOptions.TextRenderingMode="ClearType"
-                                                                           TextOptions.TextHintingMode="Fixed"/>
-                                                                <TextBlock Text="{Binding ShortContent}" TextWrapping="Wrap" Foreground="#FFEEEEEE" 
-                                                                           FontSize="12" Margin="0,5,0,0"
-                                                                           UseLayoutRounding="True" SnapsToDevicePixels="True"
-                                                                           TextOptions.TextFormattingMode="Display"
-                                                                           TextOptions.TextRenderingMode="ClearType"
-                                                                           TextOptions.TextHintingMode="Fixed"/>
-                                                            </StackPanel>
+                                                        <Grid Grid.Column="1" Width="279" Height="{StaticResource NewsBarHeight}">
+                                                            <!-- Címe a híreknek - felül -->
+                                                            <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="Bold" FontSize="15" 
+                                                                       TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                                                       Margin="0,4,60,0"
+                                                                       UseLayoutRounding="True" SnapsToDevicePixels="True"
+                                                                       TextOptions.TextFormattingMode="Display"
+                                                                       TextOptions.TextRenderingMode="ClearType"
+                                                                       TextOptions.TextHintingMode="Fixed"/>
+                                                            <!-- Dátum - 7 pixellel jobbra (10-3=7) -->
                                                             <TextBlock Text="{Binding FormattedDate}" Foreground="#FFFFA726" FontSize="12" FontWeight="Bold" 
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,0"
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Bottom" 
+                                                                       Margin="0,0,8,-10"
                                                                        UseLayoutRounding="True" SnapsToDevicePixels="True"
                                                                        TextOptions.TextFormattingMode="Display"
                                                                        TextOptions.TextRenderingMode="ClearType"
                                                                        TextOptions.TextHintingMode="Fixed">
+                                                                <TextBlock.RenderTransform>
+                                                                    <TranslateTransform X="7" Y="0"/>
+                                                                </TextBlock.RenderTransform>
                                                                 <TextBlock.Effect>
                                                                     <DropShadowEffect Color="#FFFFA726" BlurRadius="1" ShadowDepth="0" Opacity="1.0"/>
                                                                 </TextBlock.Effect>

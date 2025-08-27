@@ -38,8 +38,8 @@ namespace BitFightersLauncher
 
     public partial class LoginWindow : Window
     {
-        // MySQL Proxy API
-        private const string ApiUrl = "https://bitfighters.eu/api/mysql_proxy.php";
+        // MySQL Proxy API - Updated to use the real database
+        private const string ApiUrl = "https://bitfighters.eu/api/Launcher/main_proxy.php";
 
         // Events for login success/failure
         public event EventHandler<LoginEventArgs>? LoginSucceeded;
