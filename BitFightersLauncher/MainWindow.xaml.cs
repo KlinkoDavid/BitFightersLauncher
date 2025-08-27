@@ -1,4 +1,4 @@
-using Microsoft.WindowsAPICodePack.Dialogs;
+Ôªøusing Microsoft.WindowsAPICodePack.Dialogs;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -108,7 +108,7 @@ namespace BitFightersLauncher
                 UsernameText.Text = username;
             }
 
-            Debug.WriteLine($"Bejelentkezett felhaszn·lÛ: {username} (ID: {userId}, Created: {createdAt})");
+            Debug.WriteLine($"Bejelentkezett felhaszn√°l√≥: {username} (ID: {userId}, Created: {createdAt})");
 
             LoadUserProfile();
         }
@@ -126,7 +126,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Hiba a profil betˆltÈsekor: {ex.Message}");
+                Debug.WriteLine($"Hiba a profil bet√∂lt√©sekor: {ex.Message}");
             }
         }
 
@@ -154,7 +154,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Hiba a kijelentkezÈs sor·n: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Hiba a kijelentkez√©s sor√°n: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -176,7 +176,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Hiba az ˙jra bejelentkezÈsnÈl: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Hiba az √∫jra bejelentkez√©sn√©l: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
                 Application.Current.Shutdown();
             }
         }
@@ -263,7 +263,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Hiba a be·llÌt·sok betˆltÈsekor: {ex.Message}");
+                Debug.WriteLine($"Hiba a be√°ll√≠t√°sok bet√∂lt√©sekor: {ex.Message}");
             }
         }
 
@@ -282,7 +282,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Hiba a szerver verziÛ betˆltÈsekor: {ex.Message}");
+                Debug.WriteLine($"Hiba a szerver verzi√≥ bet√∂lt√©sekor: {ex.Message}");
                 serverGameVersion = "Ismeretlen";
                 UpdateVersionDisplay();
             }
@@ -299,13 +299,13 @@ namespace BitFightersLauncher
 
                 if (gameInstalled)
                 {
-                    VersionStatusText.Text = "TelepÌtve";
+                    VersionStatusText.Text = "Telep√≠tve";
                     VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80));
                     UpdateIndicator.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
-                    VersionStatusText.Text = "Nincs telepÌtve";
+                    VersionStatusText.Text = "Nincs telep√≠tve";
                     VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204));
                     UpdateIndicator.Visibility = Visibility.Visible;
                     UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
@@ -322,7 +322,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                ShowNotification($"Hiba a mentÈs sor·n: {ex.Message}");
+                ShowNotification($"Hiba a ment√©s sor√°n: {ex.Message}");
             }
         }
 
@@ -370,7 +370,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Hiba a kijelentkezÈs sor·n: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Hiba a kijelentkez√©s sor√°n: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -385,11 +385,11 @@ namespace BitFightersLauncher
             if (!string.IsNullOrEmpty(executablePath))
             {
                 gameInstallPath = Path.GetDirectoryName(executablePath)!;
-                ButtonText.Text = "J¡T…K";
+                ButtonText.Text = "J√ÅT√âK";
             }
             else
             {
-                ButtonText.Text = "LET÷LT…S";
+                ButtonText.Text = "LET√ñLT√âS";
             }
 
             UpdateVersionDisplay();
@@ -401,10 +401,10 @@ namespace BitFightersLauncher
 
             switch (ButtonText.Text)
             {
-                case "LET÷LT…S":
+                case "LET√ñLT√âS":
                     await DownloadAndInstallGameAsync();
                     break;
-                case "J¡T…K":
+                case "J√ÅT√âK":
                     await StartGame();
                     break;
             }
@@ -414,7 +414,7 @@ namespace BitFightersLauncher
         {
             if (currentView != "home") return;
 
-            var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "V·lassza ki a telepÌtÈsi mapp·t" };
+            var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "V√°lassza ki a telep√≠t√©si mapp√°t" };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 gameInstallPath = dialog.FileName;
@@ -429,7 +429,7 @@ namespace BitFightersLauncher
 
                 if (downloadGrid != null) downloadGrid.Visibility = Visibility.Visible;
                 if (downloadBar != null) downloadBar.IsIndeterminate = false;
-                if (downloadStatusText != null) downloadStatusText.Text = "LetˆltÈs el?kÈszÌtÈse...";
+                if (downloadStatusText != null) downloadStatusText.Text = "Let√∂lt√©s el≈ëk√©sz√≠t√©se...";
                 if (progressPercentageText != null) progressPercentageText.Text = "0%";
                 if (progressDetailsText != null) progressDetailsText.Text = "";
 
@@ -480,7 +480,7 @@ namespace BitFightersLauncher
                                             if (downloadBar != null) downloadBar.Value = progressPercentage;
                                             if (progressPercentageText != null) progressPercentageText.Text = $"{progressPercentage}%";
                                             if (progressDetailsText != null) progressDetailsText.Text = detailsText;
-                                            if (downloadStatusText != null) downloadStatusText.Text = $"LetˆltÈs... {speedText}";
+                                            if (downloadStatusText != null) downloadStatusText.Text = $"Let√∂lt√©s... {speedText}";
                                         });
                                         lastUiUpdate = DateTime.Now;
                                     }
@@ -491,9 +491,9 @@ namespace BitFightersLauncher
 
                     Dispatcher.Invoke(() =>
                     {
-                        if (downloadStatusText != null) downloadStatusText.Text = "TelepÌtÈs...";
+                        if (downloadStatusText != null) downloadStatusText.Text = "Telep√≠t√©s...";
                         if (progressPercentageText != null) progressPercentageText.Text = "";
-                        if (progressDetailsText != null) progressDetailsText.Text = "Kicsomagol·s...";
+                        if (progressDetailsText != null) progressDetailsText.Text = "Kicsomagol√°s...";
                         if (downloadBar != null) downloadBar.IsIndeterminate = true;
                     });
 
@@ -501,7 +501,7 @@ namespace BitFightersLauncher
                 }
                 catch (Exception ex)
                 {
-                    ShowNotification($"Hiba a letˆltÈs sor·n: {ex.Message}");
+                    ShowNotification($"Hiba a let√∂lt√©s sor√°n: {ex.Message}");
                 }
                 finally
                 {
@@ -528,7 +528,7 @@ namespace BitFightersLauncher
                 }
                 catch (Exception ex)
                 {
-                    Dispatcher.Invoke(() => ShowNotification($"Hiba a telepÌtÈs sor·n: {ex.Message}"));
+                    Dispatcher.Invoke(() => ShowNotification($"Hiba a telep√≠t√©s sor√°n: {ex.Message}"));
                 }
                 finally
                 {
@@ -539,11 +539,11 @@ namespace BitFightersLauncher
             if (!string.IsNullOrEmpty(FindExecutable(gameInstallPath)))
             {
                 SaveInstallPath();
-                ShowNotification($"A j·tÈk sikeresen telepÌtve! VerziÛ: v{serverGameVersion}");
+                ShowNotification($"A j√°t√©k sikeresen telep√≠tve! Verzi√≥: v{serverGameVersion}");
             }
             else
             {
-                ShowNotification("Hiba: A futtathatÛ f·jl nem tal·lhatÛ a mapp·ban.");
+                ShowNotification("Hiba: A futtathat√≥ f√°jl nem tal√°lhat√≥ a mapp√°ban.");
                 if (File.Exists(settingsFilePath)) File.Delete(settingsFilePath);
                 gameInstallPath = string.Empty;
             }
@@ -590,7 +590,7 @@ namespace BitFightersLauncher
                 }
                 else
                 {
-                    ShowNotification("Hiba: A j·tÈkf·jl nem tal·lhatÛ.");
+                    ShowNotification("Hiba: A j√°t√©kf√°jl nem tal√°lhat√≥.");
                     if (File.Exists(settingsFilePath)) File.Delete(settingsFilePath);
                     gameInstallPath = string.Empty;
                     CheckGameInstallStatus();
@@ -598,7 +598,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                ShowNotification($"Hiba a j·tÈk indÌt·sa sor·n: {ex.Message}");
+                ShowNotification($"Hiba a j√°t√©k ind√≠t√°sa sor√°n: {ex.Message}");
             }
         }
 
@@ -623,8 +623,8 @@ namespace BitFightersLauncher
                         {
                             new NewsUpdate
                             {
-                                Title = "‹dvˆzˆlj¸k a BitFighters Launcher-ben!",
-                                Content = "A launcher sikeresen betˆltˆtt. Itt fognak megjelenni a legfrissebb hÌrek Ès frissÌtÈsek a j·tÈkrÛl.",
+                                Title = "√údv√∂z√∂lj√ºk a BitFighters Launcher-ben!",
+                                Content = "A launcher sikeresen bet√∂lt√∂tt. Itt fognak megjelenni a legfrissebb h√≠rek √©s friss√≠t√©sek a j√°t√©kr√≥l.",
                                 CreatedAt = DateTime.Now
                             }
                         };
@@ -649,8 +649,8 @@ namespace BitFightersLauncher
                 {
                     new NewsUpdate
                     {
-                        Title = "Hiba a hÌrek betˆltÈsekor",
-                        Content = "Nem siker¸lt elÈrni a szervert: " + ex.Message,
+                        Title = "Hiba a h√≠rek bet√∂lt√©sekor",
+                        Content = "Nem siker√ºlt el√©rni a szervert: " + ex.Message,
                         CreatedAt = DateTime.Now
                     }
                 };
@@ -734,13 +734,24 @@ namespace BitFightersLauncher
             BottomScrollIndicator.Opacity = (e.VerticalOffset < NewsScrollViewer.ScrollableHeight - 1) ? 1 : 0;
         }
 
+        private void ResetNavButtonStates()
+        {
+            HomeNavButton.Tag = null;
+            SettingsNavButton.Tag = null;
+            StarNavButton.Tag = null;
+            ProfileNavButton.Tag = null;
+            DownloadNavButton.Tag = null;
+        }
+
         private void ShowHomeView()
         {
             currentView = "home";
 
+            ResetNavButtonStates();
+            if (HomeNavButton != null) HomeNavButton.Tag = "Active";
+
             if (ActionButton != null) ActionButton.Visibility = Visibility.Visible;
             if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Visible;
-
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
 
             AnimateNavIndicator(0);
@@ -749,6 +760,9 @@ namespace BitFightersLauncher
         private void ShowProfileView()
         {
             currentView = "profile";
+
+            ResetNavButtonStates();
+            if (ProfileNavButton != null) ProfileNavButton.Tag = "Active";
 
             if (ActionButton != null) ActionButton.Visibility = Visibility.Collapsed;
             if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Collapsed;
@@ -794,22 +808,22 @@ namespace BitFightersLauncher
             {
                 if (DateTime.TryParse(loggedInUserCreatedAt, out DateTime joinDate))
                 {
-                    ProfileJoinDateText.Text = $"Csatlakoz·s: {joinDate:yyyy. MMMM dd.}";
+                    ProfileJoinDateText.Text = $"Csatlakoz√°s: {joinDate:yyyy. MMMM dd.}";
                 }
                 else
                 {
-                    ProfileJoinDateText.Text = "Csatlakoz·s: Ismeretlen";
+                    ProfileJoinDateText.Text = "Csatlakoz√°s: Ismeretlen";
                 }
             }
         }
 
         private string GetUserRank(int score)
         {
-            if (score >= 2000) return "?? Mester";
-            if (score >= 1500) return "?? HaladÛ";
-            if (score >= 1000) return "?? Tapasztalt";
-            if (score >= 500) return "?? Kezd?+";
-            return "?? Kezd?";
+            if (score >= 2000) return "üëë Mester";
+            if (score >= 1500) return "üèÜ Halad√≥";
+            if (score >= 1000) return "‚≠ê Tapasztalt";
+            if (score >= 500) return "üöÄ Kezd≈ë+";
+            return "üî∞ Kezd≈ë";
         }
 
         private void ProfileButton_Click(object sender, RoutedEventArgs e)

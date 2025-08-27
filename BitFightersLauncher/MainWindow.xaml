@@ -253,7 +253,7 @@
                                              TextOptions.TextHintingMode="Fixed"/>
                                 </StackPanel>
                                 <Border x:Name="UpdateIndicator" Width="8" Height="8" 
-                                        Background="#FF4CAF50" CornerRadius="4" 
+                                      Background="#FF4CAF50" CornerRadius="4" 
                                       Margin="8,0,0,0" VerticalAlignment="Center"
                                       Visibility="Collapsed">
                                     <Border.Effect>
@@ -370,8 +370,8 @@
                                                                     <BeginStoryboard>
                                                                         <Storyboard>
                                                                             <DoubleAnimation Storyboard.TargetName="bd" 
-                                                                                               Storyboard.TargetProperty="Opacity" 
-                                                                                               To="0.95" Duration="0:0:0.2"/>
+                                                                                             Storyboard.TargetProperty="Opacity" 
+                                                                                             To="0.95" Duration="0:0:0.2"/>
                                                                         </Storyboard>
                                                                     </BeginStoryboard>
                                                                 </Trigger.EnterActions>
@@ -379,8 +379,8 @@
                                                                     <BeginStoryboard>
                                                                         <Storyboard>
                                                                             <DoubleAnimation Storyboard.TargetName="bd" 
-                                                                                               Storyboard.TargetProperty="Opacity" 
-                                                                                               To="1.0" Duration="0:0:0.2"/>
+                                                                                             Storyboard.TargetProperty="Opacity" 
+                                                                                             To="1.0" Duration="0:0:0.2"/>
                                                                         </Storyboard>
                                                                     </BeginStoryboard>
                                                                 </Trigger.ExitActions>
@@ -399,7 +399,7 @@
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="MenuItem">
                                                         <Border x:Name="bd" Background="#19D32F2F" CornerRadius="8" Padding="16,14" Margin="8,4" MinWidth="280"
-                                                                  BorderBrush="Transparent" BorderThickness="2">
+                                                               BorderBrush="Transparent" BorderThickness="2">
                                                             <Grid>
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto"/>
@@ -423,8 +423,8 @@
                                                                     <BeginStoryboard>
                                                                         <Storyboard>
                                                                             <DoubleAnimation Storyboard.TargetName="bd" 
-                                                                                               Storyboard.TargetProperty="Opacity" 
-                                                                                               To="0.95" Duration="0:0:0.2"/>
+                                                                                             Storyboard.TargetProperty="Opacity" 
+                                                                                             To="0.95" Duration="0:0:0.2"/>
                                                                         </Storyboard>
                                                                     </BeginStoryboard>
                                                                 </Trigger.EnterActions>
@@ -432,8 +432,8 @@
                                                                     <BeginStoryboard>
                                                                         <Storyboard>
                                                                             <DoubleAnimation Storyboard.TargetName="bd" 
-                                                                                               Storyboard.TargetProperty="Opacity" 
-                                                                                               To="1.0" Duration="0:0:0.2"/>
+                                                                                             Storyboard.TargetProperty="Opacity" 
+                                                                                             To="1.0" Duration="0:0:0.2"/>
                                                                         </Storyboard>
                                                                     </BeginStoryboard>
                                                                 </Trigger.ExitActions>
@@ -490,30 +490,58 @@
                                                 <ControlTemplate TargetType="Button">
                                                     <ContentPresenter x:Name="contentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <ContentPresenter.Effect>
-                                                            <DropShadowEffect x:Name="glowEffect" Color="#FFFFA726" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
+                                                            <DropShadowEffect Color="#FFFFA726" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
                                                         </ContentPresenter.Effect>
                                                     </ContentPresenter>
                                                     <ControlTemplate.Triggers>
-                                                        <EventTrigger RoutedEvent="MouseEnter">
-                                                            <BeginStoryboard>
-                                                                <Storyboard>
-                                                                    <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" To="White" Duration="0:0:0.2"/>
-                                                                    <DoubleAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="BlurRadius" To="15" Duration="0:0:0.2"/>
-                                                                    <DoubleAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
-                                                                    <ColorAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="Color" To="White" Duration="0:0:0.2"/>
-                                                                </Storyboard>
-                                                            </BeginStoryboard>
-                                                        </EventTrigger>
-                                                        <EventTrigger RoutedEvent="MouseLeave">
-                                                            <BeginStoryboard>
-                                                                <Storyboard>
-                                                                    <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" To="#FFFFA726" Duration="0:0:0.3"/>
-                                                                    <DoubleAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="BlurRadius" To="0" Duration="0:0:0.3"/>
-                                                                    <DoubleAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.3"/>
-                                                                    <ColorAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="Color" To="#FFFFA726" Duration="0:0:0.3"/>
-                                                                </Storyboard>
-                                                            </BeginStoryboard>
-                                                        </EventTrigger>
+                                                        <MultiTrigger>
+                                                            <MultiTrigger.Conditions>
+                                                                <Condition Property="IsMouseOver" Value="True" />
+                                                                <Condition Property="Tag" Value="{x:Null}" />
+                                                            </MultiTrigger.Conditions>
+                                                            <MultiTrigger.EnterActions>
+                                                                <BeginStoryboard Name="HoverIn">
+                                                                    <Storyboard>
+                                                                        <ColorAnimation Storyboard.TargetProperty="Foreground.Color" To="White" Duration="0:0:0.2"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Opacity" To="1" Duration="0:0:0.2"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).BlurRadius" To="15" Duration="0:0:0.2"/>
+                                                                        <ColorAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Color" To="White" Duration="0:0:0.2"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </MultiTrigger.EnterActions>
+                                                            <MultiTrigger.ExitActions>
+                                                                <BeginStoryboard Name="HoverOut">
+                                                                    <Storyboard>
+                                                                        <ColorAnimation Storyboard.TargetProperty="Foreground.Color" To="#FFFFA726" Duration="0:0:0.3"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Opacity" To="0" Duration="0:0:0.3"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).BlurRadius" To="0" Duration="0:0:0.3"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </MultiTrigger.ExitActions>
+                                                        </MultiTrigger>
+
+                                                        <Trigger Property="Tag" Value="Active">
+                                                            <Trigger.EnterActions>
+                                                                <StopStoryboard BeginStoryboardName="HoverOut"/>
+                                                                <BeginStoryboard Name="Activate">
+                                                                    <Storyboard>
+                                                                        <ColorAnimation Storyboard.TargetProperty="Foreground.Color" To="White" Duration="0:0:0.1"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Opacity" To="1" Duration="0:0:0.1"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).BlurRadius" To="15" Duration="0:0:0.1"/>
+                                                                        <ColorAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Color" To="White" Duration="0:0:0.1"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </Trigger.EnterActions>
+                                                            <Trigger.ExitActions>
+                                                                <BeginStoryboard Name="Deactivate">
+                                                                    <Storyboard>
+                                                                        <ColorAnimation Storyboard.TargetProperty="Foreground.Color" To="#FFFFA726" Duration="0:0:0.3"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).Opacity" To="0" Duration="0:0:0.3"/>
+                                                                        <DoubleAnimation Storyboard.TargetName="contentPresenter" Storyboard.TargetProperty="(UIElement.Effect).BlurRadius" To="0" Duration="0:0:0.3"/>
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </Trigger.ExitActions>
+                                                        </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Setter.Value>
@@ -528,7 +556,7 @@
                             </StackPanel>
 
                             <Rectangle x:Name="NavIndicator" Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" 
-                                     HorizontalAlignment="Right" Margin="0,28,0,509">
+                                       HorizontalAlignment="Right" Margin="0,28,0,509">
                                 <Rectangle.RenderTransform>
                                     <TranslateTransform x:Name="NavIndicatorTransform" Y="0"/>
                                 </Rectangle.RenderTransform>
@@ -748,11 +776,11 @@
                                                                            TextOptions.TextHintingMode="Fixed"/>
                                                             </StackPanel>
                                                             <TextBlock Text="{Binding FormattedDate}" Foreground="#FFFFA726" FontSize="12" FontWeight="Bold" 
-                                                                     HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,0"
-                                                                     UseLayoutRounding="True" SnapsToDevicePixels="True"
-                                                                     TextOptions.TextFormattingMode="Display"
-                                                                     TextOptions.TextRenderingMode="ClearType"
-                                                                     TextOptions.TextHintingMode="Fixed">
+                                                                       HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,0"
+                                                                       UseLayoutRounding="True" SnapsToDevicePixels="True"
+                                                                       TextOptions.TextFormattingMode="Display"
+                                                                       TextOptions.TextRenderingMode="ClearType"
+                                                                       TextOptions.TextHintingMode="Fixed">
                                                                 <TextBlock.Effect>
                                                                     <DropShadowEffect Color="#FFFFA726" BlurRadius="1" ShadowDepth="0" Opacity="1.0"/>
                                                                 </TextBlock.Effect>
@@ -767,7 +795,7 @@
 
                                 <Grid x:Name="TopScrollIndicator" Grid.Row="0" Height="25" Opacity="0" IsHitTestVisible="False">
                                     <TextBlock Text="▲" FontSize="16" FontWeight="Bold" Foreground="#FFFFA726" 
-                                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                                               HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock.Effect>
                                             <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
                                         </TextBlock.Effect>
