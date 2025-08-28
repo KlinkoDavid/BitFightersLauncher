@@ -53,7 +53,7 @@ try {
             "message" => "Hiányzó 'action' paraméter",
             "available_actions" => [
                 "login", "get_user_score", "get_user_score_by_id", 
-                "update_user_score", "get_users", "get_leaderboard", "get_news", "test"
+                "update_user_score", "get_users", "get_leaderboard", "get_user_rank", "get_news", "test"
             ]
         ], JSON_UNESCAPED_UNICODE);
         exit;
@@ -305,6 +305,74 @@ try {
             }
             break;
             
+        case 'get_user_rank':
+            if (empty($data['username'])) {
+                http_response_code(400);
+                echo json_encode([
+                    "success" => false, 
+                    "message" => "Hiányzó username paraméter"
+                ], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            
+            try {
+                // Felhasználó pontszámának lekérdezése
+                $stmt = $conn->prepare("SELECT id, username, highest_score FROM users WHERE username = ?");
+                $stmt->bind_param("s", $data['username']);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                
+                if ($row = $result->fetch_assoc()) {
+                    $user_id = (int)$row['id'];
+                    $username = $row['username'];
+                    $user_score = (int)$row['highest_score'];
+                    
+                    // Rangsor pozíció kiszámítása - hány user van nála jobb pontszámmal
+                    $rank_stmt = $conn->prepare("SELECT COUNT(*) as better_players FROM users WHERE highest_score > ?");
+                    $rank_stmt->bind_param("i", $user_score);
+                    $rank_stmt->execute();
+                    $rank_result = $rank_stmt->get_result();
+                    $rank_row = $rank_result->fetch_assoc();
+                    
+                    $rank = (int)$rank_row['better_players'] + 1;
+                    
+                    // Összes aktív játékos száma (akiknek van pontjuk)
+                    $total_stmt = $conn->prepare("SELECT COUNT(*) as total_users FROM users WHERE highest_score > 0");
+                    $total_stmt->execute();
+                    $total_result = $total_stmt->get_result();
+                    $total_row = $total_result->fetch_assoc();
+                    $total_users = (int)$total_row['total_users'];
+                    
+                    echo json_encode([
+                        "success" => true,
+                        "message" => "Rangsor pozíció sikeresen lekérdezve",
+                        "user" => [
+                            "rank" => $rank,
+                            "total_users" => $total_users,
+                            "score" => $user_score,
+                            "username" => $username,
+                            "id" => $user_id
+                        ]
+                    ], JSON_UNESCAPED_UNICODE);
+                    
+                    $rank_stmt->close();
+                    $total_stmt->close();
+                } else {
+                    echo json_encode([
+                        "success" => false, 
+                        "message" => "Felhasználó nem található",
+                        "username" => $data['username']
+                    ], JSON_UNESCAPED_UNICODE);
+                }
+                $stmt->close();
+            } catch (Exception $e) {
+                echo json_encode([
+                    "success" => false, 
+                    "message" => "Rangsor lekérdezési hiba: " . $e->getMessage()
+                ], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+            
         case 'update_user_score':
             if (empty($data['user_id']) || !isset($data['new_score'])) {
                 http_response_code(400);
@@ -383,7 +451,7 @@ try {
                 "message" => "Ismeretlen action: " . $data['action'],
                 "available_actions" => [
                     "login", "get_user_score", "get_user_score_by_id", 
-                    "update_user_score", "get_users", "get_leaderboard", "get_news", "test"
+                    "update_user_score", "get_users", "get_leaderboard", "get_user_rank", "get_news", "test"
                 ]
             ], JSON_UNESCAPED_UNICODE);
             break;

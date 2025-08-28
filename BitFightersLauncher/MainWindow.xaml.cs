@@ -1,4 +1,4 @@
-using Microsoft.WindowsAPICodePack.Dialogs;
+ï»¿using Microsoft.WindowsAPICodePack.Dialogs;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -21,7 +21,7 @@ namespace BitFightersLauncher
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
         
-        // Ha nincs content, akkor a title-t használjuk rövidített verzióként
+        // Ha nincs content, akkor a title-t hasznÃ¡ljuk rÃ¶vidÃ­tett verziÃ³kÃ©nt
         public string ShortContent => !string.IsNullOrEmpty(Content) && Content.Length > 100 
             ? Content.Substring(0, 100) + "..." 
             : Title;
@@ -59,6 +59,19 @@ namespace BitFightersLauncher
         public int highest_score { get; set; }
     }
 
+    public class UserRankApiResponse
+    {
+        public bool success { get; set; }
+        public string message { get; set; } = string.Empty;
+        public UserRankData? user { get; set; }
+    }
+
+    public class UserRankData
+    {
+        public int rank { get; set; }
+        public int total_users { get; set; }
+    }
+
     public partial class MainWindow : Window
     {
         private const string GameDownloadUrl = "https://bitfighters.eu/BitFighters/BitFighters.zip";
@@ -80,6 +93,7 @@ namespace BitFightersLauncher
         private int loggedInUserId = 0;
         private string loggedInUserCreatedAt = string.Empty;
         private int loggedInUserHighestScore = 0;
+        private int loggedInUserRanking = 0;
 
         // Navigation state
         private string currentView = "home";
@@ -107,7 +121,7 @@ namespace BitFightersLauncher
                 await LoadNewsUpdatesAsync();
                 ApplyPerformanceModeIfNeeded();
                 ShowHomeView();
-                AttachNavButtonHoverEvents(); // Hover effectek engedélyezése újra
+                AttachNavButtonHoverEvents(); // Hover effectek engedÃ©lyezÃ©se Ãºjra
                 if (NavIndicatorTransform != null)
                 {
                     NavIndicatorTransform.Y = 0;
@@ -125,7 +139,7 @@ namespace BitFightersLauncher
             {
                 UsernameText.Text = username;
             }
-            Debug.WriteLine($"Bejelentkezett felhasználó: {username} (ID: {userId})");
+            Debug.WriteLine($"Bejelentkezett felhasznÃ¡lÃ³: {username} (ID: {userId})");
             LoadUserProfile();
         }
 
@@ -135,6 +149,10 @@ namespace BitFightersLauncher
             {
                 int userScore = await GetUserScoreFromServerAsync();
                 loggedInUserHighestScore = userScore >= 0 ? userScore : 0;
+                
+                int userRank = await GetUserRankFromServerAsync();
+                loggedInUserRanking = userRank >= 0 ? userRank : 0;
+                
                 if (currentView == "profile")
                 {
                     UpdateProfileView();
@@ -142,8 +160,9 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Hiba a profil betöltésekor: {ex.Message}");
+                Debug.WriteLine($"Hiba a profil betÃ¶ltÃ©sekor: {ex.Message}");
                 loggedInUserHighestScore = 0;
+                loggedInUserRanking = 0;
             }
         }
 
@@ -165,7 +184,30 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Hiba a pontszám lekérdezésekor: {ex.Message}");
+                Debug.WriteLine($"Hiba a pontszÃ¡m lekÃ©rdezÃ©sekor: {ex.Message}");
+                return -1;
+            }
+        }
+
+        private async Task<int> GetUserRankFromServerAsync()
+        {
+            try
+            {
+                using (var httpClient = new HttpClient())
+                {
+                    httpClient.Timeout = TimeSpan.FromSeconds(10);
+                    var requestData = new { action = "get_user_rank", username = loggedInUsername };
+                    string jsonContent = JsonSerializer.Serialize(requestData);
+                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                    var response = await httpClient.PostAsync(ApiUrl, content);
+                    string responseText = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonSerializer.Deserialize<UserRankApiResponse>(responseText);
+                    return apiResponse?.success == true && apiResponse.user != null ? apiResponse.user.rank : -1;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Hiba a rangsor lekÃ©rdezÃ©sekor: {ex.Message}");
                 return -1;
             }
         }
@@ -194,7 +236,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Hiba a pontszám frissítésekor: {ex.Message}");
+                Debug.WriteLine($"Hiba a pontszÃ¡m frissÃ­tÃ©sekor: {ex.Message}");
                 return false;
             }
         }
@@ -207,12 +249,19 @@ namespace BitFightersLauncher
                 if (currentScore >= 0)
                 {
                     loggedInUserHighestScore = currentScore;
-                    if (currentView == "profile") UpdateProfileView();
                 }
+                
+                int currentRank = await GetUserRankFromServerAsync();
+                if (currentRank >= 0)
+                {
+                    loggedInUserRanking = currentRank;
+                }
+                
+                if (currentView == "profile") UpdateProfileView();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Hiba a pontszám frissítésekor: {ex.Message}");
+                Debug.WriteLine($"Hiba a pontszÃ¡m frissÃ­tÃ©sekor: {ex.Message}");
             }
         }
 
@@ -234,7 +283,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Hiba a kijelentkezés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Hiba a kijelentkezÃ©s sorÃ¡n: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -249,7 +298,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Hiba az újra bejelentkezésnél: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Hiba az Ãºjra bejelentkezÃ©snÃ©l: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
                 Application.Current.Shutdown();
             }
         }
@@ -370,7 +419,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Hiba a beállítások betöltésekor: {ex.Message}");
+                Debug.WriteLine($"Hiba a beÃ¡llÃ­tÃ¡sok betÃ¶ltÃ©sekor: {ex.Message}");
             }
         }
 
@@ -389,7 +438,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Hiba a szerver verzió betöltésekor: {ex.Message}");
+                Debug.WriteLine($"Hiba a szerver verziÃ³ betÃ¶ltÃ©sekor: {ex.Message}");
                 serverGameVersion = "Ismeretlen";
                 UpdateVersionDisplay();
             }
@@ -405,13 +454,13 @@ namespace BitFightersLauncher
                 
                 if (gameInstalled)
                 {
-                    VersionStatusText.Text = "Telepítve";
+                    VersionStatusText.Text = "TelepÃ­tve";
                     VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80));
                     UpdateIndicator.Visibility = Visibility.Collapsed;
                 }
                 else
                 {
-                    VersionStatusText.Text = "Nincs telepítve";
+                    VersionStatusText.Text = "Nincs telepÃ­tve";
                     VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204));
                     UpdateIndicator.Visibility = Visibility.Visible;
                     UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
@@ -428,7 +477,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                ShowNotification($"Hiba a mentés során: {ex.Message}");
+                ShowNotification($"Hiba a mentÃ©s sorÃ¡n: {ex.Message}");
             }
         }
 
@@ -473,7 +522,7 @@ namespace BitFightersLauncher
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Hiba a kijelentkezés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Hiba a kijelentkezÃ©s sorÃ¡n: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -487,11 +536,11 @@ namespace BitFightersLauncher
             if (!string.IsNullOrEmpty(executablePath))
             {
                 gameInstallPath = Path.GetDirectoryName(executablePath)!;
-                ButtonText.Text = "JÁTÉK";
+                ButtonText.Text = "JÃTÃ‰K";
             }
             else
             {
-                ButtonText.Text = "LETÖLTÉS";
+                ButtonText.Text = "LETÃ–LTÃ‰S";
             }
             UpdateVersionDisplay();
         }
@@ -501,10 +550,10 @@ namespace BitFightersLauncher
             if (currentView != "home") return;
             switch (ButtonText.Text)
             {
-                case "LETÖLTÉS":
+                case "LETÃ–LTÃ‰S":
                     await DownloadAndInstallGameAsync();
                     break;
-                case "JÁTÉK":
+                case "JÃTÃ‰K":
                     await StartGame();
                     break;
             }
@@ -513,7 +562,7 @@ namespace BitFightersLauncher
         private async Task DownloadAndInstallGameAsync()
         {
             if (currentView != "home") return;
-            var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "Válassza ki a telepítési mappát" };
+            var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "VÃ¡lassza ki a telepÃ­tÃ©si mappÃ¡t" };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 gameInstallPath = dialog.FileName;
@@ -536,7 +585,7 @@ namespace BitFightersLauncher
                 }
                 catch (Exception ex)
                 {
-                    ShowNotification($"Hiba a letöltés során: {ex.Message}");
+                    ShowNotification($"Hiba a letÃ¶ltÃ©s sorÃ¡n: {ex.Message}");
                 }
                 finally
                 {
@@ -557,7 +606,7 @@ namespace BitFightersLauncher
                 }
                 catch (Exception ex)
                 {
-                    Dispatcher.Invoke(() => ShowNotification($"Hiba a telepítés során: {ex.Message}"));
+                    Dispatcher.Invoke(() => ShowNotification($"Hiba a telepÃ­tÃ©s sorÃ¡n: {ex.Message}"));
                 }
                 finally
                 {
@@ -568,11 +617,11 @@ namespace BitFightersLauncher
             if (!string.IsNullOrEmpty(FindExecutable(gameInstallPath)))
             {
                 SaveInstallPath();
-                ShowNotification($"A játék sikeresen telepítve! Verzió: v{serverGameVersion}");
+                ShowNotification($"A jÃ¡tÃ©k sikeresen telepÃ­tve! VerziÃ³: v{serverGameVersion}");
             }
             else
             {
-                ShowNotification("Hiba: A futtatható fájl nem található a mappában.");
+                ShowNotification("Hiba: A futtathatÃ³ fÃ¡jl nem talÃ¡lhatÃ³ a mappÃ¡ban.");
                 gameInstallPath = string.Empty;
             }
             CheckGameInstallStatus();
@@ -611,14 +660,14 @@ namespace BitFightersLauncher
                 }
                 else
                 {
-                    ShowNotification("Hiba: A játékfájl nem található.");
+                    ShowNotification("Hiba: A jÃ¡tÃ©kfÃ¡jl nem talÃ¡lhatÃ³.");
                     gameInstallPath = string.Empty;
                     CheckGameInstallStatus();
                 }
             }
             catch (Exception ex)
             {
-                ShowNotification($"Hiba a játék indítása során: {ex.Message}");
+                ShowNotification($"Hiba a jÃ¡tÃ©k indÃ­tÃ¡sa sorÃ¡n: {ex.Message}");
             }
         }
 
@@ -649,8 +698,8 @@ namespace BitFightersLauncher
                         {
                             new NewsUpdate
                             {
-                                Title = "Üdvözöljük a BitFighters Launcher-ben!",
-                                Content = "A launcher sikeresen betöltött. Itt fognak megjelenni a legfrissebb hírek és frissítések a játékról.",
+                                Title = "ÃœdvÃ¶zÃ¶ljÃ¼k a BitFighters Launcher-ben!",
+                                Content = "A launcher sikeresen betÃ¶ltÃ¶tt. Itt fognak megjelenni a legfrissebb hÃ­rek Ã©s frissÃ­tÃ©sek a jÃ¡tÃ©krÃ³l.",
                                 CreatedAt = DateTime.Now
                             }
                         };
@@ -667,8 +716,8 @@ namespace BitFightersLauncher
                 {
                     new NewsUpdate
                     {
-                        Title = "Hiba a hírek betöltésekor",
-                        Content = $"Nem sikerült elérni a szervert: {ex.Message}",
+                        Title = "Hiba a hÃ­rek betÃ¶ltÃ©sekor",
+                        Content = $"Nem sikerÃ¼lt elÃ©rni a szervert: {ex.Message}",
                         CreatedAt = DateTime.Now
                     }
                 };
@@ -702,11 +751,11 @@ namespace BitFightersLauncher
 
         private void ResetNavButtonStates()
         {
-            // Minden gomb visszaállítása alapértelmezett állapotra
+            // Minden gomb visszaÃ¡llÃ­tÃ¡sa alapÃ©rtelmezett Ã¡llapotra
             if (HomeNavButton != null) 
             {
                 HomeNavButton.Tag = null;
-                HomeNavButton.ClearValue(Button.RenderTransformProperty); // Transform törlése
+                HomeNavButton.ClearValue(Button.RenderTransformProperty); // Transform tÃ¶rlÃ©se
             }
             if (SettingsNavButton != null) 
             {
@@ -776,28 +825,24 @@ namespace BitFightersLauncher
             if (ProfileViewGrid?.Visibility != Visibility.Visible) return;
             if (ProfileUsernameText != null) ProfileUsernameText.Text = loggedInUsername;
             if (ProfileHighestScoreText != null) ProfileHighestScoreText.Text = loggedInUserHighestScore.ToString();
-            if (ProfileUserIdText != null) ProfileUserIdText.Text = loggedInUserId.ToString();
-            if (ProfileRankText != null) ProfileRankText.Text = GetUserRank(loggedInUserHighestScore);
-            if (ProfileJoinDateText != null)
+            if (ProfileUserRankText != null) 
             {
-                if (DateTime.TryParse(loggedInUserCreatedAt, out DateTime joinDate))
-                {
-                    ProfileJoinDateText.Text = $"Csatlakozás: {joinDate:yyyy. MMMM dd.}";
-                }
+                if (loggedInUserRanking > 0)
+                    ProfileUserRankText.Text = $"#{loggedInUserRanking}";
                 else
-                {
-                    ProfileJoinDateText.Text = "Csatlakozás: Ismeretlen";
-                }
+                    ProfileUserRankText.Text = "N/A";
             }
+            if (ProfileRankText != null) ProfileRankText.Text = GetUserRank(loggedInUserHighestScore);
         }
 
         private string GetUserRank(int score)
         {
-            if (score >= 2000) return "?? Mester";
-            if (score >= 1500) return "?? Haladó";
-            if (score >= 1000) return "? Tapasztalt";
-            if (score >= 500) return "?? Kezdõ+";
-            return "?? Kezdõ";
+            if (score >= 1000) return "ðŸ’Ž Diamond";
+            if (score >= 700) return "ðŸ”· Platinum";
+            if (score >= 500) return "ðŸ¥‡ Gold";
+            if (score >= 300) return "ðŸ¥ˆ Silver";
+            if (score >= 100) return "ðŸ¥‰ Bronz";
+            return "ðŸŽ® KezdÅ‘";
         }
 
         private void ProfileButton_Click(object sender, RoutedEventArgs e)
@@ -810,21 +855,21 @@ namespace BitFightersLauncher
             ShowHomeView();
         }
 
-        // Navigációs gombok hover effect kezelése - egyszerûsített verzió
+        // NavigÃ¡ciÃ³s gombok hover effect kezelÃ©se - egyszerÃ»sÃ­tett verziÃ³
         private void NavButton_MouseEnter(object sender, MouseEventArgs e)
         {
-            // XAML kezeli alapból a hover effectet minden gombra
+            // XAML kezeli alapbÃ³l a hover effectet minden gombra
         }
 
         private void NavButton_MouseLeave(object sender, MouseEventArgs e)
         {
-            // XAML kezeli alapból a hover effectet minden gombra
+            // XAML kezeli alapbÃ³l a hover effectet minden gombra
         }
 
-        // Event handler hozzárendelés - most bekapcsoljuk a hover effecteket
+        // Event handler hozzÃ¡rendelÃ©s - most bekapcsoljuk a hover effecteket
         private void AttachNavButtonHoverEvents()
         {
-            // Hover effectek hozzáadása minden navigációs gombhoz - XAML-ben is mûködni fog
+            // Hover effectek hozzÃ¡adÃ¡sa minden navigÃ¡ciÃ³s gombhoz - XAML-ben is mÃ»kÃ¶dni fog
             if (HomeNavButton != null)
             {
                 HomeNavButton.MouseEnter += (s, e) => { /* XAML kezeli */ };
