@@ -14,7 +14,6 @@
     <Window.Resources>
         <CubicEase x:Key="EntranceEase" EasingMode="EaseOut"/>
 
-        <!-- Updated orange color scheme for better contrast -->
         <SolidColorBrush x:Key="PrimaryOrange" Color="#FFFF8F00"/>
         <SolidColorBrush x:Key="SecondaryOrange" Color="#FFFF9800"/>
         <SolidColorBrush x:Key="LightOrange" Color="#FFFFAB40"/>
@@ -67,36 +66,36 @@
 
         <Storyboard x:Key="ExitMenuEntrance">
             <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" 
-                           From="0.8" To="1.0" Duration="0:0:0.25">
+                             From="0.8" To="1.0" Duration="0:0:0.25">
                 <DoubleAnimation.EasingFunction>
                     <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)" 
-                           From="0.8" To="1.0" Duration="0:0:0.25">
+                             From="0.8" To="1.0" Duration="0:0:0.25">
                 <DoubleAnimation.EasingFunction>
                     <BackEase EasingMode="EaseOut" Amplitude="0.3"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[2].(TranslateTransform.Y)" 
-                           From="-15" To="0" Duration="0:0:0.25">
+                             From="-15" To="0" Duration="0:0:0.25">
                 <DoubleAnimation.EasingFunction>
                     <CubicEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                           From="0" To="1" Duration="0:0:0.2"/>
+                             From="0" To="1" Duration="0:0:0.2"/>
         </Storyboard>
 
         <Storyboard x:Key="MenuItemHoverIn">
             <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" 
-                           To="1.05" Duration="0:0:0.15">
+                             To="1.05" Duration="0:0:0.15">
                 <DoubleAnimation.EasingFunction>
                     <QuadraticEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)" 
-                           To="1.05" Duration="0:0:0.15">
+                             To="1.05" Duration="0:0:0.15">
                 <DoubleAnimation.EasingFunction>
                     <QuadraticEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
@@ -105,13 +104,13 @@
 
         <Storyboard x:Key="MenuItemHoverOut">
             <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" 
-                           To="1.0" Duration="0:0:0.15">
+                             To="1.0" Duration="0:0:0.15">
                 <DoubleAnimation.EasingFunction>
                     <QuadraticEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
             </DoubleAnimation>
             <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)" 
-                           To="1.0" Duration="0:0:0.15">
+                             To="1.0" Duration="0:0:0.15">
                 <DoubleAnimation.EasingFunction>
                     <QuadraticEase EasingMode="EaseOut"/>
                 </DoubleAnimation.EasingFunction>
@@ -120,14 +119,14 @@
 
         <Storyboard x:Key="ScrollPulse" RepeatBehavior="Forever">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                           From="0.5" To="1.0" Duration="0:0:1.8" 
-                           AutoReverse="True"/>
+                             From="0.5" To="1.0" Duration="0:0:1.8" 
+                             AutoReverse="True"/>
         </Storyboard>
 
         <Storyboard x:Key="UpdateAvailablePulse" RepeatBehavior="Forever">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                           From="0.7" To="1.0" Duration="0:0:1.0" 
-                           AutoReverse="True"/>
+                             From="0.7" To="1.0" Duration="0:0:1.0" 
+                             AutoReverse="True"/>
         </Storyboard>
 
         <sys:Double x:Key="NewsItemHeight">90</sys:Double>
@@ -135,28 +134,28 @@
 
         <Storyboard x:Key="SimpleMenuItemHoverIn">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                           To="0.95" Duration="0:0:0.15"/>
+                             To="0.95" Duration="0:0:0.15"/>
             <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
-                           To="#FFFF8F00" Duration="0:0:0.15"/>
+                            To="#FFFF8F00" Duration="0:0:0.15"/>
         </Storyboard>
 
         <Storyboard x:Key="SimpleMenuItemHoverOut">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                           To="1.0" Duration="0:0:0.15"/>
+                             To="1.0" Duration="0:0:0.15"/>
             <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
                             To="Transparent" Duration="0:0:0.15"/>
         </Storyboard>
 
         <Storyboard x:Key="SimpleDangerItemHoverIn">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                           To="0.95" Duration="0:0:0.15"/>
+                             To="0.95" Duration="0:0:0.15"/>
             <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
                             To="#FFD32F2F" Duration="0:0:0.15"/>
         </Storyboard>
 
         <Storyboard x:Key="SimpleDangerItemHoverOut">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                           To="1.0" Duration="0:0:0.15"/>
+                             To="1.0" Duration="0:0:0.15"/>
             <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
                             To="Transparent" Duration="0:0:0.15"/>
         </Storyboard>
@@ -288,9 +287,9 @@
                                              TextOptions.TextHintingMode="Fixed"/>
                                 </StackPanel>
                                 <Border x:Name="UpdateIndicator" Width="8" Height="8" 
-                                      Background="#FF4CAF50" CornerRadius="4" 
-                                      Margin="8,0,0,0" VerticalAlignment="Center"
-                                      Visibility="Collapsed">
+                                        Background="#FF4CAF50" CornerRadius="4" 
+                                        Margin="8,0,0,0" VerticalAlignment="Center"
+                                        Visibility="Collapsed">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#FF4CAF50" BlurRadius="6" ShadowDepth="0" Opacity="1"/>
                                     </Border.Effect>
@@ -381,7 +380,7 @@
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="MenuItem">
                                                         <Border x:Name="bd" Background="#111A1C20" CornerRadius="8" Padding="16,14" Margin="8,4" MinWidth="280"
-                                                               BorderBrush="Transparent" BorderThickness="2">
+                                                                BorderBrush="Transparent" BorderThickness="2">
                                                             <Grid>
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto"/>
@@ -434,7 +433,7 @@
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="MenuItem">
                                                         <Border x:Name="bd" Background="#19D32F2F" CornerRadius="8" Padding="16,14" Margin="8,4" MinWidth="280"
-                                                               BorderBrush="Transparent" BorderThickness="2">
+                                                                BorderBrush="Transparent" BorderThickness="2">
                                                             <Grid>
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="Auto"/>
@@ -532,7 +531,6 @@
                                                         </ContentPresenter.Effect>
                                                     </ContentPresenter>
                                                     <ControlTemplate.Triggers>
-                                                        <!-- Active state trigger - white state for active buttons -->
                                                         <Trigger Property="Tag" Value="Active">
                                                             <Setter Property="Foreground" Value="White"/>
                                                             <Setter TargetName="contentPresenter" Property="Effect">
@@ -541,8 +539,7 @@
                                                                 </Setter.Value>
                                                             </Setter>
                                                         </Trigger>
-                                                        
-                                                        <!-- Hover effect for ALL buttons (active and inactive) -->
+
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                             <Setter Property="Foreground" Value="White"/>
                                                             <Setter TargetName="contentPresenter" Property="Effect">
@@ -559,7 +556,7 @@
                                 </StackPanel.Resources>
                                 <Button x:Name="HomeNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE80F;" FontFamily="Segoe MDL2 Assets" ToolTip="Home" Click="HomeButton_Click"/>
                                 <Button x:Name="SettingsNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings"/>
-                                <Button x:Name="StarNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star"/>
+                                <Button x:Name="StarNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star" Click="StarButton_Click"/>
                                 <Button x:Name="ProfileNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Click="ProfileButton_Click"/>
                                 <Button x:Name="DownloadNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE896;" FontFamily="Segoe MDL2 Assets" ToolTip="Download"/>
                             </StackPanel>
@@ -755,6 +752,48 @@
                         </StackPanel>
                     </Grid>
 
+                    <Grid x:Name="LeaderboardViewGrid" Grid.Column="1" Grid.ColumnSpan="2" Visibility="Collapsed" Margin="40,25,20,0">
+                        <StackPanel>
+                            <TextBlock Text="TOP 15 JÁTÉKOS" Foreground="White" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"/>
+                            <Rectangle Height="1" Fill="#A7FF8F00" Margin="0,10,0,20" HorizontalAlignment="Center" Width="350"/>
+
+                            <Border BorderBrush="#33CCCCCC" BorderThickness="0,0,0,1" Margin="0,0,40,10" Padding="12,0,12,8">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Helyezés" Foreground="#FFFF8F00" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="Felhasználónév" Foreground="#FFFF8F00" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Grid.Column="2" Text="Pontszám" Foreground="#FFFF8F00" FontWeight="Bold" FontSize="16" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </Border>
+
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="500">
+                                <ItemsControl x:Name="LeaderboardItemsControl">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#09FFFFFF" CornerRadius="8" Margin="0,0,40,8" Padding="12">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="80"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="150"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock Grid.Column="0" Text="{Binding rank, StringFormat='#{0}'}" Foreground="White" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding username}" Foreground="White" FontSize="16" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding highest_score}" Foreground="#FFFF8F00" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Grid>
+
                     <Border x:Name="NewsPanelBorder" Grid.Column="2" CornerRadius="12" Margin="0,25,0,155" Opacity="0">
                         <Border.RenderTransform>
                             <TranslateTransform Y="20" />
@@ -788,7 +827,6 @@
                                                             </Rectangle.Effect>
                                                         </Rectangle>
                                                         <Grid Grid.Column="1" Width="279" Height="{StaticResource NewsBarHeight}">
-                                                            <!-- Címe a híreknek - felül -->
                                                             <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="Bold" FontSize="15" 
                                                                        TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Top"
                                                                        Margin="0,4,60,0"
@@ -796,7 +834,6 @@
                                                                        TextOptions.TextFormattingMode="Display"
                                                                        TextOptions.TextRenderingMode="ClearType"
                                                                        TextOptions.TextHintingMode="Fixed"/>
-                                                            <!-- Dátum - 7 pixellel jobbra (10-3=7) -->
                                                             <TextBlock Text="{Binding FormattedDate}" Foreground="#FFFF8F00" FontSize="12" FontWeight="Bold" 
                                                                        HorizontalAlignment="Right" VerticalAlignment="Bottom" 
                                                                        Margin="0,0,8,-10"
