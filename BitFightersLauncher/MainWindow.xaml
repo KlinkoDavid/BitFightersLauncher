@@ -164,12 +164,12 @@
                         <ColumnDefinition Width="200"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Background="#22FFA726" CornerRadius="15" 
+                    <Border Background="#229E9E9E" CornerRadius="15" 
                             HorizontalAlignment="Left" VerticalAlignment="Center" 
                             Margin="25,0,0,0" Padding="12,6"
                             UseLayoutRounding="True" SnapsToDevicePixels="True">
                         <Border.Effect>
-                            <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.4"/>
+                            <DropShadowEffect Color="#FF9E9E9E" BlurRadius="8" ShadowDepth="0" Opacity="0.4"/>
                         </Border.Effect>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" 
@@ -229,12 +229,12 @@
                         </StackPanel>
                     </DockPanel>
 
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,25,0">
-                        <Border x:Name="VersionDisplay" Background="#22FFA726" CornerRadius="15" 
-                                Padding="10,5" Margin="0,0,15,0"
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <Border x:Name="VersionDisplay" Background="#229E9E9E" CornerRadius="15" 
+                                Padding="10,5" Margin="0,0,8,0"
                                 UseLayoutRounding="True" SnapsToDevicePixels="True">
                             <Border.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.4"/>
+                                <DropShadowEffect Color="#FF9E9E9E" BlurRadius="8" ShadowDepth="0" Opacity="0.4"/>
                             </Border.Effect>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock x:Name="VersionIcon" Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" 
@@ -587,9 +587,9 @@
 
                     <Grid x:Name="ProfileViewGrid" Grid.Column="1" Grid.ColumnSpan="2" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                         <StackPanel Width="600" HorizontalAlignment="Center">
-                            <Border Background="#22FFA726" CornerRadius="20" Padding="30" Margin="0,0,0,30">
+                            <Border Background="#229E9E9E" CornerRadius="20" Padding="30" Margin="0,0,0,30">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
+                                    <DropShadowEffect Color="#FF9E9E9E" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
                                 </Border.Effect>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -636,9 +636,9 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Border Grid.Column="0" Background="#22FFA726" CornerRadius="15" Padding="25">
+                                <Border Grid.Column="0" Background="#229E9E9E" CornerRadius="15" Padding="25">
                                     <Border.Effect>
-                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
+                                        <DropShadowEffect Color="#FF9E9E9E" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
                                     </Border.Effect>
                                     <StackPanel HorizontalAlignment="Center">
                                         <TextBlock Text="🏆" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10">
@@ -657,9 +657,9 @@
                                     </StackPanel>
                                 </Border>
 
-                                <Border Grid.Column="2" Background="#22FFA726" CornerRadius="15" Padding="25">
+                                <Border Grid.Column="2" Background="#229E9E9E" CornerRadius="15" Padding="25">
                                     <Border.Effect>
-                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
+                                        <DropShadowEffect Color="#FF9E9E9E" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
                                     </Border.Effect>
                                     <StackPanel HorizontalAlignment="Center">
                                         <TextBlock Text="🏅" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10">
