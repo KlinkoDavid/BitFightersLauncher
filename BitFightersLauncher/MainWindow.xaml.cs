@@ -398,27 +398,36 @@ namespace BitFightersLauncher
         private void ApplyPerformanceModeIfNeeded()
         {
             if (!_reducedMotion) return;
+            
+            // Scroll indikátorok eltávolítása gyenge gépeken
             if (TopScrollIndicator != null) TopScrollIndicator.Visibility = Visibility.Collapsed;
             if (BottomScrollIndicator != null) BottomScrollIndicator.Visibility = Visibility.Collapsed;
+            
+            // Navigációs indikátor glow csökkentése
             if (NavIndicator?.Effect is DropShadowEffect navGlow)
             {
-                navGlow.BlurRadius = 6;
+                navGlow.BlurRadius = 4;
                 navGlow.Opacity = 0.8;
             }
-            RemoveDropShadows(this);
+            
+            // Összes drop shadow eltávolítása/csökkentése
+            OptimizeDropShadows(this);
         }
 
-        private void RemoveDropShadows(DependencyObject parent)
+        private void OptimizeDropShadows(DependencyObject parent)
         {
-            if (parent is UIElement element && element.Effect is DropShadowEffect)
+            if (parent is UIElement element && element.Effect is DropShadowEffect effect)
             {
-                element.Effect = null;
+                // Csökkentjük a blur radiust gyenge gépeken
+                effect.BlurRadius = Math.Max(2, effect.BlurRadius * 0.5);
+                effect.Opacity = Math.Max(0.3, effect.Opacity * 0.7);
             }
+            
             int count = VisualTreeHelper.GetChildrenCount(parent);
             for (int i = 0; i < count; i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
-                RemoveDropShadows(child);
+                OptimizeDropShadows(child);
             }
         }
 
@@ -483,9 +492,9 @@ namespace BitFightersLauncher
             else
             {
                 VersionStatusText.Text = "Nincs telepítve";
-                VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204));
+                VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(224, 224, 224));
                 UpdateIndicator.Visibility = Visibility.Visible;
-                UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
+                UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 167, 38)); // FFA726 színhez közelebb
             }
         }
 

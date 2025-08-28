@@ -14,7 +14,7 @@
     <Window.Resources>
         <CubicEase x:Key="EntranceEase" EasingMode="EaseOut"/>
 
-        <SolidColorBrush x:Key="PrimaryOrange" Color="#FFFF8F00"/>
+        <SolidColorBrush x:Key="PrimaryOrange" Color="#FFFFA726"/>
         <SolidColorBrush x:Key="SecondaryOrange" Color="#FFFF9800"/>
         <SolidColorBrush x:Key="LightOrange" Color="#FFFFAB40"/>
         <SolidColorBrush x:Key="DarkOrange" Color="#FFE65100"/>
@@ -87,92 +87,64 @@
                              From="0" To="1" Duration="0:0:0.2"/>
         </Storyboard>
 
-        <Storyboard x:Key="MenuItemHoverIn">
-            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" 
-                             To="1.05" Duration="0:0:0.15">
-                <DoubleAnimation.EasingFunction>
-                    <QuadraticEase EasingMode="EaseOut"/>
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)" 
-                             To="1.05" Duration="0:0:0.15">
-                <DoubleAnimation.EasingFunction>
-                    <QuadraticEase EasingMode="EaseOut"/>
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
-
-        <Storyboard x:Key="MenuItemHoverOut">
-            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleX)" 
-                             To="1.0" Duration="0:0:0.15">
-                <DoubleAnimation.EasingFunction>
-                    <QuadraticEase EasingMode="EaseOut"/>
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TransformGroup.Children)[0].(ScaleTransform.ScaleY)" 
-                             To="1.0" Duration="0:0:0.15">
-                <DoubleAnimation.EasingFunction>
-                    <QuadraticEase EasingMode="EaseOut"/>
-                </DoubleAnimation.EasingFunction>
-            </DoubleAnimation>
-        </Storyboard>
-
-        <Storyboard x:Key="ScrollPulse" RepeatBehavior="Forever">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                             From="0.5" To="1.0" Duration="0:0:1.8" 
-                             AutoReverse="True"/>
-        </Storyboard>
-
-        <Storyboard x:Key="UpdateAvailablePulse" RepeatBehavior="Forever">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                             From="0.7" To="1.0" Duration="0:0:1.0" 
-                             AutoReverse="True"/>
-        </Storyboard>
-
         <sys:Double x:Key="NewsItemHeight">90</sys:Double>
         <sys:Double x:Key="NewsBarHeight">56</sys:Double>
-
-        <Storyboard x:Key="SimpleMenuItemHoverIn">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                             To="0.95" Duration="0:0:0.15"/>
-            <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
-                            To="#FFFF8F00" Duration="0:0:0.15"/>
-        </Storyboard>
-
-        <Storyboard x:Key="SimpleMenuItemHoverOut">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                             To="1.0" Duration="0:0:0.15"/>
-            <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
-                            To="Transparent" Duration="0:0:0.15"/>
-        </Storyboard>
-
-        <Storyboard x:Key="SimpleDangerItemHoverIn">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                             To="0.95" Duration="0:0:0.15"/>
-            <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
-                            To="#FFD32F2F" Duration="0:0:0.15"/>
-        </Storyboard>
-
-        <Storyboard x:Key="SimpleDangerItemHoverOut">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" 
-                             To="1.0" Duration="0:0:0.15"/>
-            <ColorAnimation Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)" 
-                            To="Transparent" Duration="0:0:0.15"/>
-        </Storyboard>
     </Window.Resources>
 
-    <Border x:Name="RootBorder" CornerRadius="18" BorderBrush="#33CCCCCC" BorderThickness="1.5" ClipToBounds="True">
+    <Border x:Name="RootBorder" CornerRadius="25" BorderBrush="#44CCCCCC" BorderThickness="2" ClipToBounds="True">
         <Border.Triggers>
             <EventTrigger RoutedEvent="Loaded">
                 <BeginStoryboard Storyboard="{StaticResource ContentEntranceAnimation}"/>
             </EventTrigger>
         </Border.Triggers>
         <Border.Background>
-            <SolidColorBrush Color="#FF1A1C20"/>
+            <RadialGradientBrush Center="0.5,0.3">
+                <GradientStop Color="#FF0F1419" Offset="0"/>
+                <GradientStop Color="#FF1A1C20" Offset="0.6"/>
+                <GradientStop Color="#FF0A0C10" Offset="1"/>
+            </RadialGradientBrush>
         </Border.Background>
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="0" ShadowDepth="0" Opacity="1"/>
+        </Border.Effect>
 
         <Grid>
-            <Rectangle Fill="#88000000" RadiusX="{Binding ElementName=RootBorder, Path=CornerRadius.TopLeft}" RadiusY="{Binding ElementName=RootBorder, Path=CornerRadius.TopLeft}" />
+            <!-- Háttér ellipszisek optimalizálva -->
+            <Ellipse Width="800" Height="300" VerticalAlignment="Top" Margin="0,-150,0,0" HorizontalAlignment="Center">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#22FFA726" Offset="0"/>
+                        <GradientStop Color="#00FFA726" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
+            <Ellipse Width="600" Height="200" VerticalAlignment="Top" Margin="0,-100,0,0" HorizontalAlignment="Center">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#11FFCC44" Offset="0"/>
+                        <GradientStop Color="#00FFCC44" Offset="0.8"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
+            <Ellipse Width="300" Height="150" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="-150,0,0,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#11CC7A00" Offset="0"/>
+                        <GradientStop Color="#00CC7A00" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+
+            <Ellipse Width="300" Height="150" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,0,-150,0">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#11FFAA26" Offset="0"/>
+                        <GradientStop Color="#00FFAA26" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
 
             <Grid x:Name="DimOverlay" Background="#80000000" Visibility="Collapsed" Panel.ZIndex="900"/>
 
@@ -192,35 +164,35 @@
                         <ColumnDefinition Width="200"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Background="#22FFFFFF" CornerRadius="12" 
+                    <Border Background="#22FFA726" CornerRadius="15" 
                             HorizontalAlignment="Left" VerticalAlignment="Center" 
                             Margin="25,0,0,0" Padding="12,6"
                             UseLayoutRounding="True" SnapsToDevicePixels="True">
                         <Border.Effect>
-                            <DropShadowEffect Color="Black" BlurRadius="8" ShadowDepth="2" Opacity="0.3"/>
+                            <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.4"/>
                         </Border.Effect>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" 
-                                     FontSize="16" Foreground="#FFFF8F00" 
+                                     FontSize="16" Foreground="#FFFFA726" 
                                      VerticalAlignment="Center" Margin="0,0,8,0"
                                      UseLayoutRounding="True" SnapsToDevicePixels="True"
                                      TextOptions.TextFormattingMode="Display"
                                      TextOptions.TextRenderingMode="ClearType"
                                      TextOptions.TextHintingMode="Fixed">
                                 <TextBlock.Effect>
-                                    <DropShadowEffect Color="#FFFF8F00" BlurRadius="3" ShadowDepth="0" Opacity="1"/>
+                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="3" ShadowDepth="0" Opacity="0.8"/>
                                 </TextBlock.Effect>
                             </TextBlock>
                             <StackPanel>
                                 <TextBlock x:Name="UsernameText" Text="Felhasználó" 
                                          FontSize="13" FontWeight="Bold" 
-                                         Foreground="#FFFF8F00" Margin="0,-2,0,0"
+                                         Foreground="#FFFFA726" Margin="0,-2,0,0"
                                          UseLayoutRounding="True" SnapsToDevicePixels="True"
                                          TextOptions.TextFormattingMode="Display"
                                          TextOptions.TextRenderingMode="ClearType"
                                          TextOptions.TextHintingMode="Fixed">
                                     <TextBlock.Effect>
-                                        <DropShadowEffect Color="#FFFF8F00" BlurRadius="2" ShadowDepth="0" Opacity="1.0"/>
+                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="2" ShadowDepth="0" Opacity="0.8"/>
                                     </TextBlock.Effect>
                                 </TextBlock>
                                 <TextBlock Text="Bejelentkezve" 
@@ -235,29 +207,39 @@
                     </Border>
 
                     <DockPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <Image Source="/Resources/Logo.png" Width="70">
-                            <Image.Effect>
-                                <DropShadowEffect Color="#FFFF8F00" BlurRadius="45" ShadowDepth="0" Opacity="1.5"/>
-                            </Image.Effect>
-                        </Image>
-                        <TextBlock Text="BITFIGHTERS" FontSize="28" FontWeight="Bold" Foreground="#FFFF8F00" TextAlignment="Center" VerticalAlignment="Center" Margin="10,0,0,0">
-                            <TextBlock.Effect>
-                                <DropShadowEffect ShadowDepth="0" Opacity="1.5" Color="#FFFF8F00" BlurRadius="25"/>
-                            </TextBlock.Effect>
-                        </TextBlock>
+                        <Border Background="#22FFA726" CornerRadius="20" Padding="8" Margin="0,0,15,0">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#FFFFA726" BlurRadius="15" ShadowDepth="0" Opacity="0.6"/>
+                            </Border.Effect>
+                            <Image Source="/Resources/Logo.png" Width="40">
+                                <Image.Effect>
+                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="20" ShadowDepth="0" Opacity="0.8"/>
+                                </Image.Effect>
+                            </Image>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="BITFIGHTERS" FontSize="24" FontWeight="Bold" Foreground="#FFFFA726" 
+                                     Margin="0,-2,0,0" VerticalAlignment="Center">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect ShadowDepth="0" Opacity="1.0" Color="#FFFFA726" BlurRadius="10"/>
+                                </TextBlock.Effect>
+                            </TextBlock>
+                            <TextBlock Text="Game Launcher" FontSize="11" Foreground="#AAFFA726" 
+                                     FontWeight="SemiBold" Margin="0,-4,0,0"/>
+                        </StackPanel>
                     </DockPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,25,0">
-                        <Border x:Name="VersionDisplay" Background="#22FFFFFF" CornerRadius="12" 
-                                Padding="12,6" Margin="0,0,15,0"
+                        <Border x:Name="VersionDisplay" Background="#22FFA726" CornerRadius="15" 
+                                Padding="10,5" Margin="0,0,15,0"
                                 UseLayoutRounding="True" SnapsToDevicePixels="True">
                             <Border.Effect>
-                                <DropShadowEffect Color="Black" BlurRadius="8" ShadowDepth="2" Opacity="0.3"/>
+                                <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.4"/>
                             </Border.Effect>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock x:Name="VersionIcon" Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" 
                                          FontSize="16" Foreground="White" 
-                                         VerticalAlignment="Center" Margin="0,0,8,0"
+                                         VerticalAlignment="Center" Margin="0,0,6,0"
                                          UseLayoutRounding="True" SnapsToDevicePixels="True"
                                          TextOptions.TextFormattingMode="Display"
                                          TextOptions.TextRenderingMode="ClearType"
@@ -269,18 +251,18 @@
                                 <StackPanel>
                                     <TextBlock x:Name="VersionCurrentText" Text="v1.0.0" 
                                              FontSize="13" FontWeight="Bold" 
-                                             Foreground="#FFFF8F00" Margin="0,-2,0,0"
+                                             Foreground="#FFFFA726" Margin="0,-2,0,0"
                                              UseLayoutRounding="True" SnapsToDevicePixels="True"
                                              TextOptions.TextFormattingMode="Display"
                                              TextOptions.TextRenderingMode="ClearType"
                                              TextOptions.TextHintingMode="Fixed">
                                         <TextBlock.Effect>
-                                            <DropShadowEffect Color="#FFFF8F00" BlurRadius="2" ShadowDepth="0" Opacity="1.0"/>
+                                            <DropShadowEffect Color="#FFFFA726" BlurRadius="2" ShadowDepth="0" Opacity="0.8"/>
                                         </TextBlock.Effect>
                                     </TextBlock>
                                     <TextBlock x:Name="VersionStatusText" Text="aktuális" 
                                              FontSize="10" Foreground="#E0E0E0" FontWeight="SemiBold"
-                                             Margin="0,-3,0,0"
+                                             Margin="0,-3,0,0" TextTrimming="CharacterEllipsis"
                                              UseLayoutRounding="True" SnapsToDevicePixels="True"
                                              TextOptions.TextFormattingMode="Display"
                                              TextOptions.TextRenderingMode="ClearType"
@@ -288,7 +270,7 @@
                                 </StackPanel>
                                 <Border x:Name="UpdateIndicator" Width="8" Height="8" 
                                         Background="#FF4CAF50" CornerRadius="4" 
-                                        Margin="8,0,0,0" VerticalAlignment="Center"
+                                        Margin="6,0,0,0" VerticalAlignment="Center"
                                         Visibility="Collapsed">
                                     <Border.Effect>
                                         <DropShadowEffect Color="#FF4CAF50" BlurRadius="6" ShadowDepth="0" Opacity="1"/>
@@ -297,43 +279,27 @@
                             </StackPanel>
                         </Border>
 
-                        <Button x:Name="ExitBtn" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="28" 
-                                Click="ExitButton_Click" Height="28" Width="28">
+                        <Button x:Name="ExitBtn" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
+                                Click="ExitButton_Click" Height="30" Width="30">
                             <Button.Style>
                                 <Style TargetType="Button">
-                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Background" Value="#22FFFFFF"/>
                                     <Setter Property="BorderBrush" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#FFFF8F00"/>
+                                    <Setter Property="Foreground" Value="#CCFFA726"/>
                                     <Setter Property="Cursor" Value="Hand"/>
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="Button">
-                                                <ContentPresenter x:Name="contentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                    <ContentPresenter.Effect>
-                                                        <DropShadowEffect x:Name="glowEffect" Color="#FFFF8F00" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
-                                                    </ContentPresenter.Effect>
-                                                </ContentPresenter>
+                                                <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
+                                                        CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
                                                 <ControlTemplate.Triggers>
-                                                    <EventTrigger RoutedEvent="MouseEnter">
-                                                        <BeginStoryboard>
-                                                            <Storyboard>
-                                                                <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" To="Red" Duration="0:0:0.2"/>
-                                                                <DoubleAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="BlurRadius" To="20" Duration="0:0:0.2"/>
-                                                                <DoubleAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="Opacity" To="1.5" Duration="0:0:0.2"/>
-                                                                <ColorAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="Color" To="Red" Duration="0:0:0.2"/>
-                                                            </Storyboard>
-                                                        </BeginStoryboard>
-                                                    </EventTrigger>
-                                                    <EventTrigger RoutedEvent="MouseLeave">
-                                                        <BeginStoryboard>
-                                                            <Storyboard>
-                                                                <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" To="#FFFF8F00" Duration="0:0:0.3"/>
-                                                                <DoubleAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="BlurRadius" To="0" Duration="0:0:0.3"/>
-                                                                <DoubleAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.3"/>
-                                                                <ColorAnimation Storyboard.TargetName="glowEffect" Storyboard.TargetProperty="Color" To="#FFFF8F00" Duration="0:0:0.3"/>
-                                                            </Storyboard>
-                                                        </BeginStoryboard>
-                                                    </EventTrigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Foreground" Value="#FFFF4444"/>
+                                                        <Setter TargetName="ButtonBorder" Property="Background" Value="#33FF4444"/>
+                                                        <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFFF4444"/>
+                                                    </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
                                         </Setter.Value>
@@ -344,7 +310,7 @@
                                 <ContextMenu x:Name="ExitContextMenu" HasDropShadow="True" Width="320" Opened="ExitContextMenu_Opened" Closed="ExitContextMenu_Closed">
                                     <ContextMenu.Template>
                                         <ControlTemplate TargetType="ContextMenu">
-                                            <Border Background="#FF1A1C20" CornerRadius="12" BorderBrush="#FFFF8F00" BorderThickness="2" MinWidth="320" Panel.ZIndex="1000">
+                                            <Border Background="#FF1A1C20" CornerRadius="12" BorderBrush="#FFFFA726" BorderThickness="2" MinWidth="320" Panel.ZIndex="1000">
                                                 <Border.RenderTransform>
                                                     <TransformGroup>
                                                         <ScaleTransform ScaleX="1" ScaleY="1"/>
@@ -354,7 +320,7 @@
                                                     </TransformGroup>
                                                 </Border.RenderTransform>
                                                 <Border.Effect>
-                                                    <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="0" Opacity="0.7"/>
+                                                    <DropShadowEffect Color="#000000" BlurRadius="15" ShadowDepth="0" Opacity="0.7"/>
                                                 </Border.Effect>
                                                 <Border.Triggers>
                                                     <EventTrigger RoutedEvent="FrameworkElement.Loaded">
@@ -364,8 +330,8 @@
                                                 <StackPanel>
                                                     <Border Background="#331A1C20" Padding="16,12" CornerRadius="12,12,0,0">
                                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                            <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets" Foreground="#FFFF8F00" FontSize="14" Margin="0,3,8,0"/>
-                                                            <TextBlock Text="Kilépés" Foreground="#FFFF8F00" FontWeight="Bold" FontSize="14"/>
+                                                            <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets" Foreground="#FFFFA726" FontSize="14" Margin="0,3,8,0"/>
+                                                            <TextBlock Text="Kilépés" Foreground="#FFFFA726" FontWeight="Bold" FontSize="14"/>
                                                         </StackPanel>
                                                     </Border>
                                                     <ItemsPresenter Margin="8"/>
@@ -387,7 +353,7 @@
                                                                     <ColumnDefinition Width="*"/>
                                                                 </Grid.ColumnDefinitions>
                                                                 <TextBlock x:Name="iconText" Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" 
-                                                                           Foreground="#FFFF8F00" FontSize="18" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                                                           Foreground="#FFFFA726" FontSize="18" VerticalAlignment="Center" Margin="0,0,16,0"/>
                                                                 <StackPanel Grid.Column="1">
                                                                     <TextBlock Text="{TemplateBinding Header}" Foreground="White" FontWeight="Bold" FontSize="16"/>
                                                                     <TextBlock Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ToolTip}" 
@@ -397,30 +363,12 @@
                                                         </Border>
                                                         <ControlTemplate.Triggers>
                                                             <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter TargetName="bd" Property="Background" Value="#22FF8F00"/>
-                                                                <Setter TargetName="bd" Property="BorderBrush" Value="#FFFF8F00"/>
+                                                                <Setter TargetName="bd" Property="Background" Value="#22FFA726"/>
+                                                                <Setter TargetName="bd" Property="BorderBrush" Value="#FFFFA726"/>
                                                                 <Setter TargetName="iconText" Property="Foreground" Value="#FFFFFF"/>
-                                                                <Trigger.EnterActions>
-                                                                    <BeginStoryboard>
-                                                                        <Storyboard>
-                                                                            <DoubleAnimation Storyboard.TargetName="bd" 
-                                                                                             Storyboard.TargetProperty="Opacity" 
-                                                                                             To="0.95" Duration="0:0:0.2"/>
-                                                                        </Storyboard>
-                                                                    </BeginStoryboard>
-                                                                </Trigger.EnterActions>
-                                                                <Trigger.ExitActions>
-                                                                    <BeginStoryboard>
-                                                                        <Storyboard>
-                                                                            <DoubleAnimation Storyboard.TargetName="bd" 
-                                                                                             Storyboard.TargetProperty="Opacity" 
-                                                                                             To="1.0" Duration="0:0:0.2"/>
-                                                                        </Storyboard>
-                                                                    </BeginStoryboard>
-                                                                </Trigger.ExitActions>
                                                             </Trigger>
                                                             <Trigger Property="IsPressed" Value="True">
-                                                                <Setter TargetName="bd" Property="Background" Value="#44FF8F00"/>
+                                                                <Setter TargetName="bd" Property="Background" Value="#44FFA726"/>
                                                             </Trigger>
                                                         </ControlTemplate.Triggers>
                                                     </ControlTemplate>
@@ -453,24 +401,6 @@
                                                                 <Setter TargetName="bd" Property="Background" Value="#22D32F2F"/>
                                                                 <Setter TargetName="bd" Property="BorderBrush" Value="#FFD32F2F"/>
                                                                 <Setter TargetName="iconText" Property="Foreground" Value="#FFFFFF"/>
-                                                                <Trigger.EnterActions>
-                                                                    <BeginStoryboard>
-                                                                        <Storyboard>
-                                                                            <DoubleAnimation Storyboard.TargetName="bd" 
-                                                                                             Storyboard.TargetProperty="Opacity" 
-                                                                                             To="0.95" Duration="0:0:0.2"/>
-                                                                        </Storyboard>
-                                                                    </BeginStoryboard>
-                                                                </Trigger.EnterActions>
-                                                                <Trigger.ExitActions>
-                                                                    <BeginStoryboard>
-                                                                        <Storyboard>
-                                                                            <DoubleAnimation Storyboard.TargetName="bd" 
-                                                                                             Storyboard.TargetProperty="Opacity" 
-                                                                                             To="1.0" Duration="0:0:0.2"/>
-                                                                        </Storyboard>
-                                                                    </BeginStoryboard>
-                                                                </Trigger.ExitActions>
                                                             </Trigger>
                                                             <Trigger Property="IsPressed" Value="True">
                                                                 <Setter TargetName="bd" Property="Background" Value="#44D32F2F"/>
@@ -504,7 +434,7 @@
                         <ColumnDefinition Width="420"/>
                     </Grid.ColumnDefinitions>
 
-                    <Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFF8F00" Opacity="0.8" Grid.ColumnSpan="3"/>
+                    <Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFFA726" Opacity="0.8" Grid.ColumnSpan="3"/>
 
                     <Border x:Name="NavPanelContainer" Grid.Column="0" CornerRadius="0,0,0,17" Margin="0,2,0,0" Background="Transparent" Opacity="0">
                         <Border.RenderTransform>
@@ -516,7 +446,7 @@
                                     <Style x:Key="NavButtonStyle" TargetType="Button">
                                         <Setter Property="Background" Value="Transparent"/>
                                         <Setter Property="BorderBrush" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#FFFF8F00"/>
+                                        <Setter Property="Foreground" Value="#FFFFA726"/>
                                         <Setter Property="FontSize" Value="32"/>
                                         <Setter Property="Margin" Value="0,32,0,30"/>
                                         <Setter Property="Cursor" Value="Hand"/>
@@ -527,7 +457,7 @@
                                                 <ControlTemplate TargetType="Button">
                                                     <ContentPresenter x:Name="contentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <ContentPresenter.Effect>
-                                                            <DropShadowEffect Color="#FFFF8F00" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
+                                                            <DropShadowEffect Color="#FFFFA726" BlurRadius="0" ShadowDepth="0" Opacity="0"/>
                                                         </ContentPresenter.Effect>
                                                     </ContentPresenter>
                                                     <ControlTemplate.Triggers>
@@ -535,7 +465,7 @@
                                                             <Setter Property="Foreground" Value="White"/>
                                                             <Setter TargetName="contentPresenter" Property="Effect">
                                                                 <Setter.Value>
-                                                                    <DropShadowEffect Color="White" BlurRadius="15" ShadowDepth="0" Opacity="1"/>
+                                                                    <DropShadowEffect Color="White" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
                                                                 </Setter.Value>
                                                             </Setter>
                                                         </Trigger>
@@ -544,7 +474,7 @@
                                                             <Setter Property="Foreground" Value="White"/>
                                                             <Setter TargetName="contentPresenter" Property="Effect">
                                                                 <Setter.Value>
-                                                                    <DropShadowEffect Color="White" BlurRadius="25" ShadowDepth="0" Opacity="1.5"/>
+                                                                    <DropShadowEffect Color="White" BlurRadius="12" ShadowDepth="0" Opacity="1.2"/>
                                                                 </Setter.Value>
                                                             </Setter>
                                                         </Trigger>
@@ -560,13 +490,13 @@
                                 <Button x:Name="ProfileNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Click="ProfileButton_Click"/>
                             </StackPanel>
 
-                            <Rectangle x:Name="NavIndicator" Width="6" Fill="#FFFF8F00" RadiusX="3" RadiusY="3" 
+                            <Rectangle x:Name="NavIndicator" Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" 
                                        HorizontalAlignment="Right" Margin="0,28,0,509">
                                 <Rectangle.RenderTransform>
                                     <TranslateTransform x:Name="NavIndicatorTransform" Y="0"/>
                                 </Rectangle.RenderTransform>
                                 <Rectangle.Effect>
-                                    <DropShadowEffect Color="#FFFF8F00" BlurRadius="15" ShadowDepth="0" Opacity="1.5"/>
+                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="1.2"/>
                                 </Rectangle.Effect>
                             </Rectangle>
                         </Grid>
@@ -599,14 +529,14 @@
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type Button}">
                                                 <Grid>
-                                                    <Border x:Name="OuterBorder" CornerRadius="45" BorderThickness="4" BorderBrush="#FFFF8F00" Margin="-6" Background="#00000000">
+                                                    <Border x:Name="OuterBorder" CornerRadius="45" BorderThickness="4" BorderBrush="#FFFFA726" Margin="-6" Background="#00000000">
                                                         <Border.Effect>
-                                                            <DropShadowEffect x:Name="OuterGlow" Color="#FFFF8F00" BlurRadius="15" ShadowDepth="0" Opacity="1.2" RenderingBias="Quality" />
+                                                            <DropShadowEffect x:Name="OuterGlow" Color="#FFFFA726" BlurRadius="10" ShadowDepth="0" Opacity="0.8" RenderingBias="Quality" />
                                                         </Border.Effect>
                                                     </Border>
-                                                    <Border x:Name="InnerBorder" Width="300" Height="300" CornerRadius="37" BorderThickness="4" BorderBrush="#FFFF8F00" Padding="32" Background="#00000000">
+                                                    <Border x:Name="InnerBorder" Width="300" Height="300" CornerRadius="37" BorderThickness="4" BorderBrush="#FFFFA726" Padding="32" Background="#00000000">
                                                         <Border.Effect>
-                                                            <DropShadowEffect x:Name="InnerGlow" Color="#FFFF8F00" BlurRadius="15" ShadowDepth="0" Opacity="1.5" />
+                                                            <DropShadowEffect x:Name="InnerGlow" Color="#FFFFA726" BlurRadius="12" ShadowDepth="0" Opacity="1.0" />
                                                         </Border.Effect>
                                                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     </Border>
@@ -615,10 +545,10 @@
                                                     <EventTrigger RoutedEvent="UIElement.MouseEnter">
                                                         <BeginStoryboard>
                                                             <Storyboard>
-                                                                <ColorAnimation Storyboard.TargetName="OuterBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#FFFF8F00" Duration="0:0:0.2"/>
-                                                                <ColorAnimation Storyboard.TargetName="InnerBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#FFFF8F00" Duration="0:0:0.2"/>
-                                                                <DoubleAnimation Storyboard.TargetName="InnerGlow" Storyboard.TargetProperty="BlurRadius" To="45" Duration="0:0:0.2"/>
-                                                                <DoubleAnimation Storyboard.TargetName="OuterGlow" Storyboard.TargetProperty="BlurRadius" To="35" Duration="0:0:0.2"/>
+                                                                <ColorAnimation Storyboard.TargetName="OuterBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#FFFFA726" Duration="0:0:0.2"/>
+                                                                <ColorAnimation Storyboard.TargetName="InnerBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#FFFFA726" Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="InnerGlow" Storyboard.TargetProperty="BlurRadius" To="20" Duration="0:0:0.2"/>
+                                                                <DoubleAnimation Storyboard.TargetName="OuterGlow" Storyboard.TargetProperty="BlurRadius" To="18" Duration="0:0:0.2"/>
                                                             </Storyboard>
                                                         </BeginStoryboard>
                                                     </EventTrigger>
@@ -627,13 +557,13 @@
                                                             <Storyboard>
                                                                 <ColorAnimation Storyboard.TargetName="OuterBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#00000000" Duration="0:0:0.3"/>
                                                                 <ColorAnimation Storyboard.TargetName="InnerBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#00000000" Duration="0:0:0.3"/>
-                                                                <DoubleAnimation Storyboard.TargetName="InnerGlow" Storyboard.TargetProperty="BlurRadius" To="15" Duration="0:0:0.3"/>
-                                                                <DoubleAnimation Storyboard.TargetName="OuterGlow" Storyboard.TargetProperty="BlurRadius" To="15" Duration="0:0:0.3"/>
+                                                                <DoubleAnimation Storyboard.TargetName="InnerGlow" Storyboard.TargetProperty="BlurRadius" To="12" Duration="0:0:0.3"/>
+                                                                <DoubleAnimation Storyboard.TargetName="OuterGlow" Storyboard.TargetProperty="BlurRadius" To="10" Duration="0:0:0.3"/>
                                                             </Storyboard>
                                                         </BeginStoryboard>
                                                     </EventTrigger>
                                                     <Trigger Property="IsPressed" Value="True">
-                                                        <Setter TargetName="InnerBorder" Property="Background" Value="#CCFF8F00"/>
+                                                        <Setter TargetName="InnerBorder" Property="Background" Value="#CCFFA726"/>
                                                     </Trigger>
                                                     <Trigger Property="IsEnabled" Value="False">
                                                         <Setter TargetName="InnerBorder" Property="Opacity" Value="0.5"/>
@@ -648,7 +578,7 @@
                             <Viewbox>
                                 <TextBlock x:Name="ButtonText" Text="LETOLTES" FontSize="48" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center">
                                     <TextBlock.Effect>
-                                        <DropShadowEffect Color="#FFFF8F00" BlurRadius="15" ShadowDepth="0" Opacity="1.5" />
+                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="1.2" />
                                     </TextBlock.Effect>
                                 </TextBlock>
                             </Viewbox>
@@ -657,9 +587,9 @@
 
                     <Grid x:Name="ProfileViewGrid" Grid.Column="1" Grid.ColumnSpan="2" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                         <StackPanel Width="600" HorizontalAlignment="Center">
-                            <Border Background="#22FFFFFF" CornerRadius="20" Padding="30" Margin="0,0,0,30">
+                            <Border Background="#22FFA726" CornerRadius="20" Padding="30" Margin="0,0,0,30">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="#FFFF8F00" BlurRadius="20" ShadowDepth="0" Opacity="0.4"/>
+                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="12" ShadowDepth="0" Opacity="0.4"/>
                                 </Border.Effect>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -668,31 +598,31 @@
                                     </Grid.ColumnDefinitions>
 
                                     <Border Grid.Column="0" Width="120" Height="120" CornerRadius="60" 
-                                            Background="#FFFF8F00" Margin="0,0,30,0">
+                                            Background="#FFFFA726" Margin="0,0,30,0">
                                         <Border.Effect>
-                                            <DropShadowEffect Color="#FFFF8F00" BlurRadius="25" ShadowDepth="0" Opacity="1"/>
+                                            <DropShadowEffect Color="#FFFFA726" BlurRadius="15" ShadowDepth="0" Opacity="0.8"/>
                                         </Border.Effect>
                                         <TextBlock Text="👤" FontSize="60" HorizontalAlignment="Center" 
                                                    VerticalAlignment="Center" Foreground="#FF1A1C20">
                                             <TextBlock.Effect>
-                                                <DropShadowEffect Color="#FFFF8F00" BlurRadius="10" ShadowDepth="0" Opacity="1.2"/>
+                                                <DropShadowEffect Color="#FFFFA726" BlurRadius="6" ShadowDepth="0" Opacity="1.0"/>
                                             </TextBlock.Effect>
                                         </TextBlock>
                                     </Border>
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                         <TextBlock x:Name="ProfileUsernameText" Text="Felhasználó" 
-                                                   FontSize="32" FontWeight="Bold" Foreground="#FFFF8F00" 
+                                                   FontSize="32" FontWeight="Bold" Foreground="#FFFFA726" 
                                                    Margin="0,0,0,15">
                                             <TextBlock.Effect>
-                                                <DropShadowEffect Color="#FFFF8F00" BlurRadius="10" ShadowDepth="0" Opacity="1.2"/>
+                                                <DropShadowEffect Color="#FFFFA726" BlurRadius="6" ShadowDepth="0" Opacity="1.0"/>
                                             </TextBlock.Effect>
                                         </TextBlock>
 
                                         <TextBlock x:Name="ProfileRankText" Text="🔰 Kezdő" 
                                                    FontSize="18" FontWeight="SemiBold" Foreground="White">
                                             <TextBlock.Effect>
-                                                <DropShadowEffect Color="#FFFF8F00" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
+                                                <DropShadowEffect Color="#FFFFA726" BlurRadius="4" ShadowDepth="0" Opacity="0.6"/>
                                             </TextBlock.Effect>
                                         </TextBlock>
                                     </StackPanel>
@@ -706,43 +636,43 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <Border Grid.Column="0" Background="#22FFFFFF" CornerRadius="15" Padding="25">
+                                <Border Grid.Column="0" Background="#22FFA726" CornerRadius="15" Padding="25">
                                     <Border.Effect>
-                                        <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
                                     </Border.Effect>
                                     <StackPanel HorizontalAlignment="Center">
                                         <TextBlock Text="🏆" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10">
                                             <TextBlock.Effect>
-                                                <DropShadowEffect Color="#FFFF8F00" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
+                                                <DropShadowEffect Color="#FFFFA726" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
                                             </TextBlock.Effect>
                                         </TextBlock>
                                         <TextBlock Text="Legmagasabb pontszám" FontSize="16" FontWeight="SemiBold" 
-                                                   Foreground="#FFFF8F00" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                                   Foreground="#FFFFA726" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                                         <TextBlock x:Name="ProfileHighestScoreText" Text="0" FontSize="28" FontWeight="Bold" 
                                                    Foreground="White" HorizontalAlignment="Center">
                                             <TextBlock.Effect>
-                                                <DropShadowEffect Color="#FFFF8F00" BlurRadius="6" ShadowDepth="0" Opacity="1"/>
+                                                <DropShadowEffect Color="#FFFFA726" BlurRadius="4" ShadowDepth="0" Opacity="0.8"/>
                                             </TextBlock.Effect>
                                         </TextBlock>
                                     </StackPanel>
                                 </Border>
 
-                                <Border Grid.Column="2" Background="#22FFFFFF" CornerRadius="15" Padding="25">
+                                <Border Grid.Column="2" Background="#22FFA726" CornerRadius="15" Padding="25">
                                     <Border.Effect>
-                                        <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
+                                        <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.3"/>
                                     </Border.Effect>
                                     <StackPanel HorizontalAlignment="Center">
                                         <TextBlock Text="🏅" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,10">
                                             <TextBlock.Effect>
-                                                <DropShadowEffect Color="#FFFF8F00" BlurRadius="8" ShadowDepth="0" Opacity="1"/>
+                                                <DropShadowEffect Color="#FFFFA726" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
                                             </TextBlock.Effect>
                                         </TextBlock>
                                         <TextBlock Text="Rangsor helyezés" FontSize="16" FontWeight="SemiBold" 
-                                                   Foreground="#FFFF8F00" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                                                   Foreground="#FFFFA726" HorizontalAlignment="Center" Margin="0,0,0,10"/>
                                         <TextBlock x:Name="ProfileUserRankText" Text="N/A" FontSize="28" FontWeight="Bold" 
                                                    Foreground="White" HorizontalAlignment="Center">
                                             <TextBlock.Effect>
-                                                <DropShadowEffect Color="#FFFF8F00" BlurRadius="6" ShadowDepth="0" Opacity="1"/>
+                                                <DropShadowEffect Color="#FFFFA726" BlurRadius="4" ShadowDepth="0" Opacity="0.8"/>
                                             </TextBlock.Effect>
                                         </TextBlock>
                                     </StackPanel>
@@ -754,7 +684,7 @@
                     <Grid x:Name="LeaderboardViewGrid" Grid.Column="1" Grid.ColumnSpan="2" Visibility="Collapsed" Margin="40,25,20,0">
                         <StackPanel>
                             <TextBlock Text="TOP 15 JÁTÉKOS" Foreground="White" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"/>
-                            <Rectangle Height="1" Fill="#A7FF8F00" Margin="0,10,0,20" HorizontalAlignment="Center" Width="350"/>
+                            <Rectangle Height="1" Fill="#A7FFA726" Margin="0,10,0,20" HorizontalAlignment="Center" Width="350"/>
 
                             <Border BorderBrush="#33CCCCCC" BorderThickness="0,0,0,1" Margin="0,0,40,10" Padding="12,0,12,8">
                                 <Grid>
@@ -763,9 +693,9 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="150"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Helyezés" Foreground="#FFFF8F00" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Text="Felhasználónév" Foreground="#FFFF8F00" FontWeight="Bold" FontSize="16"/>
-                                    <TextBlock Grid.Column="2" Text="Pontszám" Foreground="#FFFF8F00" FontWeight="Bold" FontSize="16" HorizontalAlignment="Right"/>
+                                    <TextBlock Grid.Column="0" Text="Helyezés" Foreground="#FFFFA726" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="Felhasználónév" Foreground="#FFFFA726" FontWeight="Bold" FontSize="16"/>
+                                    <TextBlock Grid.Column="2" Text="Pontszám" Foreground="#FFFFA726" FontWeight="Bold" FontSize="16" HorizontalAlignment="Right"/>
                                 </Grid>
                             </Border>
 
@@ -783,7 +713,7 @@
 
                                                     <TextBlock Grid.Column="0" Text="{Binding rank, StringFormat='#{0}'}" Foreground="White" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     <TextBlock Grid.Column="1" Text="{Binding username}" Foreground="White" FontSize="16" VerticalAlignment="Center"/>
-                                                    <TextBlock Grid.Column="2" Text="{Binding highest_score}" Foreground="#FFFF8F00" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding highest_score}" Foreground="#FFFFA726" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -799,7 +729,7 @@
                         </Border.RenderTransform>
                         <StackPanel HorizontalAlignment="Center" Margin="15,0,15,0">
                             <TextBlock Text="HÍREK ÉS FRISSÍTÉSEK" Foreground="White" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"/>
-                            <Rectangle Height="1" Fill="#A7FF8F00" Margin="0,10,0,20" HorizontalAlignment="Center" Width="295"/>
+                            <Rectangle Height="1" Fill="#A7FFA726" Margin="0,10,0,20" HorizontalAlignment="Center" Width="295"/>
                             <Grid Height="370">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
@@ -813,16 +743,16 @@
                                                 <Border Background="#15FFFF99" CornerRadius="8" Margin="0,0,0,15" Padding="8" Height="{StaticResource NewsItemHeight}"
                                                         UseLayoutRounding="True" SnapsToDevicePixels="True">
                                                     <Border.Effect>
-                                                        <DropShadowEffect Color="#FFFF99" BlurRadius="4" ShadowDepth="0" Opacity="0.2"/>
+                                                        <DropShadowEffect Color="#FFFF99" BlurRadius="2" ShadowDepth="0" Opacity="0.2"/>
                                                     </Border.Effect>
                                                     <Grid VerticalAlignment="Center">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="Auto"/>
                                                             <ColumnDefinition Width="*"/>
                                                         </Grid.ColumnDefinitions>
-                                                        <Rectangle Grid.Column="0" Width="3" Height="{StaticResource NewsBarHeight}" Fill="#FFFF8F00" RadiusX="2" RadiusY="2" Margin="0,0,12,0" VerticalAlignment="Center">
+                                                        <Rectangle Grid.Column="0" Width="3" Height="{StaticResource NewsBarHeight}" Fill="#FFFFA726" RadiusX="2" RadiusY="2" Margin="0,0,12,0" VerticalAlignment="Center">
                                                             <Rectangle.Effect>
-                                                                <DropShadowEffect Color="#FFFF8F00" BlurRadius="25" ShadowDepth="0" Opacity="1.2"/>
+                                                                <DropShadowEffect Color="#FFFFA726" BlurRadius="8" ShadowDepth="0" Opacity="0.8"/>
                                                             </Rectangle.Effect>
                                                         </Rectangle>
                                                         <Grid Grid.Column="1" Width="279" Height="{StaticResource NewsBarHeight}">
@@ -833,7 +763,7 @@
                                                                        TextOptions.TextFormattingMode="Display"
                                                                        TextOptions.TextRenderingMode="ClearType"
                                                                        TextOptions.TextHintingMode="Fixed"/>
-                                                            <TextBlock Text="{Binding FormattedDate}" Foreground="#FFFF8F00" FontSize="12" FontWeight="Bold" 
+                                                            <TextBlock Text="{Binding FormattedDate}" Foreground="#FFFFA726" FontSize="12" FontWeight="Bold" 
                                                                        HorizontalAlignment="Right" VerticalAlignment="Bottom" 
                                                                        Margin="0,0,8,-10"
                                                                        UseLayoutRounding="True" SnapsToDevicePixels="True"
@@ -844,7 +774,7 @@
                                                                     <TranslateTransform X="7" Y="0"/>
                                                                 </TextBlock.RenderTransform>
                                                                 <TextBlock.Effect>
-                                                                    <DropShadowEffect Color="#FFFF8F00" BlurRadius="2" ShadowDepth="0" Opacity="1.2"/>
+                                                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="2" ShadowDepth="0" Opacity="0.8"/>
                                                                 </TextBlock.Effect>
                                                             </TextBlock>
                                                         </Grid>
@@ -856,19 +786,19 @@
                                 </ScrollViewer>
 
                                 <Grid x:Name="TopScrollIndicator" Grid.Row="0" Height="25" Opacity="0" IsHitTestVisible="False">
-                                    <TextBlock Text="▲" FontSize="16" FontWeight="Bold" Foreground="#FFFF8F00" 
+                                    <TextBlock Text="▲" FontSize="16" FontWeight="Bold" Foreground="#FFFFA726" 
                                                HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock.Effect>
-                                            <DropShadowEffect Color="#FFFF8F00" BlurRadius="10" ShadowDepth="0" Opacity="1.2"/>
+                                            <DropShadowEffect Color="#FFFFA726" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
                                         </TextBlock.Effect>
                                     </TextBlock>
                                 </Grid>
 
                                 <Grid x:Name="BottomScrollIndicator" Grid.Row="2" Height="25" Opacity="0" IsHitTestVisible="False">
-                                    <TextBlock Text="▼" FontSize="16" FontWeight="Bold" Foreground="#FFFF8F00" 
+                                    <TextBlock Text="▼" FontSize="16" FontWeight="Bold" Foreground="#FFFFA726" 
                                                HorizontalAlignment="Center" VerticalAlignment="Center">
                                         <TextBlock.Effect>
-                                            <DropShadowEffect Color="#FFFF8F00" BlurRadius="10" ShadowDepth="0" Opacity="1.2"/>
+                                            <DropShadowEffect Color="#FFFFA726" BlurRadius="6" ShadowDepth="0" Opacity="0.8"/>
                                         </TextBlock.Effect>
                                     </TextBlock>
                                 </Grid>
@@ -877,7 +807,7 @@
                     </Border>
                 </Grid>
 
-                <Border x:Name="NotificationBorder" Grid.Row="0" Grid.RowSpan="2" Height="50" Opacity="0" Background="#FF2c2f34" BorderBrush="#FFFF8F00" BorderThickness="1.5" CornerRadius="10" Margin="25,90,20,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed">
+                <Border x:Name="NotificationBorder" Grid.Row="0" Grid.RowSpan="2" Height="50" Opacity="0" Background="#FF2c2f34" BorderBrush="#FFFFA726" BorderThickness="1.5" CornerRadius="10" Margin="25,90,20,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed">
                     <TextBlock x:Name="NotificationText" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,0"/>
                 </Border>
             </Grid>
