@@ -133,6 +133,19 @@ namespace BitFightersLauncher
                 {
                     NavIndicatorTransform.Y = 0;
                 }
+                
+                // Biztosítjuk, hogy a fő gomb látható és működőképes legyen
+                if (ActionButton != null)
+                {
+                    ActionButton.Visibility = Visibility.Visible;
+                    ActionButton.IsEnabled = true;
+                    Debug.WriteLine($"ActionButton beállítva: Visible={ActionButton.Visibility}, Enabled={ActionButton.IsEnabled}");
+                }
+                if (MainContentGrid != null)
+                {
+                    MainContentGrid.Visibility = Visibility.Visible;
+                    Debug.WriteLine($"MainContentGrid beállítva: Visible={MainContentGrid.Visibility}");
+                }
             };
         }
 
@@ -523,16 +536,33 @@ namespace BitFightersLauncher
             {
                 gameInstallPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "BitFighters");
             }
+            
             string? executablePath = FindExecutable(gameInstallPath);
-            if (!string.IsNullOrEmpty(executablePath))
+            bool gameInstalled = !string.IsNullOrEmpty(executablePath);
+            
+            if (ButtonText != null)
             {
-                gameInstallPath = Path.GetDirectoryName(executablePath)!;
-                ButtonText.Text = "JÁTÉK";
+                if (gameInstalled)
+                {
+                    gameInstallPath = Path.GetDirectoryName(executablePath)!;
+                    ButtonText.Text = "JÁTÉK";
+                    Debug.WriteLine($"Játék telepítve: {executablePath}");
+                }
+                else
+                {
+                    ButtonText.Text = "LETÖLTÉS";
+                    Debug.WriteLine("Játék nincs telepítve, letöltés szükséges");
+                }
             }
-            else
+            
+            // ActionButton láthatóságának biztosítása
+            if (ActionButton != null && currentView == "home")
             {
-                ButtonText.Text = "LETÖLTÉS";
+                ActionButton.Visibility = Visibility.Visible;
+                ActionButton.IsEnabled = true;
+                Debug.WriteLine($"CheckGameInstallStatus - ActionButton: {ActionButton.Visibility}, Enabled: {ActionButton.IsEnabled}");
             }
+            
             UpdateVersionDisplay();
         }
 
@@ -553,32 +583,88 @@ namespace BitFightersLauncher
         private async Task DownloadAndInstallGameAsync()
         {
             if (currentView != "home") return;
+            
             var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "Válassza ki a telepítési mappát" };
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
                 gameInstallPath = dialog.FileName;
-                ActionButton.IsEnabled = false;
-                ButtonText.Text = "FOLYAMATBAN";
                 
-                string tempDownloadPath = Path.Combine(Path.GetTempPath(), "game.zip");
+                // Letöltés indítása - UI frissítés
+                if (ActionButton != null)
+                {
+                    ActionButton.IsEnabled = false;
+                    Debug.WriteLine("Letöltés indítása - ActionButton letiltva");
+                }
+                if (ButtonText != null)
+                {
+                    ButtonText.Text = "LETÖLTÉS...";
+                    Debug.WriteLine("ButtonText frissítve: LETÖLTÉS...");
+                }
+                
+                string tempDownloadPath = Path.Combine(Path.GetTempPath(), "BitFighters_game.zip");
+                
                 try
                 {
-                    var response = await _httpClient.GetAsync(GameDownloadUrl);
-                    response.EnsureSuccessStatusCode();
-                    using (var fileStream = File.Create(tempDownloadPath))
+                    ShowNotification("Játék letöltése elkezdődött...");
+                    Debug.WriteLine($"Letöltés indul: {GameDownloadUrl} -> {tempDownloadPath}");
+                    
+                    // Progress tracking
+                    using (var client = new HttpClient())
                     {
-                        await response.Content.CopyToAsync(fileStream);
+                        client.Timeout = TimeSpan.FromMinutes(10); // 10 perc timeout
+                        
+                        var response = await client.GetAsync(GameDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                        response.EnsureSuccessStatusCode();
+                        
+                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                        Debug.WriteLine($"Fájl mérete: {totalBytes} bytes");
+                        
+                        using (var contentStream = await response.Content.ReadAsStreamAsync())
+                        using (var fileStream = File.Create(tempDownloadPath))
+                        {
+                            var buffer = new byte[8192];
+                            long totalBytesRead = 0;
+                            int bytesRead;
+                            
+                            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                            {
+                                await fileStream.WriteAsync(buffer, 0, bytesRead);
+                                totalBytesRead += bytesRead;
+                                
+                                if (totalBytes > 0)
+                                {
+                                    var progress = (int)((totalBytesRead * 100) / totalBytes);
+                                    if (ButtonText != null)
+                                    {
+                                        ButtonText.Text = $"LETÖLTÉS {progress}%";
+                                    }
+                                    Debug.WriteLine($"Letöltési progress: {progress}% ({totalBytesRead}/{totalBytes})");
+                                }
+                            }
+                        }
                     }
+                    
+                    Debug.WriteLine("Letöltés befejezve, telepítés indítása...");
+                    if (ButtonText != null) ButtonText.Text = "TELEPÍTÉS...";
+                    ShowNotification("Letöltés befejezve, telepítés...");
+                    
                     await InstallGameAsync(tempDownloadPath);
                 }
                 catch (Exception ex)
                 {
+                    Debug.WriteLine($"Hiba a letöltés során: {ex.Message}");
                     ShowNotification($"Hiba a letöltés során: {ex.Message}");
                 }
                 finally
                 {
-                    ActionButton.IsEnabled = true;
+                    // UI visszaállítása
+                    if (ActionButton != null)
+                    {
+                        ActionButton.IsEnabled = true;
+                        Debug.WriteLine("ActionButton újra engedélyezve");
+                    }
                     CheckGameInstallStatus();
+                    Debug.WriteLine("Letöltési folyamat befejezve");
                 }
             }
         }
@@ -768,9 +854,22 @@ namespace BitFightersLauncher
             currentView = "home";
             ResetNavButtonStates();
             if (HomeNavButton != null) HomeNavButton.Tag = "Active";
-            if (ActionButton != null) ActionButton.Visibility = Visibility.Visible;
+            
+            // Biztosítjuk, hogy a fő tartalom látható legyen
+            if (ActionButton != null) 
+            {
+                ActionButton.Visibility = Visibility.Visible;
+                ActionButton.IsEnabled = true;
+                Debug.WriteLine($"ShowHomeView - ActionButton: Visible={ActionButton.Visibility}, Enabled={ActionButton.IsEnabled}");
+            }
+            if (MainContentGrid != null) 
+            {
+                MainContentGrid.Visibility = Visibility.Visible;
+                Debug.WriteLine($"ShowHomeView - MainContentGrid: Visible={MainContentGrid.Visibility}");
+            }
             if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Visible;
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
+            
             AnimateNavIndicator(0);
         }
 
