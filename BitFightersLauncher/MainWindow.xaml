@@ -558,7 +558,6 @@
                                 <Button x:Name="SettingsNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings"/>
                                 <Button x:Name="StarNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star" Click="StarButton_Click"/>
                                 <Button x:Name="ProfileNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Click="ProfileButton_Click"/>
-                                <Button x:Name="DownloadNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE896;" FontFamily="Segoe MDL2 Assets" ToolTip="Download"/>
                             </StackPanel>
 
                             <Rectangle x:Name="NavIndicator" Width="6" Fill="#FFFF8F00" RadiusX="3" RadiusY="3" 

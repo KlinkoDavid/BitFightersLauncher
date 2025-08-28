@@ -147,7 +147,6 @@ namespace BitFightersLauncher
                 await LoadNewsUpdatesAsync();
                 ApplyPerformanceModeIfNeeded();
                 ShowHomeView();
-                AttachNavButtonHoverEvents(); // Hover effectek engedélyezése újra
                 if (NavIndicatorTransform != null)
                 {
                     NavIndicatorTransform.Y = 0;
@@ -158,12 +157,10 @@ namespace BitFightersLauncher
                 {
                     ActionButton.Visibility = Visibility.Visible;
                     ActionButton.IsEnabled = true;
-                    Debug.WriteLine($"ActionButton beállítva: Visible={ActionButton.Visibility}, Enabled={ActionButton.IsEnabled}");
                 }
                 if (MainContentGrid != null)
                 {
                     MainContentGrid.Visibility = Visibility.Visible;
-                    Debug.WriteLine($"MainContentGrid beállítva: Visible={MainContentGrid.Visibility}");
                 }
             };
         }
@@ -174,11 +171,10 @@ namespace BitFightersLauncher
             loggedInUserId = userId;
             loggedInUserCreatedAt = createdAt;
             this.Title = $"BitFighters Launcher - {username}";
+            
             if (UsernameText != null)
-            {
                 UsernameText.Text = username;
-            }
-            Debug.WriteLine($"Bejelentkezett felhasználó: {username} (ID: {userId})");
+            
             LoadUserProfile();
         }
 
@@ -186,11 +182,13 @@ namespace BitFightersLauncher
         {
             try
             {
-                int userScore = await GetUserScoreFromServerAsync();
-                loggedInUserHighestScore = userScore >= 0 ? userScore : 0;
-
-                int userRank = await GetUserRankFromServerAsync();
-                loggedInUserRanking = userRank >= 0 ? userRank : 0;
+                var scoreTask = GetUserScoreFromServerAsync();
+                var rankTask = GetUserRankFromServerAsync();
+                
+                await Task.WhenAll(scoreTask, rankTask);
+                
+                loggedInUserHighestScore = Math.Max(0, await scoreTask);
+                loggedInUserRanking = Math.Max(0, await rankTask);
 
                 if (currentView == "profile")
                 {
@@ -272,19 +270,19 @@ namespace BitFightersLauncher
         {
             try
             {
-                int currentScore = await GetUserScoreFromServerAsync();
-                if (currentScore >= 0)
-                {
-                    loggedInUserHighestScore = currentScore;
-                }
+                var scoreTask = GetUserScoreFromServerAsync();
+                var rankTask = GetUserRankFromServerAsync();
+                
+                await Task.WhenAll(scoreTask, rankTask);
+                
+                var currentScore = await scoreTask;
+                var currentRank = await rankTask;
+                
+                if (currentScore >= 0) loggedInUserHighestScore = currentScore;
+                if (currentRank >= 0) loggedInUserRanking = currentRank;
 
-                int currentRank = await GetUserRankFromServerAsync();
-                if (currentRank >= 0)
-                {
-                    loggedInUserRanking = currentRank;
-                }
-
-                if (currentView == "profile") UpdateProfileView();
+                if (currentView == "profile") 
+                    UpdateProfileView();
             }
             catch (Exception ex)
             {
@@ -469,25 +467,25 @@ namespace BitFightersLauncher
 
         private void UpdateVersionDisplay()
         {
-            if (VersionCurrentText != null && VersionStatusText != null && UpdateIndicator != null)
-            {
-                VersionCurrentText.Text = $"v{serverGameVersion}";
-                string? executablePath = FindExecutable(gameInstallPath);
-                bool gameInstalled = !string.IsNullOrEmpty(executablePath);
+            if (VersionCurrentText == null || VersionStatusText == null || UpdateIndicator == null)
+                return;
 
-                if (gameInstalled)
-                {
-                    VersionStatusText.Text = "Telepítve";
-                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80));
-                    UpdateIndicator.Visibility = Visibility.Collapsed;
-                }
-                else
-                {
-                    VersionStatusText.Text = "Nincs telepítve";
-                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204));
-                    UpdateIndicator.Visibility = Visibility.Visible;
-                    UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
-                }
+            VersionCurrentText.Text = $"v{serverGameVersion}";
+            string? executablePath = FindExecutable(gameInstallPath);
+            bool gameInstalled = !string.IsNullOrEmpty(executablePath);
+
+            if (gameInstalled)
+            {
+                VersionStatusText.Text = "Telepítve";
+                VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80));
+                UpdateIndicator.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                VersionStatusText.Text = "Nincs telepítve";
+                VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(204, 204, 204));
+                UpdateIndicator.Visibility = Visibility.Visible;
+                UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 152, 0));
             }
         }
 
@@ -561,17 +559,12 @@ namespace BitFightersLauncher
 
             if (ButtonText != null)
             {
-                if (gameInstalled)
-                {
-                    gameInstallPath = Path.GetDirectoryName(executablePath)!;
-                    ButtonText.Text = "JÁTÉK";
-                    Debug.WriteLine($"Játék telepítve: {executablePath}");
-                }
-                else
-                {
-                    ButtonText.Text = "LETÖLTÉS";
-                    Debug.WriteLine("Játék nincs telepítve, letöltés szükséges");
-                }
+                ButtonText.Text = gameInstalled ? "JÁTÉK" : "LETÖLTÉS";
+            }
+
+            if (gameInstalled)
+            {
+                gameInstallPath = Path.GetDirectoryName(executablePath)!;
             }
 
             // ActionButton láthatóságának biztosítása
@@ -579,7 +572,6 @@ namespace BitFightersLauncher
             {
                 ActionButton.Visibility = Visibility.Visible;
                 ActionButton.IsEnabled = true;
-                Debug.WriteLine($"CheckGameInstallStatus - ActionButton: {ActionButton.Visibility}, Enabled: {ActionButton.IsEnabled}");
             }
 
             UpdateVersionDisplay();
@@ -612,12 +604,10 @@ namespace BitFightersLauncher
                 if (ActionButton != null)
                 {
                     ActionButton.IsEnabled = false;
-                    Debug.WriteLine("Letöltés indítása - ActionButton letiltva");
                 }
                 if (ButtonText != null)
                 {
                     ButtonText.Text = "LETÖLTÉS...";
-                    Debug.WriteLine("ButtonText frissítve: LETÖLTÉS...");
                 }
 
                 string tempDownloadPath = Path.Combine(Path.GetTempPath(), "BitFighters_game.zip");
@@ -625,7 +615,6 @@ namespace BitFightersLauncher
                 try
                 {
                     ShowNotification("Játék letöltése elkezdődött...");
-                    Debug.WriteLine($"Letöltés indul: {GameDownloadUrl} -> {tempDownloadPath}");
 
                     // Progress tracking
                     using (var client = new HttpClient())
@@ -636,7 +625,6 @@ namespace BitFightersLauncher
                         response.EnsureSuccessStatusCode();
 
                         var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                        Debug.WriteLine($"Fájl mérete: {totalBytes} bytes");
 
                         using (var contentStream = await response.Content.ReadAsStreamAsync())
                         using (var fileStream = File.Create(tempDownloadPath))
@@ -657,15 +645,13 @@ namespace BitFightersLauncher
                                     {
                                         ButtonText.Text = $"LETÖLTÉS {progress}%";
                                     }
-                                    Debug.WriteLine($"Letöltési progress: {progress}% ({totalBytesRead}/{totalBytes})");
                                 }
                             }
                         }
                     }
 
-                    Debug.WriteLine("Letöltés befejezve, telepítés indítása...");
                     if (ButtonText != null) ButtonText.Text = "TELEPÍTÉS...";
-                    ShowNotification("Letöltés befejezve, telepítés...");
+                    ShowNotification("Letöltés befejeződött, telepítés...");
 
                     await InstallGameAsync(tempDownloadPath);
                 }
@@ -680,10 +666,8 @@ namespace BitFightersLauncher
                     if (ActionButton != null)
                     {
                         ActionButton.IsEnabled = true;
-                        Debug.WriteLine("ActionButton újra engedélyezve");
                     }
                     CheckGameInstallStatus();
-                    Debug.WriteLine("Letöltési folyamat befejezve");
                 }
             }
         }
@@ -861,11 +845,6 @@ namespace BitFightersLauncher
                 ProfileNavButton.Tag = null;
                 ProfileNavButton.ClearValue(Button.RenderTransformProperty);
             }
-            if (DownloadNavButton != null)
-            {
-                DownloadNavButton.Tag = null;
-                DownloadNavButton.ClearValue(Button.RenderTransformProperty);
-            }
         }
 
         private void ShowHomeView()
@@ -879,12 +858,10 @@ namespace BitFightersLauncher
             {
                 ActionButton.Visibility = Visibility.Visible;
                 ActionButton.IsEnabled = true;
-                Debug.WriteLine($"ShowHomeView - ActionButton: Visible={ActionButton.Visibility}, Enabled={ActionButton.IsEnabled}");
             }
             if (MainContentGrid != null)
             {
                 MainContentGrid.Visibility = Visibility.Visible;
-                Debug.WriteLine($"ShowHomeView - MainContentGrid: Visible={MainContentGrid.Visibility}");
             }
             if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Visible;
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
@@ -975,17 +952,20 @@ namespace BitFightersLauncher
 
         private void UpdateProfileView()
         {
-            if (ProfileViewGrid?.Visibility != Visibility.Visible) return;
-            if (ProfileUsernameText != null) ProfileUsernameText.Text = loggedInUsername;
-            if (ProfileHighestScoreText != null) ProfileHighestScoreText.Text = loggedInUserHighestScore.ToString();
+            if (ProfileViewGrid?.Visibility != Visibility.Visible) 
+                return;
+            
+            if (ProfileUsernameText != null) 
+                ProfileUsernameText.Text = loggedInUsername;
+            
+            if (ProfileHighestScoreText != null) 
+                ProfileHighestScoreText.Text = loggedInUserHighestScore.ToString();
+            
             if (ProfileUserRankText != null)
-            {
-                if (loggedInUserRanking > 0)
-                    ProfileUserRankText.Text = $"#{loggedInUserRanking}";
-                else
-                    ProfileUserRankText.Text = "N/A";
-            }
-            if (ProfileRankText != null) ProfileRankText.Text = GetUserRank(loggedInUserHighestScore);
+                ProfileUserRankText.Text = loggedInUserRanking > 0 ? $"#{loggedInUserRanking}" : "N/A";
+                
+            if (ProfileRankText != null) 
+                ProfileRankText.Text = GetUserRank(loggedInUserHighestScore);
         }
 
         private string GetUserRank(int score)
@@ -1012,48 +992,6 @@ namespace BitFightersLauncher
         private void StarButton_Click(object sender, RoutedEventArgs e)
         {
             ShowLeaderboardView();
-        }
-
-        // Navigációs gombok hover effect kezelése - egyszerûsített verzió
-        private void NavButton_MouseEnter(object sender, MouseEventArgs e)
-        {
-            // XAML kezeli alapból a hover effectet minden gombra
-        }
-
-        private void NavButton_MouseLeave(object sender, MouseEventArgs e)
-        {
-            // XAML kezeli alapból a hover effectet minden gombra
-        }
-
-        // Event handler hozzárendelés - most bekapcsoljuk a hover effecteket
-        private void AttachNavButtonHoverEvents()
-        {
-            // Hover effectek hozzáadása minden navigációs gombhoz - XAML-ben is működni fog
-            if (HomeNavButton != null)
-            {
-                HomeNavButton.MouseEnter += (s, e) => { /* XAML kezeli */ };
-                HomeNavButton.MouseLeave += (s, e) => { /* XAML kezeli */ };
-            }
-            if (SettingsNavButton != null)
-            {
-                SettingsNavButton.MouseEnter += (s, e) => { /* XAML kezeli */ };
-                SettingsNavButton.MouseLeave += (s, e) => { /* XAML kezeli */ };
-            }
-            if (StarNavButton != null)
-            {
-                StarNavButton.MouseEnter += (s, e) => { /* XAML kezeli */ };
-                StarNavButton.MouseLeave += (s, e) => { /* XAML kezeli */ };
-            }
-            if (ProfileNavButton != null)
-            {
-                ProfileNavButton.MouseEnter += (s, e) => { /* XAML kezeli */ };
-                ProfileNavButton.MouseLeave += (s, e) => { /* XAML kezeli */ };
-            }
-            if (DownloadNavButton != null)
-            {
-                DownloadNavButton.MouseEnter += (s, e) => { /* XAML kezeli */ };
-                DownloadNavButton.MouseLeave += (s, e) => { /* XAML kezeli */ };
-            }
         }
 
         // Dispose static HttpClient when app closes
