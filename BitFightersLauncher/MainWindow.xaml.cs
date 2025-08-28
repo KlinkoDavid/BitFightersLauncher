@@ -88,6 +88,13 @@ namespace BitFightersLauncher
         private bool _renderingHooked;
         private readonly bool _reducedMotion;
 
+        // Cached HttpClient for better performance
+        private static readonly HttpClient _httpClient = new HttpClient() 
+        { 
+            Timeout = TimeSpan.FromSeconds(15),
+            DefaultRequestHeaders = { { "User-Agent", "BitFighters-Launcher/1.0" } }
+        };
+
         // User info
         private string loggedInUsername = string.Empty;
         private int loggedInUserId = 0;
@@ -170,17 +177,13 @@ namespace BitFightersLauncher
         {
             try
             {
-                using (var httpClient = new HttpClient())
-                {
-                    httpClient.Timeout = TimeSpan.FromSeconds(10);
-                    var requestData = new { action = "get_user_score", username = loggedInUsername };
-                    string jsonContent = JsonSerializer.Serialize(requestData);
-                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                    var response = await httpClient.PostAsync(ApiUrl, content);
-                    string responseText = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonSerializer.Deserialize<UserScoreApiResponse>(responseText);
-                    return apiResponse?.success == true && apiResponse.user != null ? apiResponse.user.highest_score : -1;
-                }
+                var requestData = new { action = "get_user_score", username = loggedInUsername };
+                string jsonContent = JsonSerializer.Serialize(requestData);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(ApiUrl, content);
+                string responseText = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<UserScoreApiResponse>(responseText);
+                return apiResponse?.success == true && apiResponse.user != null ? apiResponse.user.highest_score : -1;
             }
             catch (Exception ex)
             {
@@ -193,17 +196,13 @@ namespace BitFightersLauncher
         {
             try
             {
-                using (var httpClient = new HttpClient())
-                {
-                    httpClient.Timeout = TimeSpan.FromSeconds(10);
-                    var requestData = new { action = "get_user_rank", username = loggedInUsername };
-                    string jsonContent = JsonSerializer.Serialize(requestData);
-                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                    var response = await httpClient.PostAsync(ApiUrl, content);
-                    string responseText = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonSerializer.Deserialize<UserRankApiResponse>(responseText);
-                    return apiResponse?.success == true && apiResponse.user != null ? apiResponse.user.rank : -1;
-                }
+                var requestData = new { action = "get_user_rank", username = loggedInUsername };
+                string jsonContent = JsonSerializer.Serialize(requestData);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(ApiUrl, content);
+                string responseText = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<UserRankApiResponse>(responseText);
+                return apiResponse?.success == true && apiResponse.user != null ? apiResponse.user.rank : -1;
             }
             catch (Exception ex)
             {
@@ -216,23 +215,19 @@ namespace BitFightersLauncher
         {
             try
             {
-                using (var httpClient = new HttpClient())
+                var requestData = new { action = "update_user_score", user_id = loggedInUserId, new_score = newScore };
+                string jsonContent = JsonSerializer.Serialize(requestData);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(ApiUrl, content);
+                string responseText = await response.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<UserScoreApiResponse>(responseText);
+                if (apiResponse?.success == true)
                 {
-                    httpClient.Timeout = TimeSpan.FromSeconds(10);
-                    var requestData = new { action = "update_user_score", user_id = loggedInUserId, new_score = newScore };
-                    string jsonContent = JsonSerializer.Serialize(requestData);
-                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                    var response = await httpClient.PostAsync(ApiUrl, content);
-                    string responseText = await response.Content.ReadAsStringAsync();
-                    var apiResponse = JsonSerializer.Deserialize<UserScoreApiResponse>(responseText);
-                    if (apiResponse?.success == true)
-                    {
-                        loggedInUserHighestScore = newScore;
-                        if (currentView == "profile") UpdateProfileView();
-                        return true;
-                    }
-                    return false;
+                    loggedInUserHighestScore = newScore;
+                    if (currentView == "profile") UpdateProfileView();
+                    return true;
                 }
+                return false;
             }
             catch (Exception ex)
             {
@@ -427,14 +422,10 @@ namespace BitFightersLauncher
         {
             try
             {
-                using (var httpClient = new HttpClient())
-                {
-                    httpClient.Timeout = TimeSpan.FromSeconds(10);
-                    string url = $"{VersionCheckUrl}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
-                    string versionString = await httpClient.GetStringAsync(url);
-                    serverGameVersion = versionString.Trim();
-                    UpdateVersionDisplay();
-                }
+                string url = $"{VersionCheckUrl}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+                string versionString = await _httpClient.GetStringAsync(url);
+                serverGameVersion = versionString.Trim();
+                UpdateVersionDisplay();
             }
             catch (Exception ex)
             {
@@ -572,14 +563,11 @@ namespace BitFightersLauncher
                 string tempDownloadPath = Path.Combine(Path.GetTempPath(), "game.zip");
                 try
                 {
-                    using (var httpClient = new HttpClient())
+                    var response = await _httpClient.GetAsync(GameDownloadUrl);
+                    response.EnsureSuccessStatusCode();
+                    using (var fileStream = File.Create(tempDownloadPath))
                     {
-                        var response = await httpClient.GetAsync(GameDownloadUrl);
-                        response.EnsureSuccessStatusCode();
-                        using (var fileStream = File.Create(tempDownloadPath))
-                        {
-                            await response.Content.CopyToAsync(fileStream);
-                        }
+                        await response.Content.CopyToAsync(fileStream);
                     }
                     await InstallGameAsync(tempDownloadPath);
                 }
@@ -675,39 +663,35 @@ namespace BitFightersLauncher
         {
             try
             {
-                using (var httpClient = new HttpClient())
+                Debug.WriteLine($"Loading news from: {ApiUrl}");
+                
+                var requestData = new { action = "get_news", limit = 20 };
+                string jsonContent = JsonSerializer.Serialize(requestData);
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync(ApiUrl, content);
+                string responseText = await response.Content.ReadAsStringAsync();
+                
+                Debug.WriteLine($"Response status: {response.StatusCode}");
+                Debug.WriteLine($"Response content: {responseText}");
+                
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var updates = JsonSerializer.Deserialize<List<NewsUpdate>>(responseText, options);
+                
+                if (updates == null || updates.Count == 0)
                 {
-                    httpClient.Timeout = TimeSpan.FromSeconds(15);
-                    Debug.WriteLine($"Loading news from: {ApiUrl}");
-                    
-                    var requestData = new { action = "get_news", limit = 20 };
-                    string jsonContent = JsonSerializer.Serialize(requestData);
-                    var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                    var response = await httpClient.PostAsync(ApiUrl, content);
-                    string responseText = await response.Content.ReadAsStringAsync();
-                    
-                    Debug.WriteLine($"Response status: {response.StatusCode}");
-                    Debug.WriteLine($"Response content: {responseText}");
-                    
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                    var updates = JsonSerializer.Deserialize<List<NewsUpdate>>(responseText, options);
-                    
-                    if (updates == null || updates.Count == 0)
+                    updates = new List<NewsUpdate>
                     {
-                        updates = new List<NewsUpdate>
+                        new NewsUpdate
                         {
-                            new NewsUpdate
-                            {
-                                Title = "Üdvözöljük a BitFighters Launcher-ben!",
-                                Content = "A launcher sikeresen betöltött. Itt fognak megjelenni a legfrissebb hírek és frissítések a játékról.",
-                                CreatedAt = DateTime.Now
-                            }
-                        };
-                    }
-                    
-                    NewsItemsControl.ItemsSource = updates;
-                    Debug.WriteLine($"News loaded successfully: {updates.Count} items");
+                            Title = "Üdvözöljük a BitFighters Launcher-ben!",
+                            Content = "A launcher sikeresen betöltött. Itt fognak megjelenni a legfrissebb hírek és frissítések a játékról.",
+                            CreatedAt = DateTime.Now
+                        }
+                    };
                 }
+                
+                NewsItemsControl.ItemsSource = updates;
+                Debug.WriteLine($"News loaded successfully: {updates.Count} items");
             }
             catch (Exception ex)
             {
@@ -869,7 +853,7 @@ namespace BitFightersLauncher
         // Event handler hozzárendelés - most bekapcsoljuk a hover effecteket
         private void AttachNavButtonHoverEvents()
         {
-            // Hover effectek hozzáadása minden navigációs gombhoz - XAML-ben is mûködni fog
+            // Hover effectek hozzáadása minden navigációs gombhoz - XAML-ben is működni fog
             if (HomeNavButton != null)
             {
                 HomeNavButton.MouseEnter += (s, e) => { /* XAML kezeli */ };
@@ -895,6 +879,13 @@ namespace BitFightersLauncher
                 DownloadNavButton.MouseEnter += (s, e) => { /* XAML kezeli */ };
                 DownloadNavButton.MouseLeave += (s, e) => { /* XAML kezeli */ };
             }
+        }
+
+        // Dispose static HttpClient when app closes
+        protected override void OnClosed(EventArgs e)
+        {
+            _httpClient?.Dispose();
+            base.OnClosed(e);
         }
     }
 }
