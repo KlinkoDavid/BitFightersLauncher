@@ -16,6 +16,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
+using System.Windows.Threading;
 
 namespace BitFightersLauncher
 {
@@ -102,9 +103,9 @@ namespace BitFightersLauncher
         private string serverGameVersion = "0.0.0";
         private readonly string settingsFilePath;
 
+        // Optimalizált scroll változók - DispatcherTimer használata
+        private DispatcherTimer? _scrollTimer;
         private double _targetVerticalOffset;
-        private bool _isScrolling;
-        private bool _renderingHooked;
         private readonly bool _reducedMotion;
 
         // Cached HttpClient for better performance
@@ -121,10 +122,10 @@ namespace BitFightersLauncher
         private int loggedInUserHighestScore = 0;
         private int loggedInUserRanking = 0;
 
-        // Navigation state
+        // Navigation state - egyszerűsített
         private string currentView = "home";
+        private DispatcherTimer? _navTimer;
         private double _targetNavIndicatorY;
-        private bool _isNavigating;
 
         public MainWindow()
         {
@@ -134,35 +135,67 @@ namespace BitFightersLauncher
             string launcherDataPath = Path.Combine(appDataPath, "BitFightersLauncher");
             settingsFilePath = Path.Combine(launcherDataPath, "settings.txt");
 
-            _reducedMotion = (RenderCapability.Tier >> 16) < 2;
+            // Teljesítmény ellenőrzés
+            _reducedMotion = (RenderCapability.Tier >> 16) < 2 || SystemParameters.HighContrast;
 
-            Loaded += (s, e) => UpdateBorderClip();
+            // Egyszerűsített inicializálás
+            Loaded += MainWindow_Loaded;
             SizeChanged += (s, e) => UpdateBorderClip();
 
-            Loaded += async (s, e) =>
-            {
-                LoadInstallPath();
-                await LoadServerVersionAsync();
-                CheckGameInstallStatus();
-                await LoadNewsUpdatesAsync();
-                ApplyPerformanceModeIfNeeded();
-                ShowHomeView();
-                if (NavIndicatorTransform != null)
-                {
-                    NavIndicatorTransform.Y = 0;
-                }
+            // Optimalizált timerek inicializálása
+            InitializeTimers();
+        }
 
-                // Biztosítjuk, hogy a fő gomb látható és működőképes legyen
-                if (ActionButton != null)
-                {
-                    ActionButton.Visibility = Visibility.Visible;
-                    ActionButton.IsEnabled = true;
-                }
-                if (MainContentGrid != null)
-                {
-                    MainContentGrid.Visibility = Visibility.Visible;
-                }
+        private void InitializeTimers()
+        {
+            // Scroll timer optimalizálása
+            _scrollTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(_reducedMotion ? 50 : 16) // 60 FPS normál esetben, 20 FPS gyenge gépen
             };
+            _scrollTimer.Tick += ScrollTimer_Tick;
+
+            // Navigációs timer
+            _navTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(_reducedMotion ? 50 : 16)
+            };
+            _navTimer.Tick += NavTimer_Tick;
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            UpdateBorderClip();
+            LoadInstallPath();
+            
+            // Párhuzamos betöltések optimalizálása
+            var tasks = new List<Task>
+            {
+                LoadServerVersionAsync(),
+                LoadNewsUpdatesAsync()
+            };
+            
+            await Task.WhenAll(tasks);
+            
+            CheckGameInstallStatus();
+            ApplyPerformanceModeIfNeeded();
+            ShowHomeView();
+            
+            if (NavIndicatorTransform != null)
+            {
+                NavIndicatorTransform.Y = 0;
+            }
+
+            // Biztosítjuk, hogy a fő gomb látható és működőképes legyen
+            if (ActionButton != null)
+            {
+                ActionButton.Visibility = Visibility.Visible;
+                ActionButton.IsEnabled = true;
+            }
+            if (MainContentGrid != null)
+            {
+                MainContentGrid.Visibility = Visibility.Visible;
+            }
         }
 
         public void SetUserInfo(string username, int userId, string createdAt = "")
@@ -175,10 +208,11 @@ namespace BitFightersLauncher
             if (UsernameText != null)
                 UsernameText.Text = username;
             
-            LoadUserProfile();
+            // Nem blokkoló profil betöltés
+            _ = LoadUserProfileAsync();
         }
 
-        private async void LoadUserProfile()
+        private async Task LoadUserProfileAsync()
         {
             try
             {
@@ -190,9 +224,10 @@ namespace BitFightersLauncher
                 loggedInUserHighestScore = Math.Max(0, await scoreTask);
                 loggedInUserRanking = Math.Max(0, await rankTask);
 
+                // UI frissítés csak ha szükséges
                 if (currentView == "profile")
                 {
-                    UpdateProfileView();
+                    Dispatcher.Invoke(UpdateProfileView);
                 }
             }
             catch (Exception ex)
@@ -302,7 +337,9 @@ namespace BitFightersLauncher
                 Application.Current.MainWindow = loginWindow;
                 loginWindow.Show();
                 Application.Current.ShutdownMode = originalShutdownMode;
-                var fadeOutAnimation = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300));
+                
+                // Egyszerűsített fade out
+                var fadeOutAnimation = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200));
                 fadeOutAnimation.Completed += (s, a) => { this.Close(); };
                 this.BeginAnimation(Window.OpacityProperty, fadeOutAnimation);
             }
@@ -340,59 +377,43 @@ namespace BitFightersLauncher
             RootBorder.Clip = new RectangleGeometry(new Rect(0, 0, RootBorder.ActualWidth, RootBorder.ActualHeight), radius, radius);
         }
 
-        private void HookRendering()
+        // Optimalizált timer alapú scroll kezelés
+        private void ScrollTimer_Tick(object? sender, EventArgs e)
         {
-            if (_renderingHooked || _reducedMotion) return;
-            CompositionTarget.Rendering += CompositionTarget_Rendering;
-            _renderingHooked = true;
+            if (NewsScrollViewer == null) return;
+            
+            double currentOffset = NewsScrollViewer.VerticalOffset;
+            double difference = _targetVerticalOffset - currentOffset;
+            
+            if (Math.Abs(difference) < 1.0)
+            {
+                NewsScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
+                _scrollTimer?.Stop();
+            }
+            else
+            {
+                double step = _reducedMotion ? Math.Sign(difference) * 5 : Math.Max(Math.Abs(difference) * 0.15, 1.0);
+                NewsScrollViewer.ScrollToVerticalOffset(currentOffset + Math.Sign(difference) * step);
+            }
         }
 
-        private void UnhookRendering()
+        private void NavTimer_Tick(object? sender, EventArgs e)
         {
-            if (!_renderingHooked) return;
-            CompositionTarget.Rendering -= CompositionTarget_Rendering;
-            _renderingHooked = false;
-        }
-
-        private void CompositionTarget_Rendering(object? sender, EventArgs e)
-        {
-            bool stillAnimating = false;
-
-            if (_isScrolling && NewsScrollViewer != null)
+            if (NavIndicatorTransform == null) return;
+            
+            double currentY = NavIndicatorTransform.Y;
+            double difference = _targetNavIndicatorY - currentY;
+            
+            if (Math.Abs(difference) < 1.0)
             {
-                double currentOffset = NewsScrollViewer.VerticalOffset;
-                double difference = _targetVerticalOffset - currentOffset;
-                if (Math.Abs(difference) < 0.5)
-                {
-                    NewsScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
-                    _isScrolling = false;
-                }
-                else
-                {
-                    double step = Math.Max(Math.Abs(difference) * 0.15, 1.0);
-                    NewsScrollViewer.ScrollToVerticalOffset(currentOffset + Math.Sign(difference) * step);
-                    stillAnimating = true;
-                }
+                NavIndicatorTransform.Y = _targetNavIndicatorY;
+                _navTimer?.Stop();
             }
-
-            if (_isNavigating && NavIndicatorTransform != null)
+            else
             {
-                double currentY = NavIndicatorTransform.Y;
-                double difference = _targetNavIndicatorY - currentY;
-                if (Math.Abs(difference) < 0.5)
-                {
-                    NavIndicatorTransform.Y = _targetNavIndicatorY;
-                    _isNavigating = false;
-                }
-                else
-                {
-                    double step = Math.Max(Math.Abs(difference) * 0.20, 0.5);
-                    NavIndicatorTransform.Y = currentY + Math.Sign(difference) * step;
-                    stillAnimating = true;
-                }
+                double step = _reducedMotion ? Math.Sign(difference) * 8 : Math.Max(Math.Abs(difference) * 0.20, 1.0);
+                NavIndicatorTransform.Y = currentY + Math.Sign(difference) * step;
             }
-
-            if (!stillAnimating) UnhookRendering();
         }
 
         private void ApplyPerformanceModeIfNeeded()
@@ -403,40 +424,39 @@ namespace BitFightersLauncher
             if (TopScrollIndicator != null) TopScrollIndicator.Visibility = Visibility.Collapsed;
             if (BottomScrollIndicator != null) BottomScrollIndicator.Visibility = Visibility.Collapsed;
             
-            // Navigációs indikátor glow csökkentése
-            if (NavIndicator?.Effect is DropShadowEffect navGlow)
-            {
-                navGlow.BlurRadius = 4;
-                navGlow.Opacity = 0.8;
-            }
-            
-            // Összes drop shadow eltávolítása/csökkentése
-            OptimizeDropShadows(this);
+            // TextBlock rendering optimalizálás kikapcsolása gyenge gépen
+            OptimizeTextRendering(this);
         }
 
-        private void OptimizeDropShadows(DependencyObject parent)
+        private void OptimizeTextRendering(DependencyObject parent)
         {
-            if (parent is UIElement element && element.Effect is DropShadowEffect effect)
+            if (parent is TextBlock textBlock)
             {
-                // Csökkentjük a blur radiust gyenge gépeken
-                effect.BlurRadius = Math.Max(2, effect.BlurRadius * 0.5);
-                effect.Opacity = Math.Max(0.3, effect.Opacity * 0.7);
+                // Egyszerű text rendering gyenge gépeken
+                textBlock.ClearValue(TextOptions.TextFormattingModeProperty);
+                textBlock.ClearValue(TextOptions.TextRenderingModeProperty);
+                textBlock.ClearValue(TextOptions.TextHintingModeProperty);
             }
             
             int count = VisualTreeHelper.GetChildrenCount(parent);
             for (int i = 0; i < count; i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
-                OptimizeDropShadows(child);
+                OptimizeTextRendering(child);
             }
         }
 
         private async void ShowNotification(string message)
         {
+            if (NotificationText == null || NotificationBorder == null) return;
+            
             NotificationText.Text = message;
             var showStoryboard = (Storyboard)this.FindResource("ShowNotification");
             showStoryboard.Begin(NotificationBorder);
-            await Task.Delay(4000);
+            
+            // Async delay
+            await Task.Delay(3000); // Rövidebb időtartam
+            
             var hideStoryboard = (Storyboard)this.FindResource("HideNotification");
             hideStoryboard.Begin(NotificationBorder);
         }
@@ -464,13 +484,13 @@ namespace BitFightersLauncher
                 string url = $"{VersionCheckUrl}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
                 string versionString = await _httpClient.GetStringAsync(url);
                 serverGameVersion = versionString.Trim();
-                UpdateVersionDisplay();
+                Dispatcher.Invoke(UpdateVersionDisplay);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Hiba a szerver verzió betöltésekor: {ex.Message}");
                 serverGameVersion = "Ismeretlen";
-                UpdateVersionDisplay();
+                Dispatcher.Invoke(UpdateVersionDisplay);
             }
         }
 
@@ -494,7 +514,7 @@ namespace BitFightersLauncher
                 VersionStatusText.Text = "Nincs telepítve";
                 VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(224, 224, 224));
                 UpdateIndicator.Visibility = Visibility.Visible;
-                UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 167, 38)); // FFA726 színhez közelebb
+                UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 167, 38));
             }
         }
 
@@ -589,7 +609,7 @@ namespace BitFightersLauncher
         private async void HandleActionButton_Click(object sender, RoutedEventArgs e)
         {
             if (currentView != "home") return;
-            switch (ButtonText.Text)
+            switch (ButtonText?.Text)
             {
                 case "LETÖLTÉS":
                     await DownloadAndInstallGameAsync();
@@ -625,29 +645,31 @@ namespace BitFightersLauncher
                 {
                     ShowNotification("Játék letöltése elkezdődött...");
 
-                    // Progress tracking
+                    // Optimalizált progress tracking
                     using (var client = new HttpClient())
                     {
-                        client.Timeout = TimeSpan.FromMinutes(10); // 10 perc timeout
+                        client.Timeout = TimeSpan.FromMinutes(10);
 
                         var response = await client.GetAsync(GameDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
                         response.EnsureSuccessStatusCode();
 
                         var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                        var progressBuffer = new byte[32768]; // Nagyobb buffer a jobb teljesítményért
 
                         using (var contentStream = await response.Content.ReadAsStreamAsync())
                         using (var fileStream = File.Create(tempDownloadPath))
                         {
-                            var buffer = new byte[8192];
                             long totalBytesRead = 0;
                             int bytesRead;
+                            int updateCounter = 0;
 
-                            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                            while ((bytesRead = await contentStream.ReadAsync(progressBuffer, 0, progressBuffer.Length)) > 0)
                             {
-                                await fileStream.WriteAsync(buffer, 0, bytesRead);
+                                await fileStream.WriteAsync(progressBuffer, 0, bytesRead);
                                 totalBytesRead += bytesRead;
 
-                                if (totalBytes > 0)
+                                // Progress frissítés optimalizálása - csak minden 10. alkalommal
+                                if (totalBytes > 0 && ++updateCounter % 10 == 0)
                                 {
                                     var progress = (int)((totalBytesRead * 100) / totalBytes);
                                     if (ButtonText != null)
@@ -788,26 +810,41 @@ namespace BitFightersLauncher
                     };
                 }
 
-                NewsItemsControl.ItemsSource = updates;
+                // UI frissítés a fő szálon
+                Dispatcher.Invoke(() => 
+                {
+                    if (NewsItemsControl != null)
+                        NewsItemsControl.ItemsSource = updates;
+                });
+                
                 Debug.WriteLine($"News loaded successfully: {updates.Count} items");
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"LoadNewsUpdatesAsync failed: {ex}");
-                NewsItemsControl.ItemsSource = new List<NewsUpdate>
+                Dispatcher.Invoke(() =>
                 {
-                    new NewsUpdate
+                    if (NewsItemsControl != null)
                     {
-                        Title = "Hiba a hírek betöltésekor",
-                        Content = $"Nem sikerült elérni a szervert: {ex.Message}",
-                        CreatedAt = DateTime.Now
+                        NewsItemsControl.ItemsSource = new List<NewsUpdate>
+                        {
+                            new NewsUpdate
+                            {
+                                Title = "Hiba a hírek betöltésekor",
+                                Content = $"Nem sikerült elérni a szervert: {ex.Message}",
+                                CreatedAt = DateTime.Now
+                            }
+                        };
                     }
-                };
+                });
             }
         }
 
         private void NewsScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
+            if (NewsScrollViewer == null) return;
+            
+            // Gyors scroll gyenge gépen
             if (_reducedMotion)
             {
                 double target = NewsScrollViewer.VerticalOffset - e.Delta;
@@ -817,18 +854,25 @@ namespace BitFightersLauncher
                 e.Handled = true;
                 return;
             }
-            _targetVerticalOffset -= e.Delta * 0.7;
+            
+            // Smooth scroll jó gépen
+            _targetVerticalOffset = NewsScrollViewer.VerticalOffset - e.Delta * 0.7;
             if (_targetVerticalOffset < 0) _targetVerticalOffset = 0;
             if (_targetVerticalOffset > NewsScrollViewer.ScrollableHeight) _targetVerticalOffset = NewsScrollViewer.ScrollableHeight;
-            _isScrolling = true;
-            HookRendering();
+            
+            _scrollTimer?.Start();
             e.Handled = true;
         }
 
         private void NewsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            TopScrollIndicator.Opacity = (e.VerticalOffset > 0) ? 1 : 0;
-            BottomScrollIndicator.Opacity = (e.VerticalOffset < NewsScrollViewer.ScrollableHeight - 1) ? 1 : 0;
+            if (!_reducedMotion)
+            {
+                if (TopScrollIndicator != null)
+                    TopScrollIndicator.Opacity = (e.VerticalOffset > 0) ? 1 : 0;
+                if (BottomScrollIndicator != null)
+                    BottomScrollIndicator.Opacity = (e.VerticalOffset < NewsScrollViewer.ScrollableHeight - 1) ? 1 : 0;
+            }
         }
 
         private void ResetNavButtonStates()
@@ -837,7 +881,7 @@ namespace BitFightersLauncher
             if (HomeNavButton != null)
             {
                 HomeNavButton.Tag = null;
-                HomeNavButton.ClearValue(Button.RenderTransformProperty); // Transform törlése
+                HomeNavButton.ClearValue(Button.RenderTransformProperty);
             }
             if (SettingsNavButton != null)
             {
@@ -874,7 +918,7 @@ namespace BitFightersLauncher
             }
             if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Visible;
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
-            if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Collapsed; // Ranglista elrejtése
+            if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Collapsed;
 
             AnimateNavIndicator(0);
         }
@@ -885,9 +929,9 @@ namespace BitFightersLauncher
             ResetNavButtonStates();
             if (ProfileNavButton != null) ProfileNavButton.Tag = "Active";
             if (ActionButton != null) ActionButton.Visibility = Visibility.Collapsed;
-            if (MainContentGrid != null) MainContentGrid.Visibility = Visibility.Collapsed; // Fő tartalom elrejtése
+            if (MainContentGrid != null) MainContentGrid.Visibility = Visibility.Collapsed;
             if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Collapsed;
-            if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Collapsed; // Ranglista elrejtése
+            if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Collapsed;
             if (ProfileViewGrid != null)
             {
                 ProfileViewGrid.Visibility = Visibility.Visible;
@@ -908,8 +952,8 @@ namespace BitFightersLauncher
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
             if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Visible;
 
-            AnimateNavIndicator(2); // Indikátor a Star gombra (index 2)
-            LoadLeaderboardAsync();
+            AnimateNavIndicator(2);
+            _ = LoadLeaderboardAsync(); // Nem blokkoló betöltés
         }
 
         // ÚJ: Ranglista adatainak aszinkron betöltése
@@ -927,10 +971,13 @@ namespace BitFightersLauncher
 
                 if (apiResponse?.success == true && apiResponse.leaderboard != null)
                 {
-                    if (LeaderboardItemsControl != null)
+                    Dispatcher.Invoke(() =>
                     {
-                        LeaderboardItemsControl.ItemsSource = apiResponse.leaderboard;
-                    }
+                        if (LeaderboardItemsControl != null)
+                        {
+                            LeaderboardItemsControl.ItemsSource = apiResponse.leaderboard;
+                        }
+                    });
                 }
                 else
                 {
@@ -943,20 +990,22 @@ namespace BitFightersLauncher
             }
         }
 
-
         private void AnimateNavIndicator(int buttonIndex)
         {
             if (NavIndicatorTransform == null) return;
+            
             double targetY = buttonIndex * 124;
+            
             if (_reducedMotion)
             {
                 NavIndicatorTransform.Y = targetY;
                 return;
             }
+            
             if (Math.Abs(NavIndicatorTransform.Y - targetY) < 1.0) return;
+            
             _targetNavIndicatorY = targetY;
-            _isNavigating = true;
-            HookRendering();
+            _navTimer?.Start();
         }
 
         private void UpdateProfileView()
@@ -1003,9 +1052,11 @@ namespace BitFightersLauncher
             ShowLeaderboardView();
         }
 
-        // Dispose static HttpClient when app closes
+        // Cleanup timerek és HttpClient
         protected override void OnClosed(EventArgs e)
         {
+            _scrollTimer?.Stop();
+            _navTimer?.Stop();
             _httpClient?.Dispose();
             base.OnClosed(e);
         }
