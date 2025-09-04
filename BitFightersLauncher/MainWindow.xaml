@@ -320,7 +320,11 @@
                         <ColumnDefinition Width="420"/>
                     </Grid.ColumnDefinitions>
 
-                    <Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFFA726" Opacity="0.8" Grid.ColumnSpan="3"/>
+                    <!-- Módosított header vonal - csak a navigációs panelig tart -->
+                    <Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFFA726" Opacity="0.8" Grid.Column="1" Grid.ColumnSpan="2"/>
+                    
+                    <!-- Sötétítő réteg a navigációs panel helyén -->
+                    <Rectangle Grid.Column="0" Height="2" VerticalAlignment="Top" Fill="#33000000" Opacity="1"/>
 
                     <!-- Navigációs panel -->
                     <Border x:Name="NavPanelContainer" Grid.Column="0" CornerRadius="0,0,0,17" Margin="0,2,0,0" Background="#33000000" Opacity="0"
@@ -356,7 +360,6 @@
                                     </Style>
                                 </StackPanel.Resources>
                                 <Button x:Name="HomeNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE80F;" FontFamily="Segoe MDL2 Assets" ToolTip="Home" Click="HomeButton_Click"/>
-                                <Button x:Name="SettingsNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE713;" FontFamily="Segoe MDL2 Assets" ToolTip="Settings"/>
                                 <Button x:Name="StarNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star" Click="StarButton_Click"/>
                                 <Button x:Name="ProfileNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Click="ProfileButton_Click"/>
                             </StackPanel>

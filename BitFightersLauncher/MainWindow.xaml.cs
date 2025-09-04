@@ -1331,11 +1331,6 @@ namespace BitFightersLauncher
                 HomeNavButton.Tag = null;
                 HomeNavButton.ClearValue(Button.RenderTransformProperty);
             }
-            if (SettingsNavButton != null)
-            {
-                SettingsNavButton.Tag = null;
-                SettingsNavButton.ClearValue(Button.RenderTransformProperty);
-            }
             if (StarNavButton != null)
             {
                 StarNavButton.Tag = null;
@@ -1384,7 +1379,7 @@ namespace BitFightersLauncher
                 ProfileViewGrid.Visibility = Visibility.Visible;
                 UpdateProfileView();
             }
-            AnimateNavIndicator(3);
+            AnimateNavIndicator(2); // Changed from 3 to 2 since settings button was removed
         }
 
         private void ShowLeaderboardView()
@@ -1398,7 +1393,7 @@ namespace BitFightersLauncher
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
             if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Visible;
 
-            AnimateNavIndicator(2);
+            AnimateNavIndicator(1); // Changed from 2 to 1 since settings button was removed
             _ = LoadLeaderboardAsync();
         }
 
@@ -1439,6 +1434,8 @@ namespace BitFightersLauncher
         {
             if (NavIndicatorTransform == null) return;
             
+            // Adjusted positions after removing settings button
+            // buttonIndex: 0=Home, 1=Star, 2=Profile
             double targetY = buttonIndex * 124;
             
             if (_reducedMotion)
