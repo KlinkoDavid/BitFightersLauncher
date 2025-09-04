@@ -101,6 +101,7 @@ namespace BitFightersLauncher
 
         private string gameInstallPath = string.Empty;
         private string serverGameVersion = "0.0.0";
+        private string localGameVersion = "0.0.0";
         private readonly string settingsFilePath;
 
         // Optimalizált scroll változók - DispatcherTimer használata
@@ -122,7 +123,7 @@ namespace BitFightersLauncher
         private int loggedInUserHighestScore = 0;
         private int loggedInUserRanking = 0;
 
-        // Navigation state - egyszerűsített
+        // Navigation state - egyszer?sített
         private string currentView = "home";
         private DispatcherTimer? _navTimer;
         private double _targetNavIndicatorY;
@@ -135,10 +136,10 @@ namespace BitFightersLauncher
             string launcherDataPath = Path.Combine(appDataPath, "BitFightersLauncher");
             settingsFilePath = Path.Combine(launcherDataPath, "settings.txt");
 
-            // Teljesítmény ellenőrzés
+            // Teljesítmény ellen?rzés
             _reducedMotion = (RenderCapability.Tier >> 16) < 2 || SystemParameters.HighContrast;
 
-            // Egyszerűsített inicializálás
+            // Egyszer?sített inicializálás
             Loaded += MainWindow_Loaded;
             SizeChanged += (s, e) => UpdateBorderClip();
 
@@ -178,6 +179,10 @@ namespace BitFightersLauncher
             await Task.WhenAll(tasks);
             
             CheckGameInstallStatus();
+            
+            // Automatikus frissítés ellen?rzése
+            _ = CheckForUpdatesAutomatically();
+            
             ApplyPerformanceModeIfNeeded();
             ShowHomeView();
             
@@ -186,7 +191,7 @@ namespace BitFightersLauncher
                 NavIndicatorTransform.Y = 0;
             }
 
-            // Biztosítjuk, hogy a fő gomb látható és működőképes legyen
+            // Biztosítjuk, hogy a f? gomb látható és m?köd?képes legyen
             if (ActionButton != null)
             {
                 ActionButton.Visibility = Visibility.Visible;
@@ -318,8 +323,8 @@ namespace BitFightersLauncher
 
                 if (currentView == "profile") 
                     UpdateProfileView();
-            }
-            catch (Exception ex)
+            } 
+            catch (Exception ex) 
             {
                 Debug.WriteLine($"Hiba a pontszám frissítésekor: {ex.Message}");
             }
@@ -338,7 +343,7 @@ namespace BitFightersLauncher
                 loginWindow.Show();
                 Application.Current.ShutdownMode = originalShutdownMode;
                 
-                // Egyszerűsített fade out
+                // Egyszer?sített fade out
                 var fadeOutAnimation = new DoubleAnimation(0, TimeSpan.FromMilliseconds(200));
                 fadeOutAnimation.Completed += (s, a) => { this.Close(); };
                 this.BeginAnimation(Window.OpacityProperty, fadeOutAnimation);
@@ -432,7 +437,7 @@ namespace BitFightersLauncher
         {
             if (parent is TextBlock textBlock)
             {
-                // Egyszerű text rendering gyenge gépeken
+                // Egyszer? text rendering gyenge gépeken
                 textBlock.ClearValue(TextOptions.TextFormattingModeProperty);
                 textBlock.ClearValue(TextOptions.TextRenderingModeProperty);
                 textBlock.ClearValue(TextOptions.TextHintingModeProperty);
@@ -455,7 +460,7 @@ namespace BitFightersLauncher
             showStoryboard.Begin(NotificationBorder);
             
             // Async delay
-            await Task.Delay(3000); // Rövidebb időtartam
+            await Task.Delay(3000); // Rövidebb id?tartam
             
             var hideStoryboard = (Storyboard)this.FindResource("HideNotification");
             hideStoryboard.Begin(NotificationBorder);
@@ -477,13 +482,92 @@ namespace BitFightersLauncher
             }
         }
 
+        // VERZIÓ KEZELÉS - JAVÍTOTT VÁLTOZATOK
+        private string GetLocalGameVersion()
+        {
+            try
+            {
+                string? executablePath = FindExecutable(gameInstallPath);
+                if (!string.IsNullOrEmpty(executablePath))
+                {
+                    // El?ször megpróbáljuk egy lokális verzió fájlból olvasni
+                    string localVersionFile = Path.Combine(gameInstallPath, "version.txt");
+                    if (File.Exists(localVersionFile))
+                    {
+                        string localVersion = File.ReadAllText(localVersionFile).Trim();
+                        Debug.WriteLine($"Helyi verzió fájlból: '{localVersion}'");
+                        return localVersion;
+                    }
+
+                    // Ha nincs lokális verzió fájl, akkor a fájl módosítási dátumát használjuk
+                    var fileInfo = new FileInfo(executablePath);
+                    string dateVersion = fileInfo.LastWriteTime.ToString("yyyy.MM.dd");
+                    Debug.WriteLine($"Helyi verzió dátum alapján: '{dateVersion}' ({executablePath})");
+                    return dateVersion;
+                }
+                else
+                {
+                    Debug.WriteLine("Játék executable nem található");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Hiba a helyi verzió lekérdezésekor: {ex.Message}");
+            }
+            return "0.0.0";
+        }
+
+        private bool IsUpdateAvailable()
+        {
+            localGameVersion = GetLocalGameVersion();
+            
+            Debug.WriteLine($"Verzió összehasonlítás: Helyi='{localGameVersion}', Szerver='{serverGameVersion}'");
+            
+            // Ha nincs telepítve a játék, akkor nem frissítésról van szó
+            if (localGameVersion == "0.0.0" || string.IsNullOrEmpty(FindExecutable(gameInstallPath)))
+            {
+                Debug.WriteLine("Játék nincs telepítve - nem frissítés szükséges");
+                return false;
+            }
+            
+            // Ha a szerver verzió ismeretlen vagy hibás
+            if (string.IsNullOrEmpty(serverGameVersion) || serverGameVersion == "Ismeretlen")
+            {
+                Debug.WriteLine("Szerver verzió ismeretlen - nem frissítés szükséges");
+                return false;
+            }
+            
+            // Egyszer? string összehasonlítás - ha különböznek, akkor frissítés szükséges
+            bool updateNeeded = !string.Equals(localGameVersion, serverGameVersion, StringComparison.OrdinalIgnoreCase);
+            Debug.WriteLine($"Verzió összehasonlítás eredménye - Frissítés szükséges: {updateNeeded}");
+            return updateNeeded;
+        }
+
         private async Task LoadServerVersionAsync()
         {
             try
             {
-                string url = $"{VersionCheckUrl}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
-                string versionString = await _httpClient.GetStringAsync(url);
-                serverGameVersion = versionString.Trim();
+                // Cache elkerülése különböz? módszerekkel
+                string timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+                string url = $"{VersionCheckUrl}?t={timestamp}&v={Guid.NewGuid():N}";
+                
+                Debug.WriteLine($"Szerver verzió lekérdezése: {url}");
+                
+                using (var client = new HttpClient())
+                {
+                    client.DefaultRequestHeaders.CacheControl = new System.Net.Http.Headers.CacheControlHeaderValue()
+                    {
+                        NoCache = true,
+                        NoStore = true
+                    };
+                    client.DefaultRequestHeaders.Add("Pragma", "no-cache");
+                    
+                    string versionString = await client.GetStringAsync(url);
+                    serverGameVersion = versionString.Trim();
+                    
+                    Debug.WriteLine($"Szerver verzió betöltve: '{serverGameVersion}'");
+                }
+                
                 Dispatcher.Invoke(UpdateVersionDisplay);
             }
             catch (Exception ex)
@@ -499,15 +583,48 @@ namespace BitFightersLauncher
             if (VersionCurrentText == null || VersionStatusText == null || UpdateIndicator == null)
                 return;
 
+            Debug.WriteLine($"UI frissítése - Szerver: '{serverGameVersion}'");
+
+            // Csak a szerver verziót jelenítjük meg
             VersionCurrentText.Text = $"v{serverGameVersion}";
             string? executablePath = FindExecutable(gameInstallPath);
             bool gameInstalled = !string.IsNullOrEmpty(executablePath);
 
+            Debug.WriteLine($"Játék telepítve: {gameInstalled}");
+
             if (gameInstalled)
             {
-                VersionStatusText.Text = "Telepítve";
-                VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80));
-                UpdateIndicator.Visibility = Visibility.Collapsed;
+                localGameVersion = GetLocalGameVersion();
+                bool updateAvailable = IsUpdateAvailable();
+                
+                Debug.WriteLine($"Frissítés elérhető: {updateAvailable}");
+                
+                if (updateAvailable)
+                {
+                    VersionStatusText.Text = "Frissítés elérhető";
+                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 167, 38));
+                    UpdateIndicator.Visibility = Visibility.Visible;
+                    UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 167, 38));
+                    
+                    // Change button text to indicate update
+                    if (ButtonText != null)
+                    {
+                        ButtonText.Text = "FRISSÍTÉS";
+                        Debug.WriteLine("Gomb szöveg frissítve: FRISSÍTÉS");
+                    }
+                }
+                else
+                {
+                    VersionStatusText.Text = "Naprakész";
+                    VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(76, 175, 80));
+                    UpdateIndicator.Visibility = Visibility.Collapsed;
+                    
+                    if (ButtonText != null)
+                    {
+                        ButtonText.Text = "JÁTÉK";
+                        Debug.WriteLine("Gomb szöveg frissítve: JÁTÉK");
+                    }
+                }
             }
             else
             {
@@ -515,7 +632,466 @@ namespace BitFightersLauncher
                 VersionStatusText.Foreground = new SolidColorBrush(Color.FromRgb(224, 224, 224));
                 UpdateIndicator.Visibility = Visibility.Visible;
                 UpdateIndicator.Background = new SolidColorBrush(Color.FromRgb(255, 167, 38));
+                
+                if (ButtonText != null)
+                {
+                    ButtonText.Text = "LETÖLTÉS";
+                    Debug.WriteLine("Gomb szöveg frissítve: LETÖLTÉS");
+                }
             }
+        }
+
+        private async Task CheckForUpdatesAutomatically()
+        {
+            try
+            {
+                Debug.WriteLine("Automatikus frissítés ellenörzés kezdése...");
+                
+                // El?ször betöltjük a szerver verziót
+                await LoadServerVersionAsync();
+                
+                // Várakozás a UI frissítésre
+                await Task.Delay(100);
+                
+                if (IsUpdateAvailable())
+                {
+                    Debug.WriteLine("Frissítés elérhető - csak UI frissítés, dialógus nélkül");
+                    
+                    // Eltávolítottuk a MessageBox dialógust
+                    // Csak csendes frissítés történik az UI-ban
+                    ShowNotification($"Új verzió elérhető: v{serverGameVersion}");
+                }
+                else
+                {
+                    Debug.WriteLine("Nincs elérhető frissítés");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Hiba az automatikus frissítés ellenőrzésekor: {ex.Message}");
+            }
+        }
+
+        public async Task ManualVersionCheckAsync()
+        {
+            try
+            {
+                Debug.WriteLine("Manuális verzió ellenőrzés...");
+                ShowNotification("Verzió ellenőrzése...");
+                
+                await LoadServerVersionAsync();
+                
+                if (IsUpdateAvailable())
+                {
+                    ShowNotification($"Új verzió elérhető: v{serverGameVersion}");
+                }
+                else
+                {
+                    ShowNotification("A játék naprakész!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Hiba a manuális verzió ellenőrzésekor: {ex.Message}");
+                ShowNotification("Hiba a verzió ellenőrzése során!");
+            }
+        }
+
+        private async void VersionDisplay_Click(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                Debug.WriteLine("=== MANUÁLIS VERZIÓ ELLEN?RZÉS INDÍTÁSA ===");
+                await ManualVersionCheckAsync();
+                
+                // Debug információk megjelenítése a felhasználónak
+                string debugInfo = $"Debug információk:\n\n" +
+                                  $"Játék mappa: {gameInstallPath}\n" +
+                                  $"Helyi verzió: {localGameVersion}\n" +
+                                  $"Szerver verzió: {serverGameVersion}\n" +
+                                  $"Frissítés szükséges: {IsUpdateAvailable()}\n" +
+                                  $"Executable található: {!string.IsNullOrEmpty(FindExecutable(gameInstallPath))}\n\n" +
+                                  $"Helyi verzió fájl: {Path.Combine(gameInstallPath, "version.txt")}\n" +
+                                  $"Verzió fájl létezik: {File.Exists(Path.Combine(gameInstallPath, "version.txt"))}";
+                
+                var result = MessageBox.Show(debugInfo + "\n\nSzeretné kényszeríteni a verzió újra ellenőrzését?", 
+                    "Verzió információk", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Kényszerítjük az újra ellen?rzést
+                    Debug.WriteLine("Kényszerített verzió ellenőrzés...");
+                    await LoadServerVersionAsync();
+                    CheckGameInstallStatus();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Hiba: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // JÁTÉK FRISSÍTÉSI LOGIKA
+        private async Task PerformGameUpdateAsync()
+        {
+            if (currentView != "home") return;
+
+            bool isUpdate = ButtonText?.Text == "FRISSÍTÉS" || IsUpdateAvailable();
+            
+            if (!isUpdate)
+            {
+                var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "Válassza ki a telepítési mappát" };
+                if (dialog.ShowDialog() != CommonFileDialogResult.Ok)
+                    return;
+                gameInstallPath = dialog.FileName;
+            }
+
+            if (ActionButton != null)
+            {
+                ActionButton.IsEnabled = false;
+            }
+            
+            if (ButtonText != null)
+            {
+                ButtonText.Text = isUpdate ? "FRISSÍTÉS..." : "LETÖLTÉS...";
+            }
+
+            string tempDownloadPath = Path.Combine(Path.GetTempPath(), "BitFighters_game.zip");
+
+            try
+            {
+                ShowNotification(isUpdate ? "Játék frissítése elkezdődött..." : "Játék letöltése elkezdődött...");
+
+                if (isUpdate && Directory.Exists(gameInstallPath))
+                {
+                    await PerformCompleteGameUpdate(tempDownloadPath);
+                }
+                else
+                {
+                    await PerformFreshInstall(tempDownloadPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Hiba a {(isUpdate ? "frissítés" : "letöltés")} során: {ex.Message}");
+                ShowNotification($"Hiba a {(isUpdate ? "frissítés" : "letöltés")} során: {ex.Message}");
+            }
+            finally
+            {
+                if (ActionButton != null)
+                {
+                    ActionButton.IsEnabled = true;
+                }
+                CheckGameInstallStatus();
+            }
+        }
+
+        private async Task PerformCompleteGameUpdate(string tempDownloadPath)
+        {
+            try
+            {
+                if (ButtonText != null)
+                {
+                    ButtonText.Text = "ELŐKÉSZÍTÉS...";
+                }
+
+                var backupPath = await CreateConfigBackupAsync();
+                await DownloadGameFileAsync(tempDownloadPath, true);
+                await ClearOldGameFilesAsync();
+                await ExtractNewGameVersionAsync(tempDownloadPath);
+                await RestoreConfigBackupAsync(backupPath);
+
+                ShowNotification($"Játék sikeresen frissítve! Új verzió: v{serverGameVersion}");
+                localGameVersion = GetLocalGameVersion();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Frissítési hiba: {ex.Message}", ex);
+            }
+        }
+
+        private async Task PerformFreshInstall(string tempDownloadPath)
+        {
+            await DownloadGameFileAsync(tempDownloadPath, false);
+            await ExtractNewGameVersionAsync(tempDownloadPath);
+            
+            if (!string.IsNullOrEmpty(FindExecutable(gameInstallPath)))
+            {
+                SaveInstallPath();
+                ShowNotification($"A játék sikeresen telepítve! Verzió: v{serverGameVersion}");
+                localGameVersion = GetLocalGameVersion();
+            }
+            else
+            {
+                ShowNotification("Hiba: A futtatható fájl nem található a mappában.");
+                gameInstallPath = string.Empty;
+            }
+        }
+
+        private async Task DownloadGameFileAsync(string downloadPath, bool isUpdate)
+        {
+            if (ButtonText != null)
+            {
+                ButtonText.Text = isUpdate ? "ÚJ VERZIÓ LETÖLTÉSE..." : "LETÖLTÉS...";
+            }
+
+            using (var client = new HttpClient())
+            {
+                client.Timeout = TimeSpan.FromMinutes(10);
+
+                var response = await client.GetAsync(GameDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
+
+                var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                var progressBuffer = new byte[32768];
+
+                using (var contentStream = await response.Content.ReadAsStreamAsync())
+                using (var fileStream = File.Create(downloadPath))
+                {
+                    long totalBytesRead = 0;
+                    int bytesRead;
+                    int updateCounter = 0;
+
+                    while ((bytesRead = await contentStream.ReadAsync(progressBuffer, 0, progressBuffer.Length)) > 0)
+                    {
+                        await fileStream.WriteAsync(progressBuffer, 0, bytesRead);
+                        totalBytesRead += bytesRead;
+
+                        if (totalBytes > 0 && ++updateCounter % 20 == 0)
+                        {
+                            var progress = (int)((totalBytesRead * 100) / totalBytes);
+                            if (ButtonText != null)
+                            {
+                                string action = isUpdate ? "FRISSÍTÉS" : "LETÖLTÉS";
+                                ButtonText.Text = $"{action} {progress}%";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private async Task<string> CreateConfigBackupAsync()
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    var tempConfigPath = Path.Combine(Path.GetTempPath(), $"BitFighters_backup_{DateTime.Now:yyyyMMdd_HHmmss}");
+                    Directory.CreateDirectory(tempConfigPath);
+
+                    var configExtensions = new[] { "*.config", "*.ini", "*.json", "*.txt", "*.dat" };
+                    var configFiles = new List<string>();
+
+                    foreach (var extension in configExtensions)
+                    {
+                        try
+                        {
+                            configFiles.AddRange(Directory.GetFiles(gameInstallPath, extension, SearchOption.AllDirectories));
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Nem sikerült keresni a {extension} fájlokat: {ex.Message}");
+                        }
+                    }
+
+                    var configKeywords = new[] { "config", "settings", "save", "profile", "user", "pref" };
+                    var filteredConfigFiles = configFiles.Where(file =>
+                    {
+                        var fileName = Path.GetFileName(file).ToLower();
+                        return configKeywords.Any(keyword => fileName.Contains(keyword)) ||
+                               fileName.EndsWith(".config") || fileName.EndsWith(".ini");
+                    }).ToList();
+
+                    foreach (var configFile in filteredConfigFiles)
+                    {
+                        try
+                        {
+                            var relativePath = Path.GetRelativePath(gameInstallPath, configFile);
+                            var backupFilePath = Path.Combine(tempConfigPath, relativePath);
+                            
+                            Directory.CreateDirectory(Path.GetDirectoryName(backupFilePath)!);
+                            File.Copy(configFile, backupFilePath, true);
+                            
+                            Debug.WriteLine($"Konfig fájl mentve: {relativePath}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Nem sikerült menteni: {configFile} - {ex.Message}");
+                        }
+                    }
+
+                    return tempConfigPath;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Hiba a backup készítésekor: {ex.Message}");
+                    return string.Empty;
+                }
+            });
+        }
+
+        private async Task ClearOldGameFilesAsync()
+        {
+            if (ButtonText != null)
+            {
+                ButtonText.Text = "RÉGI FÁJLOK TÖRLÉSE...";
+            }
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    if (!Directory.Exists(gameInstallPath))
+                        return;
+
+                    var files = Directory.GetFiles(gameInstallPath, "*", SearchOption.AllDirectories);
+                    foreach (var file in files)
+                    {
+                        try
+                        {
+                            File.SetAttributes(file, FileAttributes.Normal);
+                            File.Delete(file);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Nem sikerült törölni a fájlt: {file} - {ex.Message}");
+                        }
+                    }
+
+                    var directories = Directory.GetDirectories(gameInstallPath, "*", SearchOption.AllDirectories)
+                                              .OrderByDescending(d => d.Length);
+
+                    foreach (var directory in directories)
+                    {
+                        try
+                        {
+                            if (!Directory.EnumerateFileSystemEntries(directory).Any())
+                            {
+                                Directory.Delete(directory);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Nem sikerült törölni a könyvtárat: {directory} - {ex.Message}");
+                        }
+                    }
+
+                    Debug.WriteLine("Régi fájlok törölve");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Hiba a régi fájlok törlése során: {ex.Message}");
+                    throw;
+                }
+            });
+        }
+
+        private async Task ExtractNewGameVersionAsync(string zipPath)
+        {
+            if (ButtonText != null)
+            {
+                ButtonText.Text = "ÚJ VERZIÓ TELEPÍTÉSE...";
+            }
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    Directory.CreateDirectory(gameInstallPath);
+                    
+                    using (var archive = ZipFile.OpenRead(zipPath))
+                    {
+                        foreach (var entry in archive.Entries)
+                        {
+                            if (string.IsNullOrEmpty(entry.Name))
+                                continue;
+
+                            var destinationPath = Path.Combine(gameInstallPath, entry.FullName);
+                            var destinationDir = Path.GetDirectoryName(destinationPath);
+                            
+                            if (!string.IsNullOrEmpty(destinationDir))
+                                Directory.CreateDirectory(destinationDir);
+
+                            entry.ExtractToFile(destinationPath, overwrite: true);
+                        }
+                    }
+
+                    // Létrehozunk egy lokális verzió fájlt a szerver verzióval
+                    string localVersionFile = Path.Combine(gameInstallPath, "version.txt");
+                    File.WriteAllText(localVersionFile, serverGameVersion);
+                    Debug.WriteLine($"Lokális verzió fájl létrehozva: {serverGameVersion}");
+
+                    Debug.WriteLine("Új verzió sikeresen kicsomagolva");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Hiba az új verzió telepítésekor: {ex.Message}");
+                    throw;
+                }
+                finally
+                {
+                    try
+                    {
+                        if (File.Exists(zipPath))
+                            File.Delete(zipPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Nem sikerült törölni a temp fájlt: {ex.Message}");
+                    }
+                }
+            });
+        }
+
+        private async Task RestoreConfigBackupAsync(string backupPath)
+        {
+            if (string.IsNullOrEmpty(backupPath) || !Directory.Exists(backupPath))
+                return;
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    var backupFiles = Directory.GetFiles(backupPath, "*", SearchOption.AllDirectories);
+                    
+                    foreach (var backupFile in backupFiles)
+                    {
+                        try
+                        {
+                            var relativePath = Path.GetRelativePath(backupPath, backupFile);
+                            var restorePath = Path.Combine(gameInstallPath, relativePath);
+                            
+                            Directory.CreateDirectory(Path.GetDirectoryName(restorePath)!);
+                            File.Copy(backupFile, restorePath, true);
+                            
+                            Debug.WriteLine($"Konfig fájl visszaállítva: {relativePath}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Nem sikerült visszaállítani: {backupFile} - {ex.Message}");
+                        }
+                    }
+
+                    Directory.Delete(backupPath, true);
+                    Debug.WriteLine("Konfiguráció visszaállítva és backup törölve");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Hiba a konfiguráció visszaállításakor: {ex.Message}");
+                }
+            });
+        }
+
+        // SEGÉDMETÓDUSOK
+        private string? FindExecutable(string path)
+        {
+            if (!Directory.Exists(path)) return null;
+            try
+            {
+                return Directory.GetFiles(path, GameExecutableName, SearchOption.AllDirectories).FirstOrDefault();
+            }
+            catch (UnauthorizedAccessException) { return null; }
         }
 
         private void SaveInstallPath()
@@ -528,51 +1104,6 @@ namespace BitFightersLauncher
             catch (Exception ex)
             {
                 ShowNotification($"Hiba a mentés során: {ex.Message}");
-            }
-        }
-
-        private void DragWindow(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left) this.DragMove();
-        }
-
-        private void ExitButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is FrameworkElement fe && fe.ContextMenu != null)
-            {
-                fe.ContextMenu.PlacementTarget = fe;
-                fe.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Left;
-                fe.ContextMenu.HorizontalOffset = -6;
-                fe.ContextMenu.VerticalOffset = 4;
-                fe.ContextMenu.IsOpen = true;
-            }
-        }
-
-        private void ExitContextMenu_Opened(object sender, RoutedEventArgs e)
-        {
-            if (DimOverlay != null) DimOverlay.Visibility = Visibility.Visible;
-        }
-
-        private void ExitContextMenu_Closed(object sender, RoutedEventArgs e)
-        {
-            if (DimOverlay != null) DimOverlay.Visibility = Visibility.Collapsed;
-        }
-
-        private void ExitOnlyMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            Application.Current.Shutdown();
-        }
-
-        private void LogoutExitMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                AuthStorage.Clear();
-                Logout();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Hiba a kijelentkezés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -596,7 +1127,6 @@ namespace BitFightersLauncher
                 gameInstallPath = Path.GetDirectoryName(executablePath)!;
             }
 
-            // ActionButton láthatóságának biztosítása
             if (ActionButton != null && currentView == "home")
             {
                 ActionButton.Visibility = Visibility.Visible;
@@ -606,143 +1136,20 @@ namespace BitFightersLauncher
             UpdateVersionDisplay();
         }
 
+        // ESEMÉNYKEZEL?K
         private async void HandleActionButton_Click(object sender, RoutedEventArgs e)
         {
             if (currentView != "home") return;
             switch (ButtonText?.Text)
             {
                 case "LETÖLTÉS":
-                    await DownloadAndInstallGameAsync();
+                case "FRISSÍTÉS":
+                    await PerformGameUpdateAsync();
                     break;
                 case "JÁTÉK":
                     await StartGame();
                     break;
             }
-        }
-
-        private async Task DownloadAndInstallGameAsync()
-        {
-            if (currentView != "home") return;
-
-            var dialog = new CommonOpenFileDialog { IsFolderPicker = true, Title = "Válassza ki a telepítési mappát" };
-            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-            {
-                gameInstallPath = dialog.FileName;
-
-                // Letöltés indítása - UI frissítés
-                if (ActionButton != null)
-                {
-                    ActionButton.IsEnabled = false;
-                }
-                if (ButtonText != null)
-                {
-                    ButtonText.Text = "LETÖLTÉS...";
-                }
-
-                string tempDownloadPath = Path.Combine(Path.GetTempPath(), "BitFighters_game.zip");
-
-                try
-                {
-                    ShowNotification("Játék letöltése elkezdődött...");
-
-                    // Optimalizált progress tracking
-                    using (var client = new HttpClient())
-                    {
-                        client.Timeout = TimeSpan.FromMinutes(10);
-
-                        var response = await client.GetAsync(GameDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
-                        response.EnsureSuccessStatusCode();
-
-                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                        var progressBuffer = new byte[32768]; // Nagyobb buffer a jobb teljesítményért
-
-                        using (var contentStream = await response.Content.ReadAsStreamAsync())
-                        using (var fileStream = File.Create(tempDownloadPath))
-                        {
-                            long totalBytesRead = 0;
-                            int bytesRead;
-                            int updateCounter = 0;
-
-                            while ((bytesRead = await contentStream.ReadAsync(progressBuffer, 0, progressBuffer.Length)) > 0)
-                            {
-                                await fileStream.WriteAsync(progressBuffer, 0, bytesRead);
-                                totalBytesRead += bytesRead;
-
-                                // Progress frissítés optimalizálása - csak minden 10. alkalommal
-                                if (totalBytes > 0 && ++updateCounter % 10 == 0)
-                                {
-                                    var progress = (int)((totalBytesRead * 100) / totalBytes);
-                                    if (ButtonText != null)
-                                    {
-                                        ButtonText.Text = $"LETÖLTÉS {progress}%";
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (ButtonText != null) ButtonText.Text = "TELEPÍTÉS...";
-                    ShowNotification("Letöltés befejeződött, telepítés...");
-
-                    await InstallGameAsync(tempDownloadPath);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Hiba a letöltés során: {ex.Message}");
-                    ShowNotification($"Hiba a letöltés során: {ex.Message}");
-                }
-                finally
-                {
-                    // UI visszaállítása
-                    if (ActionButton != null)
-                    {
-                        ActionButton.IsEnabled = true;
-                    }
-                    CheckGameInstallStatus();
-                }
-            }
-        }
-
-        private async Task InstallGameAsync(string downloadedFilePath)
-        {
-            await Task.Run(() =>
-            {
-                try
-                {
-                    Directory.CreateDirectory(gameInstallPath);
-                    ZipFile.ExtractToDirectory(downloadedFilePath, gameInstallPath, true);
-                }
-                catch (Exception ex)
-                {
-                    Dispatcher.Invoke(() => ShowNotification($"Hiba a telepítés során: {ex.Message}"));
-                }
-                finally
-                {
-                    if (File.Exists(downloadedFilePath)) File.Delete(downloadedFilePath);
-                }
-            });
-
-            if (!string.IsNullOrEmpty(FindExecutable(gameInstallPath)))
-            {
-                SaveInstallPath();
-                ShowNotification($"A játék sikeresen telepítve! Verzió: v{serverGameVersion}");
-            }
-            else
-            {
-                ShowNotification("Hiba: A futtatható fájl nem található a mappában.");
-                gameInstallPath = string.Empty;
-            }
-            CheckGameInstallStatus();
-        }
-
-        private string? FindExecutable(string path)
-        {
-            if (!Directory.Exists(path)) return null;
-            try
-            {
-                return Directory.GetFiles(path, GameExecutableName, SearchOption.AllDirectories).FirstOrDefault();
-            }
-            catch (UnauthorizedAccessException) { return null; }
         }
 
         private async Task StartGame()
@@ -810,7 +1217,6 @@ namespace BitFightersLauncher
                     };
                 }
 
-                // UI frissítés a fő szálon
                 Dispatcher.Invoke(() => 
                 {
                     if (NewsItemsControl != null)
@@ -840,11 +1246,55 @@ namespace BitFightersLauncher
             }
         }
 
+        private void DragWindow(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left) this.DragMove();
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is FrameworkElement fe && fe.ContextMenu != null)
+            {
+                fe.ContextMenu.PlacementTarget = fe;
+                fe.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Left;
+                fe.ContextMenu.HorizontalOffset = -6;
+                fe.ContextMenu.VerticalOffset = 4;
+                fe.ContextMenu.IsOpen = true;
+            }
+        }
+
+        private void ExitContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            if (DimOverlay != null) DimOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void ExitContextMenu_Closed(object sender, RoutedEventArgs e)
+        {
+            if (DimOverlay != null) DimOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void ExitOnlyMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private void LogoutExitMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                AuthStorage.Clear();
+                Logout();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Hiba a kijelentkezés során: {ex.Message}", "Hiba", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void NewsScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (NewsScrollViewer == null) return;
             
-            // Gyors scroll gyenge gépen
             if (_reducedMotion)
             {
                 double target = NewsScrollViewer.VerticalOffset - e.Delta;
@@ -855,7 +1305,6 @@ namespace BitFightersLauncher
                 return;
             }
             
-            // Smooth scroll jó gépen
             _targetVerticalOffset = NewsScrollViewer.VerticalOffset - e.Delta * 0.7;
             if (_targetVerticalOffset < 0) _targetVerticalOffset = 0;
             if (_targetVerticalOffset > NewsScrollViewer.ScrollableHeight) _targetVerticalOffset = NewsScrollViewer.ScrollableHeight;
@@ -877,7 +1326,6 @@ namespace BitFightersLauncher
 
         private void ResetNavButtonStates()
         {
-            // Minden gomb visszaállítása alapértelmezett állapotra
             if (HomeNavButton != null)
             {
                 HomeNavButton.Tag = null;
@@ -906,7 +1354,6 @@ namespace BitFightersLauncher
             ResetNavButtonStates();
             if (HomeNavButton != null) HomeNavButton.Tag = "Active";
 
-            // Biztosítjuk, hogy a fő tartalom látható legyen
             if (ActionButton != null)
             {
                 ActionButton.Visibility = Visibility.Visible;
@@ -940,7 +1387,6 @@ namespace BitFightersLauncher
             AnimateNavIndicator(3);
         }
 
-        // ÚJ: Ranglista nézet megjelenítése
         private void ShowLeaderboardView()
         {
             currentView = "leaderboard";
@@ -953,10 +1399,9 @@ namespace BitFightersLauncher
             if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Visible;
 
             AnimateNavIndicator(2);
-            _ = LoadLeaderboardAsync(); // Nem blokkoló betöltés
+            _ = LoadLeaderboardAsync();
         }
 
-        // ÚJ: Ranglista adatainak aszinkron betöltése
         private async Task LoadLeaderboardAsync()
         {
             try
@@ -1046,13 +1491,11 @@ namespace BitFightersLauncher
             ShowHomeView();
         }
 
-        // ÚJ: Star gomb eseménykezelője
         private void StarButton_Click(object sender, RoutedEventArgs e)
         {
             ShowLeaderboardView();
         }
 
-        // Cleanup timerek és HttpClient
         protected override void OnClosed(EventArgs e)
         {
             _scrollTimer?.Stop();

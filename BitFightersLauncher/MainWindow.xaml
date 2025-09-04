@@ -159,7 +159,7 @@
                     <!-- Jobb oldali panel -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
                         <Border x:Name="VersionDisplay" Background="#66000000" CornerRadius="15" 
-                                Padding="10,5" Margin="0,0,8,0">
+                                Padding="10,5" Margin="0,0,8,0" Cursor="Hand" MouseLeftButtonDown="VersionDisplay_Click">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock x:Name="VersionIcon" Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" 
                                          FontSize="16" Foreground="White" 
@@ -168,7 +168,7 @@
                                     <TextBlock x:Name="VersionCurrentText" Text="v1.0.0" 
                                              FontSize="13" FontWeight="Bold" 
                                              Foreground="#FFFFA726" Margin="0,-2,0,0"/>
-                                    <TextBlock x:Name="VersionStatusText" Text="aktuális" 
+                                    <TextBlock x:Name="VersionStatusText" Text="Naprakész" 
                                              FontSize="10" Foreground="#E0E0E0" FontWeight="SemiBold"
                                              Margin="0,-3,0,0" TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
