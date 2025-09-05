@@ -1434,20 +1434,40 @@ namespace BitFightersLauncher
         {
             if (NavIndicatorTransform == null) return;
             
-            // Adjusted positions after removing settings button
+            // A beállítás gomb eltávolítása utáni pozíciók
             // buttonIndex: 0=Home, 1=Star, 2=Profile
             double targetY = buttonIndex * 124;
-            
+
+            // Biztonság kedvéért leállítjuk a timer alapú animációt
+            _navTimer?.Stop();
+
             if (_reducedMotion)
             {
+                // Tisztítjuk az esetlegesen folyamatban lévő animációt és azonnal ugrunk
+                NavIndicatorTransform.BeginAnimation(TranslateTransform.YProperty, null);
                 NavIndicatorTransform.Y = targetY;
                 return;
             }
-            
-            if (Math.Abs(NavIndicatorTransform.Y - targetY) < 1.0) return;
-            
-            _targetNavIndicatorY = targetY;
-            _navTimer?.Start();
+
+            // Ha már közel vagyunk a célhoz, nem animálunk
+            if (Math.Abs(NavIndicatorTransform.Y - targetY) < 1.0)
+                return;
+
+            // Sima WPF animáció easinggel a jobb teljesítményért
+            double distance = Math.Abs(NavIndicatorTransform.Y - targetY);
+            var durationMs = Math.Max(120, Math.Min(260, 140 + distance * 0.4));
+            var anim = new DoubleAnimation
+            {
+                To = targetY,
+                Duration = TimeSpan.FromMilliseconds(durationMs),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+                FillBehavior = FillBehavior.Stop
+            };
+
+            // A végén rögzítjük a célértéket (mert FillBehavior.Stop visszaállítaná az alapot)
+            anim.Completed += (s, e) => NavIndicatorTransform.Y = targetY;
+
+            NavIndicatorTransform.BeginAnimation(TranslateTransform.YProperty, anim);
         }
 
         private void UpdateProfileView()
@@ -1497,7 +1517,8 @@ namespace BitFightersLauncher
         {
             _scrollTimer?.Stop();
             _navTimer?.Stop();
-            _httpClient?.Dispose();
+            // Ne dispose-oljuk a statikus HttpClient-et, mert több ablak között megosztott
+            // _httpClient.Dispose();
             base.OnClosed(e);
         }
     }
