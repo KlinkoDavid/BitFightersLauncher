@@ -6,6 +6,7 @@
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Icon="/Resources/Logo.png"
         x:Name="BitFightersWindow"
+        WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
         RenderOptions.BitmapScalingMode="HighQuality"
         TextOptions.TextRenderingMode="ClearType"
@@ -13,6 +14,10 @@
 
     <Window.Resources>
         <CubicEase x:Key="EntranceEase" EasingMode="EaseOut"/>
+
+        
+        <FontFamily x:Key="CustomFont">pack://application:,,,/Fonts/Energize-Bold-Italic.otf#Energize</FontFamily>
+        <FontFamily x:Key="CustomFont2">pack://application:,,,/Fonts/AlumniSans-Bold.ttf#Energize</FontFamily>
 
         <SolidColorBrush x:Key="PrimaryOrange" Color="#FFFFA726"/>
         <SolidColorBrush x:Key="SecondaryOrange" Color="#FFFF9800"/>
@@ -23,9 +28,6 @@
         <Storyboard x:Key="ContentEntranceAnimation">
             <DoubleAnimation Storyboard.TargetName="TopBarGrid" Storyboard.TargetProperty="Opacity"
                              To="1" Duration="0:0:0.2" BeginTime="0:0:0.05"
-                             EasingFunction="{StaticResource EntranceEase}"/>
-            <DoubleAnimation Storyboard.TargetName="NavPanelContainer" Storyboard.TargetProperty="Opacity"
-                             To="1" Duration="0:0:0.2" BeginTime="0:0:0.1"
                              EasingFunction="{StaticResource EntranceEase}"/>
             <DoubleAnimation Storyboard.TargetName="NewsPanelBorder" Storyboard.TargetProperty="Opacity"
                              To="1" Duration="0:0:0.2" BeginTime="0:0:0.15"
@@ -57,6 +59,97 @@
 
         <sys:Double x:Key="NewsItemHeight">90</sys:Double>
         <sys:Double x:Key="NewsBarHeight">56</sys:Double>
+
+        <Style x:Key="ScrollThumbStyle" TargetType="{x:Type Thumb}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border CornerRadius="4" Background="{TemplateBinding Background}" BorderThickness="0"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernScrollBarStyle" TargetType="{x:Type ScrollBar}">
+            <Setter Property="Stylus.IsFlicksEnabled" Value="False"/>
+            <Setter Property="Foreground" Value="#66FFFFFF"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid x:Name="GridRoot" Background="{TemplateBinding Background}">
+                            <Track x:Name="PART_Track" IsDirectionReversed="true" Focusable="false">
+                                <Track.Thumb>
+                                    <Thumb x:Name="Thumb" Background="{TemplateBinding Foreground}" Style="{StaticResource ScrollThumbStyle}"/>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton x:Name="PageInc" Command="ScrollBar.PageDownCommand" Opacity="0" Focusable="false"/>
+                                </Track.IncreaseRepeatButton>
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton x:Name="PageDec" Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="false"/>
+                                </Track.DecreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Orientation" Value="Vertical">
+                                <Setter Property="Width" Value="10"/>
+                                <Setter TargetName="GridRoot" Property="Width" Value="8"/>
+                                <Setter TargetName="Thumb" Property="Width" Value="6"/>
+                                <Setter TargetName="Thumb" Property="Margin" Value="0,0,2,0"/>
+                            </Trigger>
+                            <Trigger Property="Orientation" Value="Horizontal">
+                                <Setter Property="Height" Value="10"/>
+                                <Setter TargetName="GridRoot" Property="Height" Value="8"/>
+                                <Setter TargetName="Thumb" Property="Height" Value="6"/>
+                                <Setter TargetName="Thumb" Property="Margin" Value="0,0,0,2"/>
+                                <Setter TargetName="PageInc" Property="Command" Value="ScrollBar.PageRightCommand"/>
+                                <Setter TargetName="PageDec" Property="Command" Value="ScrollBar.PageLeftCommand"/>
+                                <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="false"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="true"/>
+                                    <Condition Property="Orientation" Value="Vertical"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Thumb" Property="Background" Value="#AAFFFFFF"/>
+                                <Setter TargetName="Thumb" Property="Width" Value="8"/>
+                            </MultiTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="true"/>
+                                    <Condition Property="Orientation" Value="Horizontal"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Thumb" Property="Background" Value="#AAFFFFFF"/>
+                                <Setter TargetName="Thumb" Property="Height" Value="8"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ModernScrollViewerStyle" TargetType="{x:Type ScrollViewer}">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <ScrollContentPresenter Grid.Column="0"/>
+                            <ScrollBar x:Name="PART_VerticalScrollBar" Grid.Column="1" Value="{TemplateBinding VerticalOffset}" Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" Style="{StaticResource ModernScrollBarStyle}"/>
+                            <ScrollBar x:Name="PART_HorizontalScrollBar" Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Value="{TemplateBinding HorizontalOffset}" Maximum="{TemplateBinding ScrollableWidth}" ViewportSize="{TemplateBinding ViewportWidth}" Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" Style="{StaticResource ModernScrollBarStyle}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- Properly clipped border with correct background -->
@@ -72,12 +165,24 @@
             <!-- Background image with proper clipping -->
             <Border CornerRadius="23" ClipToBounds="True">
                 <Border.Background>
-                    <ImageBrush ImageSource="/Resources/BG.png" Stretch="UniformToFill"/>
+                    <ImageBrush ImageSource="/Resources/Background.png" Stretch="UniformToFill"/>
                 </Border.Background>
             </Border>
             
-            <!-- Egyszerű sötétítő réteg -->
-            <Border CornerRadius="23" Background="#70000000" Opacity="0.7"/>
+            <!-- Egyszerű sötétítő réteg - Darker left side like Valorant -->
+            <Border CornerRadius="23">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#F0000000" Offset="0"/>
+                        <GradientStop Color="#E6000000" Offset="0.2"/>
+                        <GradientStop Color="#D9000000" Offset="0.35"/>
+                        <GradientStop Color="#99000000" Offset="0.5"/>
+                        <GradientStop Color="#4D000000" Offset="0.65"/>
+                        <GradientStop Color="#1A000000" Offset="0.8"/>
+                        <GradientStop Color="#00000000" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
             
             <!-- Csökkentett háttér effekt - kevesebb gradient stop -->
             <Border CornerRadius="23" ClipToBounds="True">
@@ -111,108 +216,213 @@
                 </Grid.RowDefinitions>
 
                 <!-- Top bar with proper transparency -->
-                <Grid x:Name="TopBarGrid" Height="80" VerticalAlignment="Top" MouseLeftButtonDown="DragWindow" 
-                      HorizontalAlignment="Stretch" Background="#33000000" Opacity="0">
+                <Grid x:Name="TopBarGrid" Height="120" VerticalAlignment="Top" MouseLeftButtonDown="DragWindow" 
+                      HorizontalAlignment="Stretch" Background="Transparent" Opacity="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="200"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="200"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- User info panel -->
-                    <Border Background="#66000000" CornerRadius="15" 
-                            HorizontalAlignment="Left" VerticalAlignment="Center" 
-                            Margin="25,0,0,0" Padding="12,6">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" 
-                                     FontSize="16" Foreground="#FFFFA726" 
-                                     VerticalAlignment="Center" Margin="0,0,8,0"/>
-                            <StackPanel>
-                                <TextBlock x:Name="UsernameText" Text="Felhasználó" 
-                                         FontSize="13" FontWeight="Bold" 
-                                         Foreground="#FFFFA726" Margin="0,-2,0,0"/>
-                                <TextBlock Text="Bejelentkezve" 
-                                         FontSize="10" Foreground="#66BB6A" FontWeight="SemiBold"
-                                         Margin="0,-3,0,0"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Központi logo panel -->
-                    <DockPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <Border Background="#66000000" CornerRadius="20" Padding="20,12" 
-                                HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <DockPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                                <Border Background="#22FFA726" CornerRadius="12" Padding="2" Margin="0,0,15,0">
-                                    <Image Source="/Resources/Logo.png" Width="40"/>
-                                </Border>
-                                <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="BITFIGHTERS" FontSize="24" FontWeight="Bold" Foreground="#FFFFA726" 
-                                             Margin="0,-2,0,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Game Launcher" FontSize="11" Foreground="#AAFFA726" 
-                                             FontWeight="SemiBold" Margin="0,-4,0,0"/>
-                                </StackPanel>
-                            </DockPanel>
-                        </Border>
-                    </DockPanel>
 
                     <!-- Jobb oldali panel -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
-                        <Border x:Name="VersionDisplay" Background="#66000000" CornerRadius="15" 
-                                Padding="10,5" Margin="0,0,8,0" Cursor="Hand" MouseLeftButtonDown="VersionDisplay_Click">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock x:Name="VersionIcon" Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" 
-                                         FontSize="16" Foreground="White" 
-                                         VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                <StackPanel>
-                                    <TextBlock x:Name="VersionCurrentText" Text="v1.0.0" 
-                                             FontSize="13" FontWeight="Bold" 
-                                             Foreground="#FFFFA726" Margin="0,-2,0,0"/>
-                                    <TextBlock x:Name="VersionStatusText" Text="Naprakész" 
-                                             FontSize="10" Foreground="#E0E0E0" FontWeight="SemiBold"
-                                             Margin="0,-3,0,0" TextTrimming="CharacterEllipsis"/>
+                    <StackPanel Grid.Column="2" Orientation="Vertical" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,10,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Border x:Name="VersionDisplay" Background="#66000000" CornerRadius="15" 
+                                    Padding="10,5" Margin="0,53,30,-53" Cursor="Hand" MouseLeftButtonDown="VersionDisplay_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="VersionIcon" Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" 
+                                             FontSize="16" Foreground="White" 
+                                             VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <StackPanel>
+                                        <TextBlock x:Name="VersionCurrentText" Text="v1.0.0" 
+                                                 FontSize="13" FontWeight="Bold" 
+                                                 Foreground="#FFFFA726" Margin="0,-2,0,0"/>
+                                        <TextBlock x:Name="VersionStatusText" Text="Naprakész" 
+                                                 FontSize="10" Foreground="#E0E0E0" FontWeight="SemiBold"
+                                                 Margin="0,-3,0,0" TextTrimming="CharacterEllipsis"/>
+                                    </StackPanel>
+                                    <Border x:Name="UpdateIndicator" Width="8" Height="8" 
+                                            Background="#FF4CAF50" CornerRadius="4" 
+                                            Margin="6,0,0,0" VerticalAlignment="Center"
+                                            Visibility="Collapsed"/>
                                 </StackPanel>
-                                <Border x:Name="UpdateIndicator" Width="8" Height="8" 
-                                        Background="#FF4CAF50" CornerRadius="4" 
-                                        Margin="6,0,0,0" VerticalAlignment="Center"
-                                        Visibility="Collapsed"/>
-                            </StackPanel>
-                        </Border>
+                            </Border>
 
-                        <!-- Exit button egyszerűsítve -->
-                        <Button x:Name="ExitBtn" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
-                                Click="ExitButton_Click" Height="30" Width="30">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Background" Value="#44000000"/>
-                                    <Setter Property="BorderBrush" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#FFFFAB40"/>
-                                    <Setter Property="Cursor" Value="Hand"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
-                                                        CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <!-- Minimize button -->
+                            <Button x:Name="MinimizeBtn" Content="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
+                                    Click="MinimizeButton_Click" Height="30" Width="30" Margin="0,0,8,0">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="#44000000"/>
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="#FFFFAB40"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
+                                                            CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6,9,6,0"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Foreground" Value="#FFFFA726"/>
+                                                            <Setter TargetName="ButtonBorder" Property="Background" Value="#66FFA726"/>
+                                                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFFFA726"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
+                            <!-- Exit button egyszerűsítve -->
+                            <Button x:Name="ExitBtn" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
+                                    Click="ExitButton_Click" Height="30" Width="30">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Background" Value="#44000000"/>
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="#FFFFAB40"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
+                                                            CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Foreground" Value="#FFFF4444"/>
+                                                            <Setter TargetName="ButtonBorder" Property="Background" Value="#66FF4444"/>
+                                                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFFF4444"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                                <!-- Context menu egyszerűsítve -->
+                                <Button.ContextMenu>
+                                    <ContextMenu x:Name="ExitContextMenu" HasDropShadow="False" Width="320" Opened="ExitContextMenu_Opened" Closed="ExitContextMenu_Closed">
+                                        <ContextMenu.Template>
+                                            <ControlTemplate TargetType="ContextMenu">
+                                                <Border Background="#FF1A1C20" CornerRadius="12" BorderBrush="#FFFFA726" BorderThickness="2" MinWidth="320" Panel.ZIndex="1000">
+                                                    <Border.Triggers>
+                                                        <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                                            <BeginStoryboard Storyboard="{StaticResource ExitMenuEntrance}"/>
+                                                        </EventTrigger>
+                                                    </Border.Triggers>
+                                                    <StackPanel>
+                                                        <Border Background="#331A1C20" Padding="16,12" CornerRadius="12,12,0,0">
+                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                                <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets" Foreground="#FFFFA726" FontSize="14" Margin="0,3,8,0"/>
+                                                                <TextBlock Text="Kilépés" Foreground="#FFFFA726" FontWeight="Bold" FontSize="14"/>
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <ItemsPresenter Margin="8"/>
+                                                    </StackPanel>
                                                 </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Foreground" Value="#FFFF4444"/>
-                                                        <Setter TargetName="ButtonBorder" Property="Background" Value="#66FF4444"/>
-                                                        <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFFF4444"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
                                             </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Button.Style>
-                            <!-- Context menu egyszerűsítve -->
+                                        </ContextMenu.Template>
+                                        <ContextMenu.Resources>
+                                            <!-- Egyszerűsített menu item stílusok -->
+                                            <Style x:Key="BaseMenuItemStyle" TargetType="MenuItem">
+                                                <Setter Property="Padding" Value="16,14"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="MenuItem">
+                                                            <Border x:Name="bd" Background="#111A1C20" CornerRadius="8" Padding="16,14" Margin="8,4" MinWidth="280"
+                                                                    BorderBrush="Transparent" BorderThickness="2">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBlock x:Name="iconText" Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" 
+                                                                               Foreground="#FFFFA726" FontSize="18" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                                                    <StackPanel Grid.Column="1">
+                                                                        <TextBlock Text="{TemplateBinding Header}" Foreground="White" FontWeight="Bold" FontSize="16"/>
+                                                                        <TextBlock Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ToolTip}" 
+                                                                                   Foreground="#B3FFFFFF" FontSize="12" Margin="0,2,0,0"/>
+                                                                    </StackPanel>
+                                                                </Grid>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="bd" Property="Background" Value="#22FFA726"/>
+                                                                    <Setter TargetName="bd" Property="BorderBrush" Value="#FFFFA726"/>
+                                                                    <Setter TargetName="iconText" Property="Foreground" Value="#FFFFFF"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+
+                                            <Style x:Key="DangerMenuItemStyle" BasedOn="{StaticResource BaseMenuItemStyle}" TargetType="MenuItem">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="MenuItem">
+                                                            <Border x:Name="bd" Background="#19D32F2F" CornerRadius="8" Padding="16,14" Margin="8,4" MinWidth="280"
+                                                                    BorderBrush="Transparent" BorderThickness="2">
+                                                                <Grid>
+                                                                    <Grid.ColumnDefinitions>
+                                                                        <ColumnDefinition Width="Auto"/>
+                                                                        <ColumnDefinition Width="*"/>
+                                                                    </Grid.ColumnDefinitions>
+                                                                    <TextBlock x:Name="iconText" Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" 
+                                                                               Foreground="#FFD32F2F" FontSize="18" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                                                    <StackPanel Grid.Column="1">
+                                                                        <TextBlock Text="{TemplateBinding Header}" Foreground="White" FontWeight="Bold" FontSize="16"/>
+                                                                        <TextBlock Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ToolTip}" 
+                                                                                   Foreground="#E6FFFFFF" FontSize="12" Margin="0,2,0,0"/>
+                                                                    </StackPanel>
+                                                                </Grid>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter TargetName="bd" Property="Background" Value="#22D32F2F"/>
+                                                                    <Setter TargetName="bd" Property="BorderBrush" Value="#FFD32F2F"/>
+                                                                    <Setter TargetName="iconText" Property="Foreground" Value="#FFFFFF"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ContextMenu.Resources>
+
+                                        <MenuItem Style="{StaticResource BaseMenuItemStyle}"
+                                                  Header="Kilépés"
+                                                  ToolTip="Program bezárása bejelentkezve maradással"
+                                                  Tag="&#xE711;" Click="ExitOnlyMenuItem_Click"/>
+
+                                        <MenuItem Style="{StaticResource DangerMenuItemStyle}"
+                                                  Header="Kijelentkezés"
+                                                  ToolTip="Adatok törlése és visszatérés a bejelentkezési képernyőhöz"
+                                                  Tag="&#xE7E8;" Click="LogoutExitMenuItem_Click"/>
+                                    </ContextMenu>
+                                </Button.ContextMenu>
+                            </Button>
+                        </StackPanel>
+
+                        <Button x:Name="ProfileMenuButton" Width="50" Height="50" Margin="0,10,0,0" 
+                                HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Hand"
+                                Click="ProfileButton_Click">
                             <Button.ContextMenu>
-                                <ContextMenu x:Name="ExitContextMenu" HasDropShadow="False" Width="320" Opened="ExitContextMenu_Opened" Closed="ExitContextMenu_Closed">
+                                <ContextMenu x:Name="ProfileContextMenu" HasDropShadow="False" Width="300" 
+                                             Placement="Bottom" PlacementTarget="{Binding ElementName=ProfileMenuButton}"
+                                             StaysOpen="False" 
+                                             Opened="ProfileContextMenu_Opened" Closed="ProfileContextMenu_Closed">
                                     <ContextMenu.Template>
                                         <ControlTemplate TargetType="ContextMenu">
-                                            <Border Background="#FF1A1C20" CornerRadius="12" BorderBrush="#FFFFA726" BorderThickness="2" MinWidth="320" Panel.ZIndex="1000">
+                                            <Border Background="#FF1A1C20" CornerRadius="12" BorderBrush="#FFFFA726" BorderThickness="2" MinWidth="300" Panel.ZIndex="1000">
                                                 <Border.Triggers>
                                                     <EventTrigger RoutedEvent="FrameworkElement.Loaded">
                                                         <BeginStoryboard Storyboard="{StaticResource ExitMenuEntrance}"/>
@@ -221,8 +431,10 @@
                                                 <StackPanel>
                                                     <Border Background="#331A1C20" Padding="16,12" CornerRadius="12,12,0,0">
                                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                                            <TextBlock Text="&#xE7E8;" FontFamily="Segoe MDL2 Assets" Foreground="#FFFFA726" FontSize="14" Margin="0,3,8,0"/>
-                                                            <TextBlock Text="Kilépés" Foreground="#FFFFA726" FontWeight="Bold" FontSize="14"/>
+                                                            <Path Width="14" Height="14" Margin="0,2,8,0" Stretch="Uniform"
+                                                                  Fill="#FFFFA726"
+                                                                  Data="M320 312C386.3 312 440 258.3 440 192C440 125.7 386.3 72 320 72C253.7 72 200 125.7 200 192C200 258.3 253.7 312 320 312zM290.3 368C191.8 368 112 447.8 112 546.3C112 562.7 125.3 576 141.7 576L498.3 576C514.7 576 528 562.7 528 546.3C528 447.8 448.2 368 349.7 368L290.3 368z"/>
+                                                            <TextBlock Text="Navigáció" Foreground="#FFFFA726" FontWeight="Bold" FontSize="14"/>
                                                         </StackPanel>
                                                     </Border>
                                                     <ItemsPresenter Margin="8"/>
@@ -231,13 +443,12 @@
                                         </ControlTemplate>
                                     </ContextMenu.Template>
                                     <ContextMenu.Resources>
-                                        <!-- Egyszerűsített menu item stílusok -->
-                                        <Style x:Key="BaseMenuItemStyle" TargetType="MenuItem">
+                                        <Style x:Key="ProfileMenuItemStyle" TargetType="MenuItem">
                                             <Setter Property="Padding" Value="16,14"/>
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="MenuItem">
-                                                        <Border x:Name="bd" Background="#111A1C20" CornerRadius="8" Padding="16,14" Margin="8,4" MinWidth="280"
+                                                        <Border x:Name="bd" Background="#111A1C20" CornerRadius="8" Padding="16,14" Margin="8,4" MinWidth="260"
                                                                 BorderBrush="Transparent" BorderThickness="2">
                                                             <Grid>
                                                                 <Grid.ColumnDefinitions>
@@ -264,125 +475,89 @@
                                                 </Setter.Value>
                                             </Setter>
                                         </Style>
-
-                                        <Style x:Key="DangerMenuItemStyle" BasedOn="{StaticResource BaseMenuItemStyle}" TargetType="MenuItem">
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="MenuItem">
-                                                        <Border x:Name="bd" Background="#19D32F2F" CornerRadius="8" Padding="16,14" Margin="8,4" MinWidth="280"
-                                                                BorderBrush="Transparent" BorderThickness="2">
-                                                            <Grid>
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="Auto"/>
-                                                                    <ColumnDefinition Width="*"/>
-                                                                </Grid.ColumnDefinitions>
-                                                                <TextBlock x:Name="iconText" Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" 
-                                                                           Foreground="#FFD32F2F" FontSize="18" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                                                                <StackPanel Grid.Column="1">
-                                                                    <TextBlock Text="{TemplateBinding Header}" Foreground="White" FontWeight="Bold" FontSize="16"/>
-                                                                    <TextBlock Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ToolTip}" 
-                                                                               Foreground="#E6FFFFFF" FontSize="12" Margin="0,2,0,0"/>
-                                                                </StackPanel>
-                                                            </Grid>
-                                                        </Border>
-                                                        <ControlTemplate.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter TargetName="bd" Property="Background" Value="#22D32F2F"/>
-                                                                <Setter TargetName="bd" Property="BorderBrush" Value="#FFD32F2F"/>
-                                                                <Setter TargetName="iconText" Property="Foreground" Value="#FFFFFF"/>
-                                                            </Trigger>
-                                                        </ControlTemplate.Triggers>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
                                     </ContextMenu.Resources>
-
-                                    <MenuItem Style="{StaticResource BaseMenuItemStyle}"
-                                              Header="Kilépés"
-                                              ToolTip="Program bezárása bejelentkezve maradással"
-                                              Tag="&#xE711;" Click="ExitOnlyMenuItem_Click"/>
-
-                                    <MenuItem Style="{StaticResource DangerMenuItemStyle}"
-                                              Header="Kijelentkezés"
-                                              ToolTip="Adatok törlése és visszatérés a bejelentkezési képernyőhöz"
-                                              Tag="&#xE7E8;" Click="LogoutExitMenuItem_Click"/>
+                                    
+                                    <MenuItem Style="{StaticResource ProfileMenuItemStyle}"
+                                              Header="Kezdőlap"
+                                              ToolTip="Vissza a főoldalra"
+                                              Tag="&#xE80F;" Click="ProfileHomeMenuItem_Click"/>
+                                    
+                                    <MenuItem Style="{StaticResource ProfileMenuItemStyle}"
+                                              Header="Profil"
+                                              ToolTip="Profilom és statisztikáim megtekintése"
+                                              Tag="&#xE77B;" Click="ProfileViewMenuItem_Click"/>
+                                    
+                                    <MenuItem Style="{StaticResource ProfileMenuItemStyle}"
+                                              Header="Rangsor"
+                                              ToolTip="TOP 15 játékos rangsor megtekintése"
+                                              Tag="&#xE8D4;" Click="ProfileLeaderboardMenuItem_Click"/>
                                 </ContextMenu>
                             </Button.ContextMenu>
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="#66000000"/>
+                                    <Setter Property="BorderBrush" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="#FFFFA726"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="ProfileBorder" Background="{TemplateBinding Background}" CornerRadius="16">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ProfileBorder" Property="Background" Value="#88FFFFFF"/>
+                                                        <Setter Property="Foreground" Value="#FF1A1C20"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                            <Grid>
+                                <Path Width="26" Height="26" Stretch="Uniform"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      Data="M320 312C386.3 312 440 258.3 440 192C440 125.7 386.3 72 320 72C253.7 72 200 125.7 200 192C200 258.3 253.7 312 320 312zM290.3 368C191.8 368 112 447.8 112 546.3C112 562.7 125.3 576 141.7 576L498.3 576C514.7 576 528 562.7 528 546.3C528 447.8 448.2 368 349.7 368L290.3 368z"/>
+                                <StackPanel Visibility="Collapsed">
+                                    <TextBlock x:Name="UsernameText" Text="Felhasználó"/>
+                                    <TextBlock Text="Bejelentkezve"/>
+                                </StackPanel>
+                            </Grid>
                         </Button>
                     </StackPanel>
                 </Grid>
 
-                <Grid Grid.Row="1" Margin="0,0,0,0" Width="1196">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="120"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="420"/>
-                    </Grid.ColumnDefinitions>
 
-                    <!-- Módosított header vonal - csak a navigációs panelig tart -->
-                    <Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFFA726" Opacity="0.8" Grid.Column="1" Grid.ColumnSpan="2"/>
-                    
-                    <!-- Sötétítő réteg a navigációs panel helyén -->
-                    <Rectangle Grid.Column="0" Height="2" VerticalAlignment="Top" Fill="#33000000" Opacity="1"/>
-
-                    <!-- Navigációs panel -->
-                    <Border x:Name="NavPanelContainer" Grid.Column="0" CornerRadius="0,0,0,17" Margin="0,2,0,0" Background="#33000000" Opacity="0"
-                            BorderBrush="#FFFFA726" BorderThickness="0,0,2,0">
-                        <Grid>
-                            <StackPanel x:Name="NavButtonsPanel" VerticalAlignment="Stretch" Margin="0,2,0,0">
-                                <StackPanel.Resources>
-                                    <!-- Optimalizált nav button - glow effect egyszerűsítve -->
-                                    <Style x:Key="NavButtonStyle" TargetType="Button">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="BorderBrush" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#FFFFA726"/>
-                                        <Setter Property="FontSize" Value="32"/>
-                                        <Setter Property="Margin" Value="0,32,0,30"/>
-                                        <Setter Property="Cursor" Value="Hand"/>
-                                        <Setter Property="Height" Value="62"/>
-                                        <Setter Property="Width" Value="37"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <ContentPresenter x:Name="contentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="Tag" Value="Active">
-                                                            <Setter Property="Foreground" Value="White"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Foreground" Value="White"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </StackPanel.Resources>
-                                <Button x:Name="HomeNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE80F;" FontFamily="Segoe MDL2 Assets" ToolTip="Home" Click="HomeButton_Click"/>
-                                <Button x:Name="StarNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE734;" FontFamily="Segoe MDL2 Assets" ToolTip="Star" Click="StarButton_Click"/>
-                                <Button x:Name="ProfileNavButton" Style="{StaticResource NavButtonStyle}" Content="&#xE77B;" FontFamily="Segoe MDL2 Assets" ToolTip="Profile" Click="ProfileButton_Click"/>
-                            </StackPanel>
-
-                            <!-- Navigációs indikátor - nem ér hozzá a borderhez -->
-                            <Rectangle x:Name="NavIndicator" Width="6" Fill="#FFFFA726" RadiusX="3" RadiusY="3" 
-                                       HorizontalAlignment="Right" Margin="0,28,8,509">
-                                <Rectangle.RenderTransform>
-                                    <TranslateTransform x:Name="NavIndicatorTransform" Y="0"/>
-                                </Rectangle.RenderTransform>
-                            </Rectangle>
-                        </Grid>
-                    </Border>
-
-                    <!-- Fő tartalom grid -->
-                    <Grid x:Name="MainContentGrid" Grid.Column="1" Opacity="0">
+                <!-- Scrollable Content -->
+                <ScrollViewer Grid.Row="1" Style="{StaticResource ModernScrollViewerStyle}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
+                    <Grid Width="1196">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="*"/>
-                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/> <!-- Main Content (Hero + News) -->
+                            <RowDefinition Height="Auto"/> <!-- Other views -->
                         </Grid.RowDefinitions>
 
-                        <!-- Action button egyszerűsítve -->
-                        <Button x:Name="ActionButton" Cursor="Hand" Click="HandleActionButton_Click" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5" Width="310" Height="310" Margin="324,0,0,0">
+                        <!-- Fő tartalom grid -->
+                        <Grid x:Name="MainContentGrid" Grid.Row="0" Opacity="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="580"/> <!-- Hero Section Height (Window Height 700 - TopBar 120) -->
+                                <RowDefinition Height="Auto"/> <!-- News/Patch Notes Section -->
+                            </Grid.RowDefinitions>
+
+                            <!-- Hero Section (Play Button, Title) -->
+                            <Grid Grid.Row="0">
+                                <!-- Text above play button -->
+                                <TextBlock Text="BITFIGHTERS" 
+                                           FontSize="70" 
+                                           FontFamily="{StaticResource CustomFont}"
+                                           Foreground="#FFFFA726"
+                                           HorizontalAlignment="Left" 
+                                           VerticalAlignment="Center"
+                                           Margin="30,-450,0,0"/>
+
+                                <!-- Action button egyszerűsítve -->
+                                <Button x:Name="ActionButton" Cursor="Hand" Click="HandleActionButton_Click" HorizontalAlignment="Left" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5" Width="310" Height="310" Margin="324,0,0,0">
                             <Button.RenderTransform>
                                 <TransformGroup>
                                     <ScaleTransform/>
@@ -400,34 +575,29 @@
                                         <Setter.Value>
                                             <ControlTemplate TargetType="{x:Type Button}">
                                                 <Grid>
-                                                    <Border x:Name="OuterBorder" CornerRadius="45" BorderThickness="4" BorderBrush="#FFFFA726" Margin="-6" Background="#00000000"/>
-                                                    <Border x:Name="InnerBorder" Width="300" Height="300" CornerRadius="37" BorderThickness="4" BorderBrush="#FFFFA726" Padding="32" Background="#00000000">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                                    </Border>
+                                    <Border x:Name="InnerBorder" Width="190" Height="60" CornerRadius="20" BorderThickness="0" BorderBrush="Transparent" Padding="0" Margin="-690,-280,0,0">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
+                                                <LinearGradientBrush.RelativeTransform>
+                                                    <RotateTransform Angle="30" CenterX="0.5" CenterY="0.5"/>
+                                                </LinearGradientBrush.RelativeTransform>
+                                                <GradientStop Color="#FFE65100" Offset="0"/>
+                                                <GradientStop Color="#FFFF9800" Offset="0.5"/>
+                                                <GradientStop Color="#FFFFA726" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <ContentPresenter HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                    </Border>
                                                 </Grid>
                                                 <ControlTemplate.Triggers>
-                                                    <EventTrigger RoutedEvent="UIElement.MouseEnter">
-                                                        <BeginStoryboard>
-                                                            <Storyboard>
-                                                                <ColorAnimation Storyboard.TargetName="OuterBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#22FFA726" Duration="0:0:0.15"/>
-                                                                <ColorAnimation Storyboard.TargetName="InnerBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#22FFA726" Duration="0:0:0.15"/>
-                                                            </Storyboard>
-                                                        </BeginStoryboard>
-                                                    </EventTrigger>
-                                                    <EventTrigger RoutedEvent="UIElement.MouseLeave">
-                                                        <BeginStoryboard>
-                                                            <Storyboard>
-                                                                <ColorAnimation Storyboard.TargetName="OuterBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#00000000" Duration="0:0:0.15"/>
-                                                                <ColorAnimation Storyboard.TargetName="InnerBorder" Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)" To="#00000000" Duration="0:0:0.15"/>
-                                                            </Storyboard>
-                                                        </BeginStoryboard>
-                                                    </EventTrigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="InnerBorder" Property="Opacity" Value="0.9"/>
+                                                    </Trigger>
                                                     <Trigger Property="IsPressed" Value="True">
-                                                        <Setter TargetName="InnerBorder" Property="Background" Value="#44FFA726"/>
+                                                        <Setter TargetName="InnerBorder" Property="Opacity" Value="0.8"/>
                                                     </Trigger>
                                                     <Trigger Property="IsEnabled" Value="False">
                                                         <Setter TargetName="InnerBorder" Property="Opacity" Value="0.5"/>
-                                                        <Setter TargetName="OuterBorder" Property="Opacity" Value="0.5"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -435,14 +605,89 @@
                                     </Setter>
                                 </Style>
                             </Button.Style>
-                            <Viewbox>
-                                <TextBlock x:Name="ButtonText" Text="LETOLTES" FontSize="48" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                            </Viewbox>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,2.5,0,0">
+                                <Viewbox Width="70" Height="70" Margin="0,-7,0,0">
+                                    <Grid Width="24" Height="24">
+                                        <Ellipse Width="14" Height="14" Fill="#000000" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Path Fill="#FFFFFF"
+                                              Data="M14.75,12.83,11.55,15A1,1,0,0,1,10,14.13V9.87A1,1,0,0,1,11.55,9l3.2,2.13A1,1,0,0,1,14.75,12.83Z"/>
+                                    </Grid>
+                                </Viewbox>
+                                <TextBlock x:Name="ButtonText" FontFamily="{StaticResource CustomFont}" Text="JÁTÉK" FontSize="24" Width="128" Height="24" TextAlignment="Center" Foreground="White" Margin="-10,-4,17,0"/>
+                            </StackPanel>
                         </Button>
-                    </Grid>
 
-                    <!-- Profil nézet -->
-                    <Grid x:Name="ProfileViewGrid" Grid.Column="1" Grid.ColumnSpan="2" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                            <!-- Hero Section End -->
+                            </Grid>
+
+                            <!-- Patch notes in second row -->
+                            <Border x:Name="NewsPanelBorder" Grid.Row="1" CornerRadius="12" Margin="30,-150,30,30" Opacity="0" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                            <StackPanel HorizontalAlignment="Stretch">
+                                <TextBlock Text="FRISSÍTÉSEK" Foreground="White" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                                <ScrollViewer x:Name="NewsScrollViewer" Style="{StaticResource ModernScrollViewerStyle}" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled" PanningMode="HorizontalOnly" PreviewMouseWheel="NewsScrollViewer_PreviewMouseWheel" ScrollChanged="NewsScrollViewer_ScrollChanged">
+                                    <ItemsControl x:Name="NewsItemsControl" HorizontalAlignment="Stretch">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Rows="1"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#CC1A1C20" CornerRadius="16" Margin="10,0,10,5" Height="220" BorderBrush="#33FFFFFF" BorderThickness="1">
+                                                    <Border.Effect>
+                                                        <DropShadowEffect BlurRadius="10" ShadowDepth="4" Direction="270" Color="Black" Opacity="0.4"/>
+                                                    </Border.Effect>
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="*"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        
+                                                        <!-- Fake image placeholder gradient -->
+                                                        <Border Grid.Row="0" CornerRadius="15,15,0,0" ClipToBounds="True">
+                                                            <Border.Background>
+                                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                                    <GradientStop Color="#FF2D3436" Offset="0"/>
+                                                                    <GradientStop Color="#FF000000" Offset="1"/>
+                                                                </LinearGradientBrush>
+                                                            </Border.Background>
+                                                            <Grid>
+                                                                <Ellipse Width="150" Height="150" Margin="100,-50,-50,-50" HorizontalAlignment="Right" VerticalAlignment="Top">
+                                                                    <Ellipse.Fill>
+                                                                        <RadialGradientBrush>
+                                                                            <GradientStop Color="#33FFA726" Offset="0"/>
+                                                                            <GradientStop Color="#00FFA726" Offset="1"/>
+                                                                        </RadialGradientBrush>
+                                                                    </Ellipse.Fill>
+                                                                </Ellipse>
+                                                                <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="Bold" FontSize="18" 
+                                                                           TextWrapping="Wrap" Margin="15" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxHeight="80"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        
+                                                        <!-- Bottom sort info -->
+                                                        <Border Grid.Row="1" Background="#FF25282F" CornerRadius="0,0,15,15" Padding="15,10">
+                                                            <Grid>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="Auto"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="PATCH NOTES" Foreground="#AAFFA726" FontSize="10" FontWeight="Bold" VerticalAlignment="Center"/>
+                                                                <TextBlock Grid.Column="1" Text="{Binding FormattedDate}" Foreground="White" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+                        </Grid> <!-- Closing MainContentGrid -->
+
+                        <!-- Profil nézet -->
+                        <Grid x:Name="ProfileViewGrid" Visibility="Collapsed" HorizontalAlignment="Stretch" VerticalAlignment="Center">
                         <StackPanel Width="600" HorizontalAlignment="Center">
                             <Border Background="#77000000" CornerRadius="20" Padding="30" Margin="0,0,0,30">
                                 <Grid>
@@ -498,7 +743,7 @@
                     </Grid>
 
                     <!-- Leaderboard view -->
-                    <Grid x:Name="LeaderboardViewGrid" Grid.Column="1" Grid.ColumnSpan="2" Visibility="Collapsed" Margin="40,25,20,0">
+                    <Grid x:Name="LeaderboardViewGrid" Visibility="Collapsed" Margin="40,25,20,0">
                         <StackPanel>
                             <TextBlock Text="TOP 15 JÁTÉKOS" Foreground="White" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"/>
                             <Rectangle Height="1" Fill="#A7FFA726" Margin="0,10,0,20" HorizontalAlignment="Center" Width="350"/>
@@ -539,62 +784,8 @@
                             </ScrollViewer>
                         </StackPanel>
                     </Grid>
-
-                    <!-- Hírek panel -->
-                    <Border x:Name="NewsPanelBorder" Grid.Column="2" CornerRadius="12" Margin="0,25,0,155" Opacity="0">
-                        <StackPanel HorizontalAlignment="Center" Margin="15,0,15,0">
-                            <TextBlock Text="HÍREK ÉS FRISSÍTÉSEK" Foreground="White" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"/>
-                            <Rectangle Height="1" Fill="#A7FFA726" Margin="0,10,0,20" HorizontalAlignment="Center" Width="295"/>
-                            <Grid Height="370">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-                                <ScrollViewer x:Name="NewsScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Hidden" PreviewMouseWheel="NewsScrollViewer_PreviewMouseWheel" ScrollChanged="NewsScrollViewer_ScrollChanged">
-                                    <ItemsControl x:Name="NewsItemsControl" HorizontalAlignment="Center">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate>
-                                                <Border Background="#66000000" CornerRadius="8" Margin="0,0,0,15" Padding="8" Height="{StaticResource NewsItemHeight}">
-                                                    <Grid VerticalAlignment="Center">
-                                                        <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="Auto"/>
-                                                            <ColumnDefinition Width="*"/>
-                                                        </Grid.ColumnDefinitions>
-                                                        <Rectangle Grid.Column="0" Width="3" Height="{StaticResource NewsBarHeight}" Fill="#FFFFA726" RadiusX="2" RadiusY="2" Margin="0,0,12,0" VerticalAlignment="Center"/>
-                                                        <Grid Grid.Column="1" Width="279" Height="{StaticResource NewsBarHeight}">
-                                                            <TextBlock Text="{Binding Title}" Foreground="White" FontWeight="Bold" FontSize="15" 
-                                                                       TextWrapping="Wrap" HorizontalAlignment="Left" VerticalAlignment="Top"
-                                                                       Margin="0,4,60,0" MaxHeight="48" TextTrimming="CharacterEllipsis"/>
-                                                            <TextBlock Text="{Binding FormattedDate}" Foreground="#FFFFA726" FontSize="12" FontWeight="Bold" 
-                                                                       HorizontalAlignment="Right" VerticalAlignment="Bottom" 
-                                                                       Margin="0,0,8,-10">
-                                                                <TextBlock.RenderTransform>
-                                                                    <TranslateTransform X="7" Y="0"/>
-                                                                </TextBlock.RenderTransform>
-                                                            </TextBlock>
-                                                        </Grid>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </ScrollViewer>
-
-                                <!-- Scroll indikátorok -->
-                                <Grid x:Name="TopScrollIndicator" Grid.Row="0" Height="25" Opacity="0" IsHitTestVisible="False">
-                                    <TextBlock Text="▲" FontSize="16" FontWeight="Bold" Foreground="#FFFFA726" 
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Grid>
-
-                                <Grid x:Name="BottomScrollIndicator" Grid.Row="2" Height="25" Opacity="0" IsHitTestVisible="False">
-                                    <TextBlock Text="▼" FontSize="16" FontWeight="Bold" Foreground="#FFFFA726" 
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Grid>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
                 </Grid>
+                </ScrollViewer>
 
                 <!-- Notification border -->
                 <Border x:Name="NotificationBorder" Grid.Row="0" Grid.RowSpan="2" Height="50" Opacity="0" Background="#55000000" BorderBrush="#FFFFA726" BorderThickness="1.5" CornerRadius="10" Margin="25,90,20,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed">

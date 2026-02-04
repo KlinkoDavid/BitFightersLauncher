@@ -32,12 +32,15 @@
   <ItemGroup>
     <None Remove="Resources\Logo.png" />
     <None Remove="Resources\BG.png" />
+	 <None Remove="Resources\Background.png" />
+    <None Remove="Fonts\Energize-Bold-Italic.otf" />
+    <None Remove="Icons\**\*.svg" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
     <PackageReference Include="MySql.Data" Version="9.4.0" />
-    <PackageReference Include="System.Text.Json" Version="9.0.8" />
+    <PackageReference Include="System.Text.Json" Version="10.0.2" />
     <PackageReference Include="WindowsAPICodePack" Version="8.0.9" />
   </ItemGroup>
 
@@ -45,7 +48,16 @@
     <Resource Include="Resources\Logo.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+	  <Resource Include="Resources\Background.png">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </Resource>
     <Resource Include="Resources\BG.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Fonts\Energize-Bold-Italic.otf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Icons\**\*.svg">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

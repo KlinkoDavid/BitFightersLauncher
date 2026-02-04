@@ -566,7 +566,7 @@
           "lib/netstandard1.3/System.IO.FileSystem.Primitives.dll": {}
         }
       },
-      "System.IO.Pipelines/9.0.8": {
+      "System.IO.Pipelines/10.0.2": {
         "type": "package",
         "compile": {
           "lib/net8.0/System.IO.Pipelines.dll": {
@@ -1093,7 +1093,7 @@
           }
         }
       },
-      "System.Text.Encodings.Web/9.0.8": {
+      "System.Text.Encodings.Web/10.0.2": {
         "type": "package",
         "compile": {
           "lib/net8.0/System.Text.Encodings.Web.dll": {
@@ -1115,11 +1115,11 @@
           }
         }
       },
-      "System.Text.Json/9.0.8": {
+      "System.Text.Json/10.0.2": {
         "type": "package",
         "dependencies": {
-          "System.IO.Pipelines": "9.0.8",
-          "System.Text.Encodings.Web": "9.0.8"
+          "System.IO.Pipelines": "10.0.2",
+          "System.Text.Encodings.Web": "10.0.2"
         },
         "compile": {
           "lib/net8.0/System.Text.Json.dll": {
@@ -2386,21 +2386,22 @@
         "system.io.filesystem.primitives.nuspec"
       ]
     },
-    "System.IO.Pipelines/9.0.8": {
-      "sha512": "6vPmJt73mgUo1gzc/OcXlJvClz/2jxZ4TQPRfriVaLoGRH2mye530D9WHJYbFQRNMxF3PWCoeofsFdCyN7fLzA==",
+    "System.IO.Pipelines/10.0.2": {
+      "sha512": "EqMsn9r18ABvTDxrDce4OWDhBE3y+rR23ilG7Y3BudDKrDKrLG/hkD/JmeFZbctAPxSkCjyJ/Ddwbn/g7ufRJA==",
       "type": "package",
-      "path": "system.io.pipelines/9.0.8",
+      "path": "system.io.pipelines/10.0.2",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
-        "LICENSE.TXT",
         "PACKAGE.md",
         "THIRD-PARTY-NOTICES.TXT",
         "buildTransitive/net461/System.IO.Pipelines.targets",
         "buildTransitive/net462/_._",
         "buildTransitive/net8.0/_._",
         "buildTransitive/netcoreapp2.0/System.IO.Pipelines.targets",
+        "lib/net10.0/System.IO.Pipelines.dll",
+        "lib/net10.0/System.IO.Pipelines.xml",
         "lib/net462/System.IO.Pipelines.dll",
         "lib/net462/System.IO.Pipelines.xml",
         "lib/net8.0/System.IO.Pipelines.dll",
@@ -2409,7 +2410,7 @@
         "lib/net9.0/System.IO.Pipelines.xml",
         "lib/netstandard2.0/System.IO.Pipelines.dll",
         "lib/netstandard2.0/System.IO.Pipelines.xml",
-        "system.io.pipelines.9.0.8.nupkg.sha512",
+        "system.io.pipelines.10.0.2.nupkg.sha512",
         "system.io.pipelines.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -3638,21 +3639,22 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.Text.Encodings.Web/9.0.8": {
-      "sha512": "W+LotQsM4wBJ4PG7uRkyul4wqL4Fz7R4ty6uXrCNZUhbaHYANgrPaYR2ZpMVpdCjQEJ17Jr1NMN8hv4SHaHY4A==",
+    "System.Text.Encodings.Web/10.0.2": {
+      "sha512": "Ro4cLT4qpRy64crfLAy3ekihtXckeXrD5eI6qb6NDSEVyHcHsmH7KgN4dbnIuiBmXIoaCslx4SynLYxag1SLSQ==",
       "type": "package",
-      "path": "system.text.encodings.web/9.0.8",
+      "path": "system.text.encodings.web/10.0.2",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
-        "LICENSE.TXT",
         "PACKAGE.md",
         "THIRD-PARTY-NOTICES.TXT",
         "buildTransitive/net461/System.Text.Encodings.Web.targets",
         "buildTransitive/net462/_._",
         "buildTransitive/net8.0/_._",
         "buildTransitive/netcoreapp2.0/System.Text.Encodings.Web.targets",
+        "lib/net10.0/System.Text.Encodings.Web.dll",
+        "lib/net10.0/System.Text.Encodings.Web.xml",
         "lib/net462/System.Text.Encodings.Web.dll",
         "lib/net462/System.Text.Encodings.Web.xml",
         "lib/net8.0/System.Text.Encodings.Web.dll",
@@ -3661,24 +3663,27 @@
         "lib/net9.0/System.Text.Encodings.Web.xml",
         "lib/netstandard2.0/System.Text.Encodings.Web.dll",
         "lib/netstandard2.0/System.Text.Encodings.Web.xml",
+        "runtimes/browser/lib/net10.0/System.Text.Encodings.Web.dll",
+        "runtimes/browser/lib/net10.0/System.Text.Encodings.Web.xml",
         "runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll",
         "runtimes/browser/lib/net8.0/System.Text.Encodings.Web.xml",
-        "runtimes/browser/lib/net9.0/System.Text.Encodings.Web.dll",
-        "runtimes/browser/lib/net9.0/System.Text.Encodings.Web.xml",
-        "system.text.encodings.web.9.0.8.nupkg.sha512",
+        "runtimes/wasi/lib/net10.0/System.Text.Encodings.Web.dll",
+        "runtimes/wasi/lib/net10.0/System.Text.Encodings.Web.xml",
+        "runtimes/win/lib/net9.0/System.Text.Encodings.Web.dll",
+        "runtimes/win/lib/net9.0/System.Text.Encodings.Web.xml",
+        "system.text.encodings.web.10.0.2.nupkg.sha512",
         "system.text.encodings.web.nuspec",
         "useSharedDesignerContext.txt"
       ]
     },
-    "System.Text.Json/9.0.8": {
-      "sha512": "mIQir9jBqk0V7X0Nw5hzPJZC8DuGdf+2DS3jAVsr6rq5+/VyH5rza0XGcONJUWBrZ+G6BCwNyjWYd9lncBu48A==",
+    "System.Text.Json/10.0.2": {
+      "sha512": "zy8ey7I16G9neZ6uzxrnYwS7pidElzN8XarsBjGu7lE2m7afTKMEe18KbY3ZSmh/z/bR40oxjd6hlUcmOEaMHw==",
       "type": "package",
-      "path": "system.text.json/9.0.8",
+      "path": "system.text.json/10.0.2",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
         "Icon.png",
-        "LICENSE.TXT",
         "PACKAGE.md",
         "THIRD-PARTY-NOTICES.TXT",
         "analyzers/dotnet/roslyn3.11/cs/System.Text.Json.SourceGeneration.dll",
@@ -3728,6 +3733,8 @@
         "buildTransitive/net8.0/System.Text.Json.targets",
         "buildTransitive/netcoreapp2.0/System.Text.Json.targets",
         "buildTransitive/netstandard2.0/System.Text.Json.targets",
+        "lib/net10.0/System.Text.Json.dll",
+        "lib/net10.0/System.Text.Json.xml",
         "lib/net462/System.Text.Json.dll",
         "lib/net462/System.Text.Json.xml",
         "lib/net8.0/System.Text.Json.dll",
@@ -3736,7 +3743,7 @@
         "lib/net9.0/System.Text.Json.xml",
         "lib/netstandard2.0/System.Text.Json.dll",
         "lib/netstandard2.0/System.Text.Json.xml",
-        "system.text.json.9.0.8.nupkg.sha512",
+        "system.text.json.10.0.2.nupkg.sha512",
         "system.text.json.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -4043,7 +4050,7 @@
     "net8.0-windows7.0": [
       "Microsoft-WindowsAPICodePack-Shell >= 1.1.5",
       "MySql.Data >= 9.4.0",
-      "System.Text.Json >= 9.0.8",
+      "System.Text.Json >= 10.0.2",
       "WindowsAPICodePack >= 8.0.9"
     ]
   },
@@ -4054,11 +4061,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Administrator\\Desktop\\suli\\BitFightersLauncher-master\\BitFightersLauncher\\BitFightersLauncher.csproj",
+      "projectUniqueName": "C:\\Users\\Administrator\\source\\repos\\BitFightersLauncher\\BitFightersLauncher\\BitFightersLauncher.csproj",
       "projectName": "BitFightersLauncher",
-      "projectPath": "C:\\Users\\Administrator\\Desktop\\suli\\BitFightersLauncher-master\\BitFightersLauncher\\BitFightersLauncher.csproj",
+      "projectPath": "C:\\Users\\Administrator\\source\\repos\\BitFightersLauncher\\BitFightersLauncher\\BitFightersLauncher.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Administrator\\Desktop\\suli\\BitFightersLauncher-master\\BitFightersLauncher\\obj\\",
+      "outputPath": "C:\\Users\\Administrator\\source\\repos\\BitFightersLauncher\\BitFightersLauncher\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -4073,6 +4080,7 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -4091,7 +4099,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
       "net8.0-windows7.0": {
@@ -4107,7 +4115,7 @@
           },
           "System.Text.Json": {
             "target": "Package",
-            "version": "[9.0.8, )"
+            "version": "[10.0.2, )"
           },
           "WindowsAPICodePack": {
             "target": "Package",
@@ -4133,7 +4141,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

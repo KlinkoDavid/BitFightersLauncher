@@ -94,10 +94,10 @@ namespace BitFightersLauncher
 
     public partial class MainWindow : Window
     {
-        private const string GameDownloadUrl = "https://bitfighters.eu/BitFighters/BitFighters.zip";
-        private const string VersionCheckUrl = "https://bitfighters.eu/BitFighters/version.txt";
+        private const string GameDownloadUrl = "https://bitfighters.eu/BitFighters.zip";
+        private const string VersionCheckUrl = "https://bitfighters.eu/version.txt";
         private const string GameExecutableName = "BitFighters.exe";
-        private const string ApiUrl = "https://bitfighters.eu/api/Launcher/main_proxy.php";
+        private const string ApiUrl = "https://bitfighters.eu/backend/Launcher/main_proxy.php";
 
         private string gameInstallPath = string.Empty;
         private string serverGameVersion = "0.0.0";
@@ -125,8 +125,6 @@ namespace BitFightersLauncher
 
         // Navigation state - egyszer?sített
         private string currentView = "home";
-        private DispatcherTimer? _navTimer;
-        private double _targetNavIndicatorY;
 
         public MainWindow()
         {
@@ -156,12 +154,6 @@ namespace BitFightersLauncher
             };
             _scrollTimer.Tick += ScrollTimer_Tick;
 
-            // Navigációs timer
-            _navTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(_reducedMotion ? 50 : 16)
-            };
-            _navTimer.Tick += NavTimer_Tick;
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -186,11 +178,6 @@ namespace BitFightersLauncher
             ApplyPerformanceModeIfNeeded();
             ShowHomeView();
             
-            if (NavIndicatorTransform != null)
-            {
-                NavIndicatorTransform.Y = 0;
-            }
-
             // Biztosítjuk, hogy a f? gomb látható és m?köd?képes legyen
             if (ActionButton != null)
             {
@@ -387,37 +374,18 @@ namespace BitFightersLauncher
         {
             if (NewsScrollViewer == null) return;
             
-            double currentOffset = NewsScrollViewer.VerticalOffset;
+            double currentOffset = NewsScrollViewer.HorizontalOffset;
             double difference = _targetVerticalOffset - currentOffset;
             
             if (Math.Abs(difference) < 1.0)
             {
-                NewsScrollViewer.ScrollToVerticalOffset(_targetVerticalOffset);
+                NewsScrollViewer.ScrollToHorizontalOffset(_targetVerticalOffset);
                 _scrollTimer?.Stop();
             }
             else
             {
                 double step = _reducedMotion ? Math.Sign(difference) * 5 : Math.Max(Math.Abs(difference) * 0.15, 1.0);
-                NewsScrollViewer.ScrollToVerticalOffset(currentOffset + Math.Sign(difference) * step);
-            }
-        }
-
-        private void NavTimer_Tick(object? sender, EventArgs e)
-        {
-            if (NavIndicatorTransform == null) return;
-            
-            double currentY = NavIndicatorTransform.Y;
-            double difference = _targetNavIndicatorY - currentY;
-            
-            if (Math.Abs(difference) < 1.0)
-            {
-                NavIndicatorTransform.Y = _targetNavIndicatorY;
-                _navTimer?.Stop();
-            }
-            else
-            {
-                double step = _reducedMotion ? Math.Sign(difference) * 8 : Math.Max(Math.Abs(difference) * 0.20, 1.0);
-                NavIndicatorTransform.Y = currentY + Math.Sign(difference) * step;
+                NewsScrollViewer.ScrollToHorizontalOffset(currentOffset + Math.Sign(difference) * step);
             }
         }
 
@@ -426,8 +394,8 @@ namespace BitFightersLauncher
             if (!_reducedMotion) return;
             
             // Scroll indikátorok eltávolítása gyenge gépeken
-            if (TopScrollIndicator != null) TopScrollIndicator.Visibility = Visibility.Collapsed;
-            if (BottomScrollIndicator != null) BottomScrollIndicator.Visibility = Visibility.Collapsed;
+            // if (TopScrollIndicator != null) TopScrollIndicator.Visibility = Visibility.Collapsed;
+            // if (BottomScrollIndicator != null) BottomScrollIndicator.Visibility = Visibility.Collapsed;
             
             // TextBlock rendering optimalizálás kikapcsolása gyenge gépen
             OptimizeTextRendering(this);
@@ -830,44 +798,225 @@ namespace BitFightersLauncher
 
         private async Task DownloadGameFileAsync(string downloadPath, bool isUpdate)
         {
-            if (ButtonText != null)
+            const int maxRetries = 3;
+            int attempt = 0;
+            Exception? lastException = null;
+
+            while (attempt < maxRetries)
             {
-                ButtonText.Text = isUpdate ? "ÚJ VERZIÓ LETÖLTÉSE..." : "LETÖLTÉS...";
-            }
-
-            using (var client = new HttpClient())
-            {
-                client.Timeout = TimeSpan.FromMinutes(10);
-
-                var response = await client.GetAsync(GameDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
-                response.EnsureSuccessStatusCode();
-
-                var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                var progressBuffer = new byte[32768];
-
-                using (var contentStream = await response.Content.ReadAsStreamAsync())
-                using (var fileStream = File.Create(downloadPath))
+                FileStream? fileStream = null;
+                try
                 {
-                    long totalBytesRead = 0;
-                    int bytesRead;
-                    int updateCounter = 0;
-
-                    while ((bytesRead = await contentStream.ReadAsync(progressBuffer, 0, progressBuffer.Length)) > 0)
+                    attempt++;
+                    if (attempt > 1)
                     {
-                        await fileStream.WriteAsync(progressBuffer, 0, bytesRead);
-                        totalBytesRead += bytesRead;
-
-                        if (totalBytes > 0 && ++updateCounter % 20 == 0)
+                        Debug.WriteLine($"Letöltési próbálkozás {attempt}/{maxRetries}");
+                        if (ButtonText != null)
                         {
-                            var progress = (int)((totalBytesRead * 100) / totalBytes);
-                            if (ButtonText != null)
+                            ButtonText.Text = $"ÚJRAPRÓBÁLÁS ({attempt}/{maxRetries})...";
+                        }
+                        await Task.Delay(3000 * attempt); // Increasing wait before retry
+                    }
+
+                    // Delete any existing partial download with retries
+                    if (File.Exists(downloadPath))
+                    {
+                        for (int i = 0; i < 3; i++)
+                        {
+                            try
                             {
-                                string action = isUpdate ? "FRISSÍTÉS" : "LETÖLTÉS";
-                                ButtonText.Text = $"{action} {progress}%";
+                                File.SetAttributes(downloadPath, FileAttributes.Normal);
+                                File.Delete(downloadPath);
+                                break;
+                            }
+                            catch
+                            {
+                                if (i == 2) throw;
+                                await Task.Delay(500);
+                                GC.Collect();
+                                GC.WaitForPendingFinalizers();
                             }
                         }
                     }
+
+                    if (ButtonText != null)
+                    {
+                        ButtonText.Text = isUpdate ? "ÚJ VERZIÓ LETÖLTÉSE..." : "LETÖLTÉS...";
+                    }
+
+                    using (var client = new HttpClient())
+                    {
+                        client.Timeout = TimeSpan.FromMinutes(15); // Longer timeout
+                        client.DefaultRequestHeaders.ConnectionClose = false;
+                        client.DefaultRequestHeaders.Add("Accept-Encoding", "identity"); // Disable compression
+
+                        var response = await client.GetAsync(GameDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                        response.EnsureSuccessStatusCode();
+
+                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                        Debug.WriteLine($"Letöltendő fájl mérete: {totalBytes} bytes ({totalBytes / 1024 / 1024} MB)");
+
+                        if (totalBytes <= 0)
+                        {
+                            throw new InvalidOperationException("A szerver nem küldte el a fájl méretét");
+                        }
+
+                        var progressBuffer = new byte[81920]; // 80KB buffer
+
+                        using (var contentStream = await response.Content.ReadAsStreamAsync())
+                        {
+                            fileStream = new FileStream(
+                                downloadPath,
+                                FileMode.Create,
+                                FileAccess.Write,
+                                FileShare.None,
+                                81920,
+                                FileOptions.Asynchronous | FileOptions.WriteThrough);
+
+                            long totalBytesRead = 0;
+                            int bytesRead;
+                            int updateCounter = 0;
+                            var lastProgressUpdate = DateTime.Now;
+
+                            while ((bytesRead = await contentStream.ReadAsync(progressBuffer, 0, progressBuffer.Length)) > 0)
+                            {
+                                await fileStream.WriteAsync(progressBuffer, 0, bytesRead);
+                                totalBytesRead += bytesRead;
+
+                                if (totalBytes > 0 && DateTime.Now - lastProgressUpdate > TimeSpan.FromMilliseconds(500))
+                                {
+                                    var progress = (int)((totalBytesRead * 100) / totalBytes);
+                                    if (ButtonText != null)
+                                    {
+                                        string action = isUpdate ? "FRISSÍTÉS" : "LETÖLTÉS";
+                                        ButtonText.Text = $"{action} {progress}% ({totalBytesRead / 1024 / 1024}/{totalBytes / 1024 / 1024} MB)";
+                                    }
+                                    lastProgressUpdate = DateTime.Now;
+                                }
+                            }
+
+                            // Critical: Ensure all data is written
+                            await fileStream.FlushAsync();
+                            fileStream.Close();
+                            fileStream.Dispose();
+                            fileStream = null;
+
+                            Debug.WriteLine($"Letöltve {totalBytesRead} bytes");
+
+                            // Verify file size matches exactly
+                            if (totalBytesRead != totalBytes)
+                            {
+                                throw new InvalidDataException($"Hiányos letöltés: {totalBytesRead}/{totalBytes} bytes");
+                            }
+                        }
+                    }
+
+                    // Aggressive file system sync
+                    await Task.Delay(1000);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                        await Task.Delay(200);
+                    }
+
+                    // Verify the file exists and has correct size
+                    var downloadedFileInfo = new FileInfo(downloadPath);
+                    downloadedFileInfo.Refresh();
+                    if (!downloadedFileInfo.Exists)
+                    {
+                        throw new FileNotFoundException("A letöltött fájl nem található a fájlrendszerben");
+                    }
+
+                    Debug.WriteLine($"Letöltött fájl ellenőrzése: {downloadedFileInfo.Length} bytes");
+
+                    // Verify the downloaded file is a valid ZIP with retries
+                    bool isValid = await ValidateZipWithRetries(downloadPath, 5); // More retry attempts
+                    if (!isValid)
+                    {
+                        // Create diagnostic dump
+                        await CreateDiagnosticDump(downloadPath);
+                        throw new InvalidDataException("A letöltött fájl sérült vagy nem érvényes ZIP fájl.");
+                    }
+
+                    Debug.WriteLine($"Fájl sikeresen letöltve és validálva: {downloadPath}");
+                    return; // Success!
                 }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    Debug.WriteLine($"Letöltési hiba (próbálkozás {attempt}/{maxRetries}): {ex.GetType().Name} - {ex.Message}");
+                    Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                    
+                    // Ensure file stream is closed
+                    if (fileStream != null)
+                    {
+                        try
+                        {
+                            fileStream.Close();
+                            fileStream.Dispose();
+                        }
+                        catch { /* Ignore */ }
+                    }
+
+                    if (attempt >= maxRetries)
+                    {
+                        throw new Exception($"A letöltés {maxRetries} próbálkozás után is sikertelen volt.\n\nUtolsó hiba: {ex.Message}", ex);
+                    }
+                }
+                finally
+                {
+                    if (fileStream != null)
+                    {
+                        try
+                        {
+                            fileStream.Dispose();
+                        }
+                        catch { /* Ignore */ }
+                    }
+                }
+            }
+
+            throw new Exception("A letöltés sikertelen volt.", lastException);
+        }
+
+        private async Task CreateDiagnosticDump(string zipPath)
+        {
+            try
+            {
+                var fileInfo = new FileInfo(zipPath);
+                if (!fileInfo.Exists) return;
+
+                Debug.WriteLine($"\n=== DIAGNOSTIC DUMP ===");
+                Debug.WriteLine($"File: {zipPath}");
+                Debug.WriteLine($"Size: {fileInfo.Length} bytes");
+                Debug.WriteLine($"Created: {fileInfo.CreationTime}");
+                Debug.WriteLine($"Modified: {fileInfo.LastWriteTime}");
+
+                // Dump first and last bytes
+                await Task.Run(() =>
+                {
+                    using (var fs = new FileStream(zipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    {
+                        byte[] firstBytes = new byte[Math.Min(64, fs.Length)];
+                        fs.Read(firstBytes, 0, firstBytes.Length);
+                        Debug.WriteLine($"First {firstBytes.Length} bytes (hex): {BitConverter.ToString(firstBytes)}");
+
+                        if (fs.Length > 64)
+                        {
+                            fs.Seek(-Math.Min(64, fs.Length), SeekOrigin.End);
+                            byte[] lastBytes = new byte[Math.Min(64, fs.Length)];
+                            fs.Read(lastBytes, 0, lastBytes.Length);
+                            Debug.WriteLine($"Last {lastBytes.Length} bytes (hex): {BitConverter.ToString(lastBytes)}");
+                        }
+                    }
+                });
+
+                Debug.WriteLine($"=== END DIAGNOSTIC DUMP ===\n");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Diagnostic dump failed: {ex.Message}");
             }
         }
 
@@ -996,12 +1145,33 @@ namespace BitFightersLauncher
 
             await Task.Run(() =>
             {
+                bool extractionSucceeded = false;
                 try
                 {
+                    // Verify ZIP file exists and has content
+                    var fileInfo = new FileInfo(zipPath);
+                    fileInfo.Refresh();
+                    
+                    if (!fileInfo.Exists)
+                    {
+                        throw new FileNotFoundException($"A ZIP fájl nem található: {zipPath}");
+                    }
+                    if (fileInfo.Length == 0)
+                    {
+                        throw new InvalidDataException($"A ZIP fájl üres: {zipPath}");
+                    }
+
+                    Debug.WriteLine($"Kicsomagolás kezdése - ZIP fájl mérete: {fileInfo.Length} bytes");
+
                     Directory.CreateDirectory(gameInstallPath);
                     
-                    using (var archive = ZipFile.OpenRead(zipPath))
+                    // Use FileStream with explicit parameters for better control
+                    using (var fileStream = new FileStream(zipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read, false))
                     {
+                        Debug.WriteLine($"ZIP tartalmaz {archive.Entries.Count} bejegyzést");
+
+                        int extractedCount = 0;
                         foreach (var entry in archive.Entries)
                         {
                             if (string.IsNullOrEmpty(entry.Name))
@@ -1013,8 +1183,30 @@ namespace BitFightersLauncher
                             if (!string.IsNullOrEmpty(destinationDir))
                                 Directory.CreateDirectory(destinationDir);
 
-                            entry.ExtractToFile(destinationPath, overwrite: true);
+                            try
+                            {
+                                // Remove read-only attribute if exists
+                                if (File.Exists(destinationPath))
+                                {
+                                    File.SetAttributes(destinationPath, FileAttributes.Normal);
+                                }
+
+                                entry.ExtractToFile(destinationPath, overwrite: true);
+                                extractedCount++;
+
+                                if (extractedCount % 10 == 0)
+                                {
+                                    Debug.WriteLine($"Kicsomagolva: {extractedCount}/{archive.Entries.Count}");
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"Hiba a fájl kicsomagolásakor ({entry.FullName}): {ex.Message}");
+                                throw;
+                            }
                         }
+
+                        Debug.WriteLine($"Összesen kicsomagolt fájlok: {extractedCount}");
                     }
 
                     // Létrehozunk egy lokális verzió fájlt a szerver verzióval
@@ -1023,22 +1215,44 @@ namespace BitFightersLauncher
                     Debug.WriteLine($"Lokális verzió fájl létrehozva: {serverGameVersion}");
 
                     Debug.WriteLine("Új verzió sikeresen kicsomagolva");
+                    extractionSucceeded = true;
+                }
+                catch (InvalidDataException ex)
+                {
+                    Debug.WriteLine($"Érvénytelen ZIP fájl: {ex.Message}");
+                    Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                    throw new InvalidDataException($"A letöltött fájl sérült vagy nem érvényes ZIP formátum. Kérem próbálja újra a letöltést.\n\nRészletek: {ex.Message}", ex);
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Hiba az új verzió telepítésekor: {ex.Message}");
+                    Debug.WriteLine($"Hiba az új verzió telepítésekor: {ex.GetType().Name} - {ex.Message}");
+                    Debug.WriteLine($"Stack trace: {ex.StackTrace}");
                     throw;
                 }
                 finally
                 {
-                    try
+                    // Small delay to ensure all handles are released
+                    System.Threading.Thread.Sleep(100);
+
+                    // Only delete the ZIP file if extraction was successful
+                    if (extractionSucceeded)
                     {
-                        if (File.Exists(zipPath))
-                            File.Delete(zipPath);
+                        try
+                        {
+                            if (File.Exists(zipPath))
+                            {
+                                File.Delete(zipPath);
+                                Debug.WriteLine("Temp ZIP fájl törölve");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Nem sikerült törölni a temp fájlt: {ex.Message}");
+                        }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Debug.WriteLine($"Nem sikerült törölni a temp fájlt: {ex.Message}");
+                        Debug.WriteLine($"ZIP fájl megőrizve hibakereséshez: {zipPath}");
                     }
                 }
             });
@@ -1092,6 +1306,115 @@ namespace BitFightersLauncher
                 return Directory.GetFiles(path, GameExecutableName, SearchOption.AllDirectories).FirstOrDefault();
             }
             catch (UnauthorizedAccessException) { return null; }
+        }
+
+        private async Task<bool> IsValidZipFileAsync(string zipPath)
+        {
+            try
+            {
+                // Refresh file info
+                var fileInfo = new FileInfo(zipPath);
+                fileInfo.Refresh();
+                
+                if (!fileInfo.Exists)
+                {
+                    Debug.WriteLine($"Érvénytelen ZIP: fájl nem létezik: {zipPath}");
+                    return false;
+                }
+                
+                if (fileInfo.Length < 22) // Minimum ZIP file size
+                {
+                    Debug.WriteLine($"Érvénytelen ZIP: túl kicsi ({fileInfo.Length} bytes)");
+                    return false;
+                }
+
+                Debug.WriteLine($"ZIP validálás kezdése: {fileInfo.Length} bytes");
+
+                // Read and analyze file header for diagnostics
+                await Task.Run(() =>
+                {
+                    using (var fs = new FileStream(zipPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan))
+                    {
+                        // Read first 4 bytes (ZIP signature should be 50 4B 03 04 or 50 4B 05 06)
+                        byte[] header = new byte[4];
+                        fs.Read(header, 0, 4);
+                        string hexHeader = BitConverter.ToString(header).Replace("-", " ");
+                        Debug.WriteLine($"ZIP file header (hex): {hexHeader}");
+                        
+                        // Check for valid ZIP signature
+                        if (header[0] != 0x50 || header[1] != 0x4B)
+                        {
+                            throw new InvalidDataException($"Invalid ZIP signature. Expected 'PK' (50 4B), got: {hexHeader}");
+                        }
+                        
+                        // Read last 22 bytes (End of Central Directory)
+                        if (fs.Length >= 22)
+                        {
+                            fs.Seek(-22, SeekOrigin.End);
+                            byte[] eocdMarker = new byte[4];
+                            fs.Read(eocdMarker, 0, 4);
+                            string hexEOCD = BitConverter.ToString(eocdMarker).Replace("-", " ");
+                            Debug.WriteLine($"ZIP EOCD marker (hex): {hexEOCD} (should be 50 4B 05 06)");
+                        }
+                    }
+                });
+
+                // Try to open and read the ZIP file
+                await Task.Run(() =>
+                {
+                    using (var fileStream = new FileStream(zipPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan))
+                    using (var archive = new ZipArchive(fileStream, ZipArchiveMode.Read, false))
+                    {
+                        // Try to access entries to verify ZIP integrity
+                        var entryCount = archive.Entries.Count;
+                        if (entryCount == 0)
+                        {
+                            throw new InvalidDataException("A ZIP fájl üres");
+                        }
+                        
+                        // Try to read the first entry's properties to ensure it's readable
+                        var firstEntry = archive.Entries[0];
+                        var testLength = firstEntry.Length;
+                        
+                        Debug.WriteLine($"ZIP validálás sikeres: {entryCount} bejegyzés, első fájl: {firstEntry.FullName} ({testLength} bytes)");
+                    }
+                });
+
+                return true;
+            }
+            catch (InvalidDataException ex)
+            {
+                Debug.WriteLine($"ZIP validálás sikertelen - érvénytelen formátum: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ZIP validálás hiba: {ex.GetType().Name} - {ex.Message}");
+                return false;
+            }
+        }
+
+        private async Task<bool> ValidateZipWithRetries(string zipPath, int maxRetries)
+        {
+            for (int i = 0; i < maxRetries; i++)
+            {
+                if (i > 0)
+                {
+                    Debug.WriteLine($"ZIP validálási próbálkozás {i + 1}/{maxRetries}");
+                    await Task.Delay(300 * (i + 1)); // Increasing delay
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                }
+
+                bool isValid = await IsValidZipFileAsync(zipPath);
+                if (isValid)
+                {
+                    return true;
+                }
+            }
+
+            Debug.WriteLine($"ZIP validálás véglegesen sikertelen {maxRetries} próbálkozás után");
+            return false;
         }
 
         private void SaveInstallPath()
@@ -1192,7 +1515,7 @@ namespace BitFightersLauncher
             {
                 Debug.WriteLine($"Loading news from: {ApiUrl}");
 
-                var requestData = new { action = "get_news", limit = 20 };
+                var requestData = new { action = "get_news", limit = 3 };
                 string jsonContent = JsonSerializer.Serialize(requestData);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
                 var response = await _httpClient.PostAsync(ApiUrl, content);
@@ -1220,7 +1543,7 @@ namespace BitFightersLauncher
                 Dispatcher.Invoke(() => 
                 {
                     if (NewsItemsControl != null)
-                        NewsItemsControl.ItemsSource = updates;
+                        NewsItemsControl.ItemsSource = updates.OrderByDescending(u => u.CreatedAt).Take(3);
                 });
                 
                 Debug.WriteLine($"News loaded successfully: {updates.Count} items");
@@ -1249,6 +1572,11 @@ namespace BitFightersLauncher
         private void DragWindow(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) this.DragMove();
+        }
+
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)
@@ -1297,17 +1625,17 @@ namespace BitFightersLauncher
             
             if (_reducedMotion)
             {
-                double target = NewsScrollViewer.VerticalOffset - e.Delta;
+                double target = NewsScrollViewer.HorizontalOffset - e.Delta;
                 if (target < 0) target = 0;
-                if (target > NewsScrollViewer.ScrollableHeight) target = NewsScrollViewer.ScrollableHeight;
-                NewsScrollViewer.ScrollToVerticalOffset(target);
+                if (target > NewsScrollViewer.ScrollableWidth) target = NewsScrollViewer.ScrollableWidth;
+                NewsScrollViewer.ScrollToHorizontalOffset(target);
                 e.Handled = true;
                 return;
             }
             
-            _targetVerticalOffset = NewsScrollViewer.VerticalOffset - e.Delta * 0.7;
+            _targetVerticalOffset = NewsScrollViewer.HorizontalOffset - e.Delta * 0.7;
             if (_targetVerticalOffset < 0) _targetVerticalOffset = 0;
-            if (_targetVerticalOffset > NewsScrollViewer.ScrollableHeight) _targetVerticalOffset = NewsScrollViewer.ScrollableHeight;
+            if (_targetVerticalOffset > NewsScrollViewer.ScrollableWidth) _targetVerticalOffset = NewsScrollViewer.ScrollableWidth;
             
             _scrollTimer?.Start();
             e.Handled = true;
@@ -1315,39 +1643,12 @@ namespace BitFightersLauncher
 
         private void NewsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
-            if (!_reducedMotion)
-            {
-                if (TopScrollIndicator != null)
-                    TopScrollIndicator.Opacity = (e.VerticalOffset > 0) ? 1 : 0;
-                if (BottomScrollIndicator != null)
-                    BottomScrollIndicator.Opacity = (e.VerticalOffset < NewsScrollViewer.ScrollableHeight - 1) ? 1 : 0;
-            }
-        }
-
-        private void ResetNavButtonStates()
-        {
-            if (HomeNavButton != null)
-            {
-                HomeNavButton.Tag = null;
-                HomeNavButton.ClearValue(Button.RenderTransformProperty);
-            }
-            if (StarNavButton != null)
-            {
-                StarNavButton.Tag = null;
-                StarNavButton.ClearValue(Button.RenderTransformProperty);
-            }
-            if (ProfileNavButton != null)
-            {
-                ProfileNavButton.Tag = null;
-                ProfileNavButton.ClearValue(Button.RenderTransformProperty);
-            }
+            // Scroll indikátorok eltávolítva
         }
 
         private void ShowHomeView()
         {
             currentView = "home";
-            ResetNavButtonStates();
-            if (HomeNavButton != null) HomeNavButton.Tag = "Active";
 
             if (ActionButton != null)
             {
@@ -1362,14 +1663,11 @@ namespace BitFightersLauncher
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
             if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Collapsed;
 
-            AnimateNavIndicator(0);
         }
 
         private void ShowProfileView()
         {
             currentView = "profile";
-            ResetNavButtonStates();
-            if (ProfileNavButton != null) ProfileNavButton.Tag = "Active";
             if (ActionButton != null) ActionButton.Visibility = Visibility.Collapsed;
             if (MainContentGrid != null) MainContentGrid.Visibility = Visibility.Collapsed;
             if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Collapsed;
@@ -1379,21 +1677,17 @@ namespace BitFightersLauncher
                 ProfileViewGrid.Visibility = Visibility.Visible;
                 UpdateProfileView();
             }
-            AnimateNavIndicator(2); // Changed from 3 to 2 since settings button was removed
         }
 
         private void ShowLeaderboardView()
         {
             currentView = "leaderboard";
-            ResetNavButtonStates();
-            if (StarNavButton != null) StarNavButton.Tag = "Active";
 
             if (MainContentGrid != null) MainContentGrid.Visibility = Visibility.Collapsed;
             if (NewsPanelBorder != null) NewsPanelBorder.Visibility = Visibility.Collapsed;
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
             if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Visible;
 
-            AnimateNavIndicator(1); // Changed from 2 to 1 since settings button was removed
             _ = LoadLeaderboardAsync();
         }
 
@@ -1430,46 +1724,6 @@ namespace BitFightersLauncher
             }
         }
 
-        private void AnimateNavIndicator(int buttonIndex)
-        {
-            if (NavIndicatorTransform == null) return;
-            
-            // A beállítás gomb eltávolítása utáni pozíciók
-            // buttonIndex: 0=Home, 1=Star, 2=Profile
-            double targetY = buttonIndex * 124;
-
-            // Biztonság kedvéért leállítjuk a timer alapú animációt
-            _navTimer?.Stop();
-
-            if (_reducedMotion)
-            {
-                // Tisztítjuk az esetlegesen folyamatban lévő animációt és azonnal ugrunk
-                NavIndicatorTransform.BeginAnimation(TranslateTransform.YProperty, null);
-                NavIndicatorTransform.Y = targetY;
-                return;
-            }
-
-            // Ha már közel vagyunk a célhoz, nem animálunk
-            if (Math.Abs(NavIndicatorTransform.Y - targetY) < 1.0)
-                return;
-
-            // Sima WPF animáció easinggel a jobb teljesítményért
-            double distance = Math.Abs(NavIndicatorTransform.Y - targetY);
-            var durationMs = Math.Max(120, Math.Min(260, 140 + distance * 0.4));
-            var anim = new DoubleAnimation
-            {
-                To = targetY,
-                Duration = TimeSpan.FromMilliseconds(durationMs),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-                FillBehavior = FillBehavior.Stop
-            };
-
-            // A végén rögzítjük a célértéket (mert FillBehavior.Stop visszaállítaná az alapot)
-            anim.Completed += (s, e) => NavIndicatorTransform.Y = targetY;
-
-            NavIndicatorTransform.BeginAnimation(TranslateTransform.YProperty, anim);
-        }
-
         private void UpdateProfileView()
         {
             if (ProfileViewGrid?.Visibility != Visibility.Visible) 
@@ -1500,7 +1754,54 @@ namespace BitFightersLauncher
 
         private void ProfileButton_Click(object sender, RoutedEventArgs e)
         {
+            if (ProfileMenuButton?.ContextMenu != null)
+            {
+                ProfileMenuButton.ContextMenu.PlacementTarget = ProfileMenuButton;
+                ProfileMenuButton.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+                
+                // Calculate offset to keep menu within window bounds
+                var buttonPosition = ProfileMenuButton.TransformToAncestor(this).Transform(new Point(0, 0));
+                double menuWidth = 300;
+                double windowWidth = this.ActualWidth;
+                
+                // Adjust horizontal offset if menu would go outside window
+                if (buttonPosition.X + menuWidth > windowWidth)
+                {
+                    ProfileMenuButton.ContextMenu.HorizontalOffset = -(menuWidth - ProfileMenuButton.ActualWidth);
+                }
+                else
+                {
+                    ProfileMenuButton.ContextMenu.HorizontalOffset = 0;
+                }
+                
+                ProfileMenuButton.ContextMenu.VerticalOffset = 6;
+                ProfileMenuButton.ContextMenu.IsOpen = true;
+            }
+        }
+
+        private void ProfileHomeMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            ShowHomeView();
+        }
+
+        private void ProfileViewMenuItem_Click(object sender, RoutedEventArgs e)
+        {
             ShowProfileView();
+        }
+
+        private void ProfileLeaderboardMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            ShowLeaderboardView();
+        }
+
+        private void ProfileContextMenu_Opened(object sender, RoutedEventArgs e)
+        {
+            if (DimOverlay != null) DimOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void ProfileContextMenu_Closed(object sender, RoutedEventArgs e)
+        {
+            if (DimOverlay != null) DimOverlay.Visibility = Visibility.Collapsed;
         }
 
         private void HomeButton_Click(object sender, RoutedEventArgs e)
@@ -1516,7 +1817,6 @@ namespace BitFightersLauncher
         protected override void OnClosed(EventArgs e)
         {
             _scrollTimer?.Stop();
-            _navTimer?.Stop();
             // Ne dispose-oljuk a statikus HttpClient-et, mert több ablak között megosztott
             // _httpClient.Dispose();
             base.OnClosed(e);
