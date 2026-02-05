@@ -44,9 +44,12 @@ C:\Users\Administrator\Desktop\suli\BitFightersLauncher-master\BitFightersLaunch
 C:\Users\Administrator\Desktop\suli\BitFightersLauncher-master\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher.genruntimeconfig.cache
 C:\Users\Administrator\Desktop\suli\BitFightersLauncher-master\BitFightersLauncher\obj\Debug\net8.0-windows\ref\BitFightersLauncher.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\BitFightersLauncher.exe
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\BitFightersLauncher.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\System.IO.Pipelines.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\System.Text.Encodings.Web.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\System.Text.Json.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\BitFightersLauncher.deps.json
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\BitFightersLauncher.runtimeconfig.json
-C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\BitFightersLauncher.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\BitFightersLauncher.pdb
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\BouncyCastle.Cryptography.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\Google.Protobuf.dll
@@ -55,9 +58,6 @@ C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\K4os.Hash.xxHash.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\Microsoft.WindowsAPICodePack.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\MySql.Data.dll
-C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\System.IO.Pipelines.dll
-C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\System.Text.Encodings.Web.dll
-C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\System.Text.Json.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\Microsoft.WindowsAPICodePack.Core.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\Microsoft.WindowsAPICodePack.ExtendedLinguisticServices.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\Microsoft.WindowsAPICodePack.Sensors.dll

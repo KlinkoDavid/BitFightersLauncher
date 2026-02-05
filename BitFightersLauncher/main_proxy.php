@@ -1,27 +1,27 @@
-<?php
-// BitFighters Launcher API - Valós adatbázis kapcsolattal
-// Használja a users és patchnotes táblákat
+ï»¿<?php
+// BitFighters Launcher API - ValÃ³s adatbÃ¡zis kapcsolattal
+// HasznÃ¡lja a users Ã©s patchnotes tÃ¡blÃ¡kat
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-// OPTIONS kérés kezelése (preflight)
+// OPTIONS kÃ©rÃ©s kezelÃ©se (preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-// Adatbázis kapcsolat beállítások
+// AdatbÃ¡zis kapcsolat beÃ¡llÃ­tÃ¡sok
 $servername = "mysql.rackhost.hu";
 $username = "c86218BitFighter";
 $password = "Alosos123";
 $dbname = "c86218game_users";
 
-// HTTP metódus ellenõrzése
+// HTTP metÃ³dus ellenÃµrzÃ©se
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Debug információk gyûjtése
+// Debug informÃ¡ciÃ³k gyÃ»jtÃ©se
 $debug_info = [
     "method" => $method,
     "content_type" => $_SERVER['CONTENT_TYPE'] ?? 'not set',
@@ -30,7 +30,7 @@ $debug_info = [
 ];
 
 try {
-    // Kérés típusa szerint adatok kinyerése
+    // KÃ©rÃ©s tÃ­pusa szerint adatok kinyerÃ©se
     if ($method === 'GET') {
         $data = $_GET;
     } else {
@@ -45,12 +45,12 @@ try {
         }
     }
 
-    // Action paraméter ellenõrzése
+    // Action paramÃ©ter ellenÃµrzÃ©se
     if (!isset($data['action']) || empty($data['action'])) {
         http_response_code(400);
         echo json_encode([
             "success" => false, 
-            "message" => "Hiányzó 'action' paraméter",
+            "message" => "HiÃ¡nyzÃ³ 'action' paramÃ©ter",
             "available_actions" => [
                 "login", "get_user_score", "get_user_score_by_id", 
                 "update_user_score", "get_users", "get_leaderboard", "get_user_rank", "get_news", "test"
@@ -59,11 +59,11 @@ try {
         exit;
     }
 
-    // Adatbázis kapcsolat
+    // AdatbÃ¡zis kapcsolat
     $conn = new mysqli($servername, $username, $password, $dbname);
     
     if ($conn->connect_error) {
-        throw new Exception("Adatbázis kapcsolat hiba: " . $conn->connect_error);
+        throw new Exception("AdatbÃ¡zis kapcsolat hiba: " . $conn->connect_error);
     }
     
     $conn->set_charset("utf8");
@@ -81,7 +81,7 @@ try {
                 
                 echo json_encode([
                     "success" => true,
-                    "message" => "Adatbázis kapcsolat és teszt OK",
+                    "message" => "AdatbÃ¡zis kapcsolat Ã©s teszt OK",
                     "database" => $dbname,
                     "user_count" => (int)$users_row['user_count'],
                     "patchnotes_count" => (int)$patchnotes_row['patchnotes_count'],
@@ -100,48 +100,78 @@ try {
                 http_response_code(400);
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Hiányzó username vagy password paraméter"
+                    "message" => "HiÃ¡nyzÃ³ username vagy password paramÃ©ter"
                 ], JSON_UNESCAPED_UNICODE);
                 break;
             }
             
             try {
-                // Felhasználó lekérdezése a users táblából
+                // Debug mode - csak tesztelÃ©shez, kÃ©sÅ‘bb tÃ¡volÃ­tsd el!
+                $debug_mode = isset($data['debug']) && $data['debug'] === true;
+                
+                // FelhasznÃ¡lÃ³ lekÃ©rdezÃ©se a users tÃ¡blÃ¡bÃ³l
                 $stmt = $conn->prepare("SELECT id, username, highest_score, password FROM users WHERE username = ?");
                 $stmt->bind_param("s", $data['username']);
                 $stmt->execute();
                 $result = $stmt->get_result();
                 
                 if ($row = $result->fetch_assoc()) {
-                    // Jelszó ellenõrzése (plain text - nem biztonságos, de így mûködik)
-                    if ($row['password'] === $data['password']) {
+                    // Debug informÃ¡ciÃ³k
+                    if ($debug_mode) {
+                        echo json_encode([
+                            "success" => false,
+                            "debug" => true,
+                            "message" => "Debug info",
+                            "username_found" => true,
+                            "username_in_db" => $row['username'],
+                            "password_hash_prefix" => substr($row['password'], 0, 7),
+                            "password_hash_length" => strlen($row['password']),
+                            "input_password_length" => strlen($data['password']),
+                            "password_verify_result" => password_verify($data['password'], $row['password'])
+                        ], JSON_UNESCAPED_UNICODE);
+                        break;
+                    }
+                    
+                    // JelszÃ³ ellenÅ‘rzÃ©se bcrypt hash-sel
+                    if (password_verify($data['password'], $row['password'])) {
                         echo json_encode([
                             "success" => true,
-                            "message" => "Sikeres bejelentkezés",
+                            "message" => "Sikeres bejelentkezÃ©s",
                             "user" => [
                                 "id" => (int)$row['id'],
                                 "username" => $row['username'],
                                 "highest_score" => (int)$row['highest_score'],
-                                "created_at" => "2024-01-01 00:00:00" // Mivel nincs created_at mezõ a táblában
+                                "created_at" => "2024-01-01 00:00:00" // Mivel nincs created_at mezÅ‘ a tÃ¡blÃ¡ban
                             ]
                         ], JSON_UNESCAPED_UNICODE);
                     } else {
                         echo json_encode([
                             "success" => false, 
-                            "message" => "Hibás felhasználónév vagy jelszó"
+                            "message" => "HibÃ¡s felhasznÃ¡lÃ³nÃ©v vagy jelszÃ³"
                         ], JSON_UNESCAPED_UNICODE);
                     }
                 } else {
+                    if ($debug_mode) {
+                        echo json_encode([
+                            "success" => false,
+                            "debug" => true,
+                            "message" => "Debug info",
+                            "username_found" => false,
+                            "input_username" => $data['username']
+                        ], JSON_UNESCAPED_UNICODE);
+                        break;
+                    }
+                    
                     echo json_encode([
                         "success" => false, 
-                        "message" => "Hibás felhasználónév vagy jelszó"
+                        "message" => "HibÃ¡s felhasznÃ¡lÃ³nÃ©v vagy jelszÃ³"
                     ], JSON_UNESCAPED_UNICODE);
                 }
                 $stmt->close();
             } catch (Exception $e) {
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Bejelentkezési hiba: " . $e->getMessage()
+                    "message" => "BejelentkezÃ©si hiba: " . $e->getMessage()
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;
@@ -151,7 +181,7 @@ try {
                 http_response_code(400);
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Hiányzó username paraméter"
+                    "message" => "HiÃ¡nyzÃ³ username paramÃ©ter"
                 ], JSON_UNESCAPED_UNICODE);
                 break;
             }
@@ -165,7 +195,7 @@ try {
                 if ($row = $result->fetch_assoc()) {
                     echo json_encode([
                         "success" => true,
-                        "message" => "Pontszám sikeresen lekérdezve",
+                        "message" => "PontszÃ¡m sikeresen lekÃ©rdezve",
                         "user" => [
                             "id" => (int)$row['id'],
                             "username" => $row['username'],
@@ -175,7 +205,7 @@ try {
                 } else {
                     echo json_encode([
                         "success" => false, 
-                        "message" => "Felhasználó nem található",
+                        "message" => "FelhasznÃ¡lÃ³ nem talÃ¡lhatÃ³",
                         "username" => $data['username']
                     ], JSON_UNESCAPED_UNICODE);
                 }
@@ -183,7 +213,7 @@ try {
             } catch (Exception $e) {
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Lekérdezési hiba: " . $e->getMessage()
+                    "message" => "LekÃ©rdezÃ©si hiba: " . $e->getMessage()
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;
@@ -193,7 +223,7 @@ try {
                 $limit = isset($data['limit']) ? (int)$data['limit'] : 20;
                 if ($limit > 100) $limit = 100;
                 
-                // Hírek lekérdezése a patchnotes táblából - csak title és created_at
+                // HÃ­rek lekÃ©rdezÃ©se a patchnotes tÃ¡blÃ¡bÃ³l - csak title Ã©s created_at
                 $stmt = $conn->prepare("SELECT id, title, created_at FROM patchnotes ORDER BY created_at DESC LIMIT ?");
                 $stmt->bind_param("i", $limit);
                 $stmt->execute();
@@ -204,16 +234,16 @@ try {
                     $news[] = [
                         "id" => (int)$row['id'],
                         "title" => $row['title'],
-                        "content" => "", // Üres content - csak title használata
+                        "content" => "", // Ãœres content - csak title hasznÃ¡lata
                         "created_at" => $row['created_at']
                     ];
                 }
                 
-                // Ha nincs hír az adatbázisban, alapértelmezett hírt adunk vissza
+                // Ha nincs hÃ­r az adatbÃ¡zisban, alapÃ©rtelmezett hÃ­rt adunk vissza
                 if (empty($news)) {
                     $news[] = [
                         "id" => 0,
-                        "title" => "Üdvözöljük a BitFighters világában!",
+                        "title" => "ÃœdvÃ¶zÃ¶ljÃ¼k a BitFighters vilÃ¡gÃ¡ban!",
                         "content" => "",
                         "created_at" => date('Y-m-d H:i:s')
                     ];
@@ -222,11 +252,11 @@ try {
                 echo json_encode($news, JSON_UNESCAPED_UNICODE);
                 $stmt->close();
             } catch (Exception $e) {
-                // Fallback hírek
+                // Fallback hÃ­rek
                 echo json_encode([
                     [
                         "id" => 0,
-                        "title" => "Hiba történt",
+                        "title" => "Hiba tÃ¶rtÃ©nt",
                         "content" => "",
                         "created_at" => date('Y-m-d H:i:s')
                     ]
@@ -255,7 +285,7 @@ try {
                 
                 echo json_encode([
                     "success" => true,
-                    "message" => "Felhasználók sikeresen lekérdezve",
+                    "message" => "FelhasznÃ¡lÃ³k sikeresen lekÃ©rdezve",
                     "users" => $users,
                     "count" => count($users)
                 ], JSON_UNESCAPED_UNICODE);
@@ -263,7 +293,7 @@ try {
             } catch (Exception $e) {
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Lekérdezési hiba: " . $e->getMessage()
+                    "message" => "LekÃ©rdezÃ©si hiba: " . $e->getMessage()
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;
@@ -292,7 +322,7 @@ try {
                 
                 echo json_encode([
                     "success" => true,
-                    "message" => "Ranglista sikeresen lekérdezve",
+                    "message" => "Ranglista sikeresen lekÃ©rdezve",
                     "leaderboard" => $leaderboard,
                     "count" => count($leaderboard)
                 ], JSON_UNESCAPED_UNICODE);
@@ -300,7 +330,7 @@ try {
             } catch (Exception $e) {
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Ranglista lekérdezési hiba: " . $e->getMessage()
+                    "message" => "Ranglista lekÃ©rdezÃ©si hiba: " . $e->getMessage()
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;
@@ -310,13 +340,13 @@ try {
                 http_response_code(400);
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Hiányzó username paraméter"
+                    "message" => "HiÃ¡nyzÃ³ username paramÃ©ter"
                 ], JSON_UNESCAPED_UNICODE);
                 break;
             }
             
             try {
-                // Felhasználó pontszámának lekérdezése
+                // FelhasznÃ¡lÃ³ pontszÃ¡mÃ¡nak lekÃ©rdezÃ©se
                 $stmt = $conn->prepare("SELECT id, username, highest_score FROM users WHERE username = ?");
                 $stmt->bind_param("s", $data['username']);
                 $stmt->execute();
@@ -327,7 +357,7 @@ try {
                     $username = $row['username'];
                     $user_score = (int)$row['highest_score'];
                     
-                    // Rangsor pozíció kiszámítása - hány user van nála jobb pontszámmal
+                    // Rangsor pozÃ­ciÃ³ kiszÃ¡mÃ­tÃ¡sa - hÃ¡ny user van nÃ¡la jobb pontszÃ¡mmal
                     $rank_stmt = $conn->prepare("SELECT COUNT(*) as better_players FROM users WHERE highest_score > ?");
                     $rank_stmt->bind_param("i", $user_score);
                     $rank_stmt->execute();
@@ -336,7 +366,7 @@ try {
                     
                     $rank = (int)$rank_row['better_players'] + 1;
                     
-                    // Összes aktív játékos száma (akiknek van pontjuk)
+                    // Ã–sszes aktÃ­v jÃ¡tÃ©kos szÃ¡ma (akiknek van pontjuk)
                     $total_stmt = $conn->prepare("SELECT COUNT(*) as total_users FROM users WHERE highest_score > 0");
                     $total_stmt->execute();
                     $total_result = $total_stmt->get_result();
@@ -345,7 +375,7 @@ try {
                     
                     echo json_encode([
                         "success" => true,
-                        "message" => "Rangsor pozíció sikeresen lekérdezve",
+                        "message" => "Rangsor pozÃ­ciÃ³ sikeresen lekÃ©rdezve",
                         "user" => [
                             "rank" => $rank,
                             "total_users" => $total_users,
@@ -360,7 +390,7 @@ try {
                 } else {
                     echo json_encode([
                         "success" => false, 
-                        "message" => "Felhasználó nem található",
+                        "message" => "FelhasznÃ¡lÃ³ nem talÃ¡lhatÃ³",
                         "username" => $data['username']
                     ], JSON_UNESCAPED_UNICODE);
                 }
@@ -368,7 +398,7 @@ try {
             } catch (Exception $e) {
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Rangsor lekérdezési hiba: " . $e->getMessage()
+                    "message" => "Rangsor lekÃ©rdezÃ©si hiba: " . $e->getMessage()
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;
@@ -378,7 +408,7 @@ try {
                 http_response_code(400);
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Hiányzó user_id vagy new_score paraméter"
+                    "message" => "HiÃ¡nyzÃ³ user_id vagy new_score paramÃ©ter"
                 ], JSON_UNESCAPED_UNICODE);
                 break;
             }
@@ -387,7 +417,7 @@ try {
                 $user_id = (int)$data['user_id'];
                 $new_score = (int)$data['new_score'];
                 
-                // Jelenlegi pontszám lekérdezése
+                // Jelenlegi pontszÃ¡m lekÃ©rdezÃ©se
                 $stmt = $conn->prepare("SELECT highest_score, username FROM users WHERE id = ?");
                 $stmt->bind_param("i", $user_id);
                 $stmt->execute();
@@ -398,14 +428,14 @@ try {
                     $username = $row['username'];
                     
                     if ($new_score > $current_score) {
-                        // Pontszám frissítése
+                        // PontszÃ¡m frissÃ­tÃ©se
                         $update_stmt = $conn->prepare("UPDATE users SET highest_score = ? WHERE id = ?");
                         $update_stmt->bind_param("ii", $new_score, $user_id);
                         
                         if ($update_stmt->execute()) {
                             echo json_encode([
                                 "success" => true,
-                                "message" => "Pontszám sikeresen frissítve",
+                                "message" => "PontszÃ¡m sikeresen frissÃ­tve",
                                 "user" => [
                                     "id" => $user_id,
                                     "username" => $username,
@@ -416,14 +446,14 @@ try {
                         } else {
                             echo json_encode([
                                 "success" => false, 
-                                "message" => "Hiba a pontszám frissítése során"
+                                "message" => "Hiba a pontszÃ¡m frissÃ­tÃ©se sorÃ¡n"
                             ], JSON_UNESCAPED_UNICODE);
                         }
                         $update_stmt->close();
                     } else {
                         echo json_encode([
                             "success" => false,
-                            "message" => "Az új pontszám nem nagyobb a jelenleginél",
+                            "message" => "Az Ãºj pontszÃ¡m nem nagyobb a jelenleginÃ©l",
                             "current_score" => $current_score,
                             "submitted_score" => $new_score
                         ], JSON_UNESCAPED_UNICODE);
@@ -431,7 +461,7 @@ try {
                 } else {
                     echo json_encode([
                         "success" => false, 
-                        "message" => "Felhasználó nem található",
+                        "message" => "FelhasznÃ¡lÃ³ nem talÃ¡lhatÃ³",
                         "user_id" => $user_id
                     ], JSON_UNESCAPED_UNICODE);
                 }
@@ -439,7 +469,7 @@ try {
             } catch (Exception $e) {
                 echo json_encode([
                     "success" => false, 
-                    "message" => "Frissítési hiba: " . $e->getMessage()
+                    "message" => "FrissÃ­tÃ©si hiba: " . $e->getMessage()
                 ], JSON_UNESCAPED_UNICODE);
             }
             break;
@@ -457,14 +487,14 @@ try {
             break;
     }
 
-    // Kapcsolat bezárása
+    // Kapcsolat bezÃ¡rÃ¡sa
     $conn->close();
 
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         "success" => false,
-        "message" => "Általános hiba: " . $e->getMessage()
+        "message" => "ÃltalÃ¡nos hiba: " . $e->getMessage()
     ], JSON_UNESCAPED_UNICODE);
 }
 ?>

@@ -126,9 +126,18 @@ namespace BitFightersLauncher
         // Navigation state - egyszer?sített
         private string currentView = "home";
 
+        private TaskCompletionSource<bool> _downloadPauseSource = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private bool _isDownloadPaused;
+        private bool _isDownloadInProgress;
+        private int _lastDownloadPercentage;
+        private string _currentDownloadStatusText = string.Empty;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            _downloadPauseSource.TrySetResult(true);
+            SetPauseResumeButtonState(false, false);
 
             string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             string launcherDataPath = Path.Combine(appDataPath, "BitFightersLauncher");
@@ -607,6 +616,8 @@ namespace BitFightersLauncher
                     Debug.WriteLine("Gomb szöveg frissítve: LETÖLTÉS");
                 }
             }
+            
+            UpdateActionButtonIcon();
         }
 
         private async Task CheckForUpdatesAutomatically()
@@ -719,10 +730,7 @@ namespace BitFightersLauncher
                 ActionButton.IsEnabled = false;
             }
             
-            if (ButtonText != null)
-            {
-                ButtonText.Text = isUpdate ? "FRISSÍTÉS..." : "LETÖLTÉS...";
-            }
+            UpdateActionButtonIcon();
 
             string tempDownloadPath = Path.Combine(Path.GetTempPath(), "BitFighters_game.zip");
 
@@ -743,6 +751,7 @@ namespace BitFightersLauncher
             {
                 Debug.WriteLine($"Hiba a {(isUpdate ? "frissítés" : "letöltés")} során: {ex.Message}");
                 ShowNotification($"Hiba a {(isUpdate ? "frissítés" : "letöltés")} során: {ex.Message}");
+                UpdateProgressUI(0, "Hiba!", "", false);
             }
             finally
             {
@@ -758,22 +767,23 @@ namespace BitFightersLauncher
         {
             try
             {
-                if (ButtonText != null)
-                {
-                    ButtonText.Text = "ELŐKÉSZÍTÉS...";
-                }
+                UpdateProgressUI(0, "Előkészítés...", "", true);
 
                 var backupPath = await CreateConfigBackupAsync();
                 await DownloadGameFileAsync(tempDownloadPath, true);
+                
+                UpdateProgressUI(100, "Fájlok kibontása...", "", true);
                 await ClearOldGameFilesAsync();
                 await ExtractNewGameVersionAsync(tempDownloadPath);
                 await RestoreConfigBackupAsync(backupPath);
 
+                UpdateProgressUI(100, "Befejezve!", "", false);
                 ShowNotification($"Játék sikeresen frissítve! Új verzió: v{serverGameVersion}");
                 localGameVersion = GetLocalGameVersion();
             }
             catch (Exception ex)
             {
+                UpdateProgressUI(0, "Hiba!", "", false);
                 throw new Exception($"Frissítési hiba: {ex.Message}", ex);
             }
         }
@@ -781,18 +791,126 @@ namespace BitFightersLauncher
         private async Task PerformFreshInstall(string tempDownloadPath)
         {
             await DownloadGameFileAsync(tempDownloadPath, false);
+            
+            UpdateProgressUI(100, "Fájlok kibontása...", "", true);
             await ExtractNewGameVersionAsync(tempDownloadPath);
             
             if (!string.IsNullOrEmpty(FindExecutable(gameInstallPath)))
             {
                 SaveInstallPath();
+                UpdateProgressUI(100, "Befejezve!", "", false);
                 ShowNotification($"A játék sikeresen telepítve! Verzió: v{serverGameVersion}");
                 localGameVersion = GetLocalGameVersion();
             }
             else
             {
+                UpdateProgressUI(0, "Hiba!", "", false);
                 ShowNotification("Hiba: A futtatható fájl nem található a mappában.");
                 gameInstallPath = string.Empty;
+            }
+        }
+        
+        private void UpdateProgressUI(int percentage, string statusText, string speedText, bool visible)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    var progressIndicatorBorder = this.FindName("ProgressIndicatorBorder") as Border;
+                    var buttonContentPanel = this.FindName("ButtonContentPanel") as StackPanel;
+                    var actionButton = this.FindName("ActionButton") as Button;
+                    
+                    if (progressIndicatorBorder != null)
+                    {
+                        progressIndicatorBorder.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+                    }
+
+                    if (actionButton != null)
+                    {
+                        actionButton.Visibility = visible ? Visibility.Collapsed : Visibility.Visible;
+                    }
+                    
+                    // Hide/show normal button content
+                    if (buttonContentPanel != null)
+                    {
+                        buttonContentPanel.Visibility = visible ? Visibility.Collapsed : Visibility.Visible;
+                    }
+                    
+                    // Update percentage circle
+                    var progressPercentageCircle = this.FindName("ProgressPercentageCircle") as TextBlock;
+                    if (progressPercentageCircle != null)
+                    {
+                        progressPercentageCircle.Text = $"{percentage}";
+                    }
+                    
+                    // Update circular progress ring
+                    var progressRingPath = this.FindName("ProgressRingPath") as System.Windows.Shapes.Path;
+                    if (progressRingPath != null)
+                    {
+                        double radius = 15;
+                        double circumference = 2 * Math.PI * radius;
+                        double thickness = Math.Max(1, progressRingPath.StrokeThickness);
+                        double scaledCircumference = circumference / thickness;
+
+                        double dashLength = (scaledCircumference * percentage) / 100.0;
+                        double gapLength = scaledCircumference - dashLength;
+
+                        progressRingPath.StrokeDashArray = new DoubleCollection { dashLength, gapLength };
+                    }
+                    
+                    var progressStatusText = this.FindName("ProgressStatusText") as TextBlock;
+                    if (progressStatusText != null)
+                    {
+                        progressStatusText.Text = statusText;
+                    }
+                    
+                    var progressSpeedText = this.FindName("ProgressSpeedText") as TextBlock;
+                    if (progressSpeedText != null)
+                    {
+                        progressSpeedText.Text = speedText;
+                    }
+                    
+                    // Also update button text for fallback
+                    if (ButtonText != null && !visible)
+                    {
+                        // Reset button text when progress is hidden
+                        CheckGameInstallStatus();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error updating progress UI: {ex.Message}");
+                }
+            });
+        }
+
+        private void SetPauseResumeButtonState(bool isEnabled, bool isPaused)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var pauseResumeButton = this.FindName("PauseResumeButton") as Button;
+                if (pauseResumeButton != null)
+                {
+                    pauseResumeButton.IsEnabled = isEnabled;
+                }
+
+                UpdatePauseResumeUI(isPaused);
+            });
+        }
+
+        private void UpdatePauseResumeUI(bool isPaused)
+        {
+            var pauseIcon = this.FindName("PauseIcon") as Canvas;
+            var resumeIcon = this.FindName("ResumeIcon") as System.Windows.Shapes.Path;
+
+            if (pauseIcon != null)
+            {
+                pauseIcon.Visibility = isPaused ? Visibility.Collapsed : Visibility.Visible;
+            }
+
+            if (resumeIcon != null)
+            {
+                resumeIcon.Visibility = isPaused ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -802,182 +920,219 @@ namespace BitFightersLauncher
             int attempt = 0;
             Exception? lastException = null;
 
-            while (attempt < maxRetries)
+            _isDownloadInProgress = true;
+            _isDownloadPaused = false;
+            _downloadPauseSource.TrySetResult(true);
+            _lastDownloadPercentage = 0;
+            _currentDownloadStatusText = isUpdate ? "Frissítés..." : "Letöltés...";
+            SetPauseResumeButtonState(true, false);
+            try
             {
-                FileStream? fileStream = null;
-                try
+                while (attempt < maxRetries)
                 {
-                    attempt++;
-                    if (attempt > 1)
+                    FileStream? fileStream = null;
+                    try
                     {
-                        Debug.WriteLine($"Letöltési próbálkozás {attempt}/{maxRetries}");
-                        if (ButtonText != null)
+                        attempt++;
+                        if (attempt > 1)
                         {
-                            ButtonText.Text = $"ÚJRAPRÓBÁLÁS ({attempt}/{maxRetries})...";
+                            Debug.WriteLine($"Letöltési próbálkozás {attempt}/{maxRetries}");
+                            UpdateProgressUI(0, "Újrapróbálás...", "0 MB/s", true);
+                            await Task.Delay(3000 * attempt); // Increasing wait before retry
                         }
-                        await Task.Delay(3000 * attempt); // Increasing wait before retry
-                    }
 
-                    // Delete any existing partial download with retries
-                    if (File.Exists(downloadPath))
-                    {
+                        // Delete any existing partial download with retries
+                        if (File.Exists(downloadPath))
+                        {
+                            for (int i = 0; i < 3; i++)
+                            {
+                                try
+                                {
+                                    File.SetAttributes(downloadPath, FileAttributes.Normal);
+                                    File.Delete(downloadPath);
+                                    break;
+                                }
+                                catch
+                                {
+                                    if (i == 2) throw;
+                                    await Task.Delay(500);
+                                    GC.Collect();
+                                    GC.WaitForPendingFinalizers();
+                                }
+                            }
+                        }
+
+                        UpdateProgressUI(0, isUpdate ? "Frissítés..." : "Letöltés...", "0 MB/s", true);
+
+                        using (var client = new HttpClient())
+                        {
+                            client.Timeout = TimeSpan.FromMinutes(15); // Longer timeout
+                            client.DefaultRequestHeaders.ConnectionClose = false;
+                            client.DefaultRequestHeaders.Add("Accept-Encoding", "identity"); // Disable compression
+
+                            var response = await client.GetAsync(GameDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                            response.EnsureSuccessStatusCode();
+
+                            var totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                            Debug.WriteLine($"Letöltendő fájl mérete: {totalBytes} bytes ({totalBytes / 1024 / 1024} MB)");
+
+                            if (totalBytes <= 0)
+                            {
+                                throw new InvalidOperationException("A szerver nem küldte el a fájl méretét");
+                            }
+
+                            var progressBuffer = new byte[81920]; // 80KB buffer
+
+                            using (var contentStream = await response.Content.ReadAsStreamAsync())
+                            {
+                                fileStream = new FileStream(
+                                    downloadPath,
+                                    FileMode.Create,
+                                    FileAccess.Write,
+                                    FileShare.None,
+                                    81920,
+                                    FileOptions.Asynchronous | FileOptions.WriteThrough);
+
+                                long totalBytesRead = 0;
+                                int bytesRead;
+                                var lastProgressUpdate = DateTime.Now;
+                                var startTime = DateTime.Now;
+                                long lastBytesRead = 0;
+
+                                while (true)
+                                {
+                                    bool shouldWait = _isDownloadPaused;
+                                    if (shouldWait)
+                                    {
+                                        await _downloadPauseSource.Task;
+                                        lastProgressUpdate = DateTime.Now;
+                                        lastBytesRead = totalBytesRead;
+                                    }
+
+                                    bytesRead = await contentStream.ReadAsync(progressBuffer, 0, progressBuffer.Length);
+                                    if (bytesRead <= 0)
+                                    {
+                                        break;
+                                    }
+
+                                    await fileStream.WriteAsync(progressBuffer, 0, bytesRead);
+                                    totalBytesRead += bytesRead;
+
+                                    if (totalBytes > 0 && DateTime.Now - lastProgressUpdate > TimeSpan.FromMilliseconds(250))
+                                    {
+                                        var progress = (int)((totalBytesRead * 100) / totalBytes);
+                                        _lastDownloadPercentage = progress;
+                                        
+                                        // Calculate download speed
+                                        var elapsed = (DateTime.Now - lastProgressUpdate).TotalSeconds;
+                                        var bytesPerSecond = (totalBytesRead - lastBytesRead) / elapsed;
+                                        var mbPerSecond = bytesPerSecond / (1024 * 1024);
+                                        
+                                        string statusText = _currentDownloadStatusText;
+                                        string speedText = $"{mbPerSecond:F1} MB/s";
+                                        
+                                        UpdateProgressUI(progress, statusText, speedText, true);
+                                        
+                                        lastProgressUpdate = DateTime.Now;
+                                        lastBytesRead = totalBytesRead;
+                                    }
+                                }
+
+                                // Critical: Ensure all data is written
+                                await fileStream.FlushAsync();
+                                fileStream.Close();
+                                fileStream.Dispose();
+                                fileStream = null;
+
+                                Debug.WriteLine($"Letöltve {totalBytesRead} bytes");
+                                
+                                // Show completion
+                                UpdateProgressUI(100, "Kész!", "Befejezve", true);
+                                await Task.Delay(500);
+
+                                // Verify file size matches exactly
+                                if (totalBytesRead != totalBytes)
+                                {
+                                    throw new InvalidDataException($"Hiányos letöltés: {totalBytesRead}/{totalBytes} bytes");
+                                }
+                            }
+                        }
+
+                        // Aggressive file system sync
+                        await Task.Delay(1000);
                         for (int i = 0; i < 3; i++)
+                        {
+                            GC.Collect();
+                            GC.WaitForPendingFinalizers();
+                            await Task.Delay(200);
+                        }
+
+                        // Verify the file exists and has correct size
+                        var downloadedFileInfo = new FileInfo(downloadPath);
+                        downloadedFileInfo.Refresh();
+                        if (!downloadedFileInfo.Exists)
+                        {
+                            throw new FileNotFoundException("A letöltött fájl nem található a fájlrendszerben");
+                        }
+
+                        Debug.WriteLine($"Letöltött fájl ellenőrzése: {downloadedFileInfo.Length} bytes");
+
+                        // Verify the downloaded file is a valid ZIP with retries
+                        bool isValid = await ValidateZipWithRetries(downloadPath, 5); // More retry attempts
+                        if (!isValid)
+                        {
+                            // Create diagnostic dump
+                            await CreateDiagnosticDump(downloadPath);
+                            throw new InvalidDataException("A letöltött fájl sérült vagy nem érvényes ZIP fájl.");
+                        }
+
+                        Debug.WriteLine($"Fájl sikeresen letöltve és validálva: {downloadPath}");
+                        return; // Success!
+                    }
+                    catch (Exception ex)
+                    {
+                        lastException = ex;
+                        Debug.WriteLine($"Letöltési hiba (próbálkozás {attempt}/{maxRetries}): {ex.GetType().Name} - {ex.Message}");
+                        Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                        
+                        // Ensure file stream is closed
+                        if (fileStream != null)
                         {
                             try
                             {
-                                File.SetAttributes(downloadPath, FileAttributes.Normal);
-                                File.Delete(downloadPath);
-                                break;
+                                fileStream.Close();
+                                fileStream.Dispose();
                             }
-                            catch
-                            {
-                                if (i == 2) throw;
-                                await Task.Delay(500);
-                                GC.Collect();
-                                GC.WaitForPendingFinalizers();
-                            }
+                            catch { /* Ignore */ }
                         }
-                    }
 
-                    if (ButtonText != null)
-                    {
-                        ButtonText.Text = isUpdate ? "ÚJ VERZIÓ LETÖLTÉSE..." : "LETÖLTÉS...";
-                    }
-
-                    using (var client = new HttpClient())
-                    {
-                        client.Timeout = TimeSpan.FromMinutes(15); // Longer timeout
-                        client.DefaultRequestHeaders.ConnectionClose = false;
-                        client.DefaultRequestHeaders.Add("Accept-Encoding", "identity"); // Disable compression
-
-                        var response = await client.GetAsync(GameDownloadUrl, HttpCompletionOption.ResponseHeadersRead);
-                        response.EnsureSuccessStatusCode();
-
-                        var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-                        Debug.WriteLine($"Letöltendő fájl mérete: {totalBytes} bytes ({totalBytes / 1024 / 1024} MB)");
-
-                        if (totalBytes <= 0)
+                        if (attempt >= maxRetries)
                         {
-                            throw new InvalidOperationException("A szerver nem küldte el a fájl méretét");
+                            throw new Exception($"A letöltés {maxRetries} próbálkozás után is sikertelen volt.\n\nUtolsó hiba: {ex.Message}", ex);
                         }
-
-                        var progressBuffer = new byte[81920]; // 80KB buffer
-
-                        using (var contentStream = await response.Content.ReadAsStreamAsync())
+                    }
+                    finally
+                    {
+                        if (fileStream != null)
                         {
-                            fileStream = new FileStream(
-                                downloadPath,
-                                FileMode.Create,
-                                FileAccess.Write,
-                                FileShare.None,
-                                81920,
-                                FileOptions.Asynchronous | FileOptions.WriteThrough);
-
-                            long totalBytesRead = 0;
-                            int bytesRead;
-                            int updateCounter = 0;
-                            var lastProgressUpdate = DateTime.Now;
-
-                            while ((bytesRead = await contentStream.ReadAsync(progressBuffer, 0, progressBuffer.Length)) > 0)
+                            try
                             {
-                                await fileStream.WriteAsync(progressBuffer, 0, bytesRead);
-                                totalBytesRead += bytesRead;
-
-                                if (totalBytes > 0 && DateTime.Now - lastProgressUpdate > TimeSpan.FromMilliseconds(500))
-                                {
-                                    var progress = (int)((totalBytesRead * 100) / totalBytes);
-                                    if (ButtonText != null)
-                                    {
-                                        string action = isUpdate ? "FRISSÍTÉS" : "LETÖLTÉS";
-                                        ButtonText.Text = $"{action} {progress}% ({totalBytesRead / 1024 / 1024}/{totalBytes / 1024 / 1024} MB)";
-                                    }
-                                    lastProgressUpdate = DateTime.Now;
-                                }
+                                fileStream.Dispose();
                             }
-
-                            // Critical: Ensure all data is written
-                            await fileStream.FlushAsync();
-                            fileStream.Close();
-                            fileStream.Dispose();
-                            fileStream = null;
-
-                            Debug.WriteLine($"Letöltve {totalBytesRead} bytes");
-
-                            // Verify file size matches exactly
-                            if (totalBytesRead != totalBytes)
-                            {
-                                throw new InvalidDataException($"Hiányos letöltés: {totalBytesRead}/{totalBytes} bytes");
-                            }
+                            catch { /* Ignore */ }
                         }
-                    }
-
-                    // Aggressive file system sync
-                    await Task.Delay(1000);
-                    for (int i = 0; i < 3; i++)
-                    {
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
-                        await Task.Delay(200);
-                    }
-
-                    // Verify the file exists and has correct size
-                    var downloadedFileInfo = new FileInfo(downloadPath);
-                    downloadedFileInfo.Refresh();
-                    if (!downloadedFileInfo.Exists)
-                    {
-                        throw new FileNotFoundException("A letöltött fájl nem található a fájlrendszerben");
-                    }
-
-                    Debug.WriteLine($"Letöltött fájl ellenőrzése: {downloadedFileInfo.Length} bytes");
-
-                    // Verify the downloaded file is a valid ZIP with retries
-                    bool isValid = await ValidateZipWithRetries(downloadPath, 5); // More retry attempts
-                    if (!isValid)
-                    {
-                        // Create diagnostic dump
-                        await CreateDiagnosticDump(downloadPath);
-                        throw new InvalidDataException("A letöltött fájl sérült vagy nem érvényes ZIP fájl.");
-                    }
-
-                    Debug.WriteLine($"Fájl sikeresen letöltve és validálva: {downloadPath}");
-                    return; // Success!
-                }
-                catch (Exception ex)
-                {
-                    lastException = ex;
-                    Debug.WriteLine($"Letöltési hiba (próbálkozás {attempt}/{maxRetries}): {ex.GetType().Name} - {ex.Message}");
-                    Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                    
-                    // Ensure file stream is closed
-                    if (fileStream != null)
-                    {
-                        try
-                        {
-                            fileStream.Close();
-                            fileStream.Dispose();
-                        }
-                        catch { /* Ignore */ }
-                    }
-
-                    if (attempt >= maxRetries)
-                    {
-                        throw new Exception($"A letöltés {maxRetries} próbálkozás után is sikertelen volt.\n\nUtolsó hiba: {ex.Message}", ex);
                     }
                 }
-                finally
-                {
-                    if (fileStream != null)
-                    {
-                        try
-                        {
-                            fileStream.Dispose();
-                        }
-                        catch { /* Ignore */ }
-                    }
-                }
+
+                throw new Exception("A letöltés sikertelen volt.", lastException);
             }
-
-            throw new Exception("A letöltés sikertelen volt.", lastException);
+            finally
+            {
+                _isDownloadInProgress = false;
+                _isDownloadPaused = false;
+                _downloadPauseSource.TrySetResult(true);
+                SetPauseResumeButtonState(false, false);
+            }
         }
 
         private async Task CreateDiagnosticDump(string zipPath)
@@ -1457,6 +1612,7 @@ namespace BitFightersLauncher
             }
 
             UpdateVersionDisplay();
+            UpdateActionButtonIcon();
         }
 
         // ESEMÉNYKEZEL?K
@@ -1472,6 +1628,66 @@ namespace BitFightersLauncher
                 case "JÁTÉK":
                     await StartGame();
                     break;
+            }
+        }
+
+        private void PauseResumeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isDownloadInProgress)
+            {
+                return;
+            }
+
+            if (_isDownloadPaused)
+            {
+                _isDownloadPaused = false;
+                _downloadPauseSource.TrySetResult(true);
+                UpdatePauseResumeUI(false);
+                UpdateProgressUI(_lastDownloadPercentage, _currentDownloadStatusText, "0 MB/s", true);
+            }
+            else
+            {
+                _isDownloadPaused = true;
+                _downloadPauseSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                UpdatePauseResumeUI(true);
+                UpdateProgressUI(_lastDownloadPercentage, "Szüneteltetve", "0 MB/s", true);
+            }
+        }
+        
+        private void UpdateActionButtonIcon()
+        {
+            try
+            {
+                // Use FindName to get the grid elements dynamically
+                var playIconGrid = this.FindName("PlayIconGrid") as Grid;
+                var downloadIconGrid = this.FindName("DownloadIconGrid") as Grid;
+                
+                if (playIconGrid == null || downloadIconGrid == null) 
+                {
+                    Debug.WriteLine("Icon grids not found yet");
+                    return;
+                }
+                
+                string? buttonTextValue = ButtonText?.Text;
+                
+                // Switch to download icon if downloading or updating
+                if (buttonTextValue == "LETÖLTÉS" || buttonTextValue == "FRISSÍTÉS" || 
+                    buttonTextValue?.Contains("LETÖLTÉS") == true || buttonTextValue?.Contains("FRISSÍTÉS") == true)
+                {
+                    playIconGrid.Visibility = Visibility.Collapsed;
+                    downloadIconGrid.Visibility = Visibility.Visible;
+                    Debug.WriteLine("Icon changed to download icon");
+                }
+                else
+                {
+                    playIconGrid.Visibility = Visibility.Visible;
+                    downloadIconGrid.Visibility = Visibility.Collapsed;
+                    Debug.WriteLine("Icon changed to play icon");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error updating action button icon: {ex.Message}");
             }
         }
 

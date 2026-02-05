@@ -34,6 +34,8 @@
     <None Remove="Resources\BG.png" />
 	 <None Remove="Resources\Background.png" />
     <None Remove="Fonts\Energize-Bold-Italic.otf" />
+    <None Remove="Fonts\SourGummy_Expanded-Bold.ttf" />
+	<None Remove="Fonts\RussoOne-Regular.ttf" />
     <None Remove="Icons\**\*.svg" />
   </ItemGroup>
 
@@ -55,6 +57,12 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Fonts\Energize-Bold-Italic.otf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Fonts\SourGummy_Expanded-Bold.ttf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Fonts\RussoOne-Regular.ttf">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Icons\**\*.svg">
