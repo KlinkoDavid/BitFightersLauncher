@@ -108,6 +108,9 @@ namespace BitFightersLauncher
         private DispatcherTimer? _scrollTimer;
         private double _targetVerticalOffset;
         private readonly bool _reducedMotion;
+        private bool _isCompactHeaderVisible;
+        private ScrollViewer? _mainScrollViewer;
+        private Border? _compactHeaderBar;
 
         // Cached HttpClient for better performance
         private static readonly HttpClient _httpClient = new HttpClient()
@@ -186,6 +189,16 @@ namespace BitFightersLauncher
             
             ApplyPerformanceModeIfNeeded();
             ShowHomeView();
+
+            _mainScrollViewer = MainScrollViewer;
+            _compactHeaderBar = CompactHeaderBar;
+
+            if (_mainScrollViewer != null)
+            {
+                _mainScrollViewer.ScrollChanged += MainScrollViewer_ScrollChanged;
+            }
+
+            Dispatcher.BeginInvoke(new Action(UpdateCompactHeaderVisibility), DispatcherPriority.Background);
             
             // Biztosítjuk, hogy a f? gomb látható és m?köd?képes legyen
             if (ActionButton != null)
@@ -589,6 +602,10 @@ namespace BitFightersLauncher
                         ButtonText.Text = "FRISSÍTÉS";
                         Debug.WriteLine("Gomb szöveg frissítve: FRISSÍTÉS");
                     }
+                    if (CompactActionButton != null)
+                    {
+                        CompactActionButton.Content = "FRISSÍTÉS";
+                    }
                 }
                 else
                 {
@@ -601,8 +618,12 @@ namespace BitFightersLauncher
                         ButtonText.Text = "JÁTÉK";
                         Debug.WriteLine("Gomb szöveg frissítve: JÁTÉK");
                     }
+                    if (CompactActionButton != null)
+                    {
+                        CompactActionButton.Content = "JÁTÉK";
+                    }
                 }
-            }
+            } 
             else
             {
                 VersionStatusText.Text = "Nincs telepítve";
@@ -614,6 +635,10 @@ namespace BitFightersLauncher
                 {
                     ButtonText.Text = "LETÖLTÉS";
                     Debug.WriteLine("Gomb szöveg frissítve: LETÖLTÉS");
+                }
+                if (CompactActionButton != null)
+                {
+                    CompactActionButton.Content = "LETÖLTÉS";
                 }
             }
             
@@ -729,6 +754,10 @@ namespace BitFightersLauncher
             {
                 ActionButton.IsEnabled = false;
             }
+            if (CompactActionButton != null)
+            {
+                CompactActionButton.IsEnabled = false;
+            }
             
             UpdateActionButtonIcon();
 
@@ -758,6 +787,10 @@ namespace BitFightersLauncher
                 if (ActionButton != null)
                 {
                     ActionButton.IsEnabled = true;
+                }
+                if (CompactActionButton != null)
+                {
+                    CompactActionButton.IsEnabled = true;
                 }
                 CheckGameInstallStatus();
             }
@@ -870,6 +903,52 @@ namespace BitFightersLauncher
                         progressSpeedText.Text = speedText;
                     }
                     
+                    // Compact header handling
+                    var compactProgressIndicator = this.FindName("CompactProgressIndicator") as Border;
+                    var compactActionButton = this.FindName("CompactActionButton") as Button;
+                    
+                    if (compactProgressIndicator != null)
+                    {
+                        compactProgressIndicator.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+                    }
+                    if (compactActionButton != null)
+                    {
+                        compactActionButton.Visibility = visible ? Visibility.Collapsed : Visibility.Visible;
+                    }
+
+                    // Update compact texts
+                    var compactProgressPercentage = this.FindName("CompactProgressPercentage") as TextBlock;
+                    if (compactProgressPercentage != null)
+                    {
+                         compactProgressPercentage.Text = $"{percentage}";
+                    }
+                    
+                    var compactProgressStatus = this.FindName("CompactProgressStatus") as TextBlock;
+                    if (compactProgressStatus != null)
+                    {
+                         compactProgressStatus.Text = statusText;
+                    }
+
+                    var compactProgressSpeed = this.FindName("CompactProgressSpeed") as TextBlock;
+                    if (compactProgressSpeed != null)
+                    {
+                         compactProgressSpeed.Text = speedText;
+                    }
+                    
+                    // Update compact ring
+                    var compactProgressRingPath = this.FindName("CompactProgressRingPath") as System.Windows.Shapes.Path;
+                    if (compactProgressRingPath != null)
+                    {
+                        double radius = 14; 
+                        double circumference = 2 * Math.PI * radius;
+                        double thickness = Math.Max(1, compactProgressRingPath.StrokeThickness);
+                        double scaledCircumference = circumference / thickness;
+                        
+                        double dashLength = (scaledCircumference * percentage) / 100.0;
+                        double gapLength = scaledCircumference - dashLength;
+                        compactProgressRingPath.StrokeDashArray = new DoubleCollection { dashLength, gapLength };
+                    }
+
                     // Also update button text for fallback
                     if (ButtonText != null && !visible)
                     {
@@ -894,6 +973,12 @@ namespace BitFightersLauncher
                     pauseResumeButton.IsEnabled = isEnabled;
                 }
 
+                var compactPauseResumeButton = this.FindName("CompactPauseResumeButton") as Button;
+                if (compactPauseResumeButton != null)
+                {
+                    compactPauseResumeButton.IsEnabled = isEnabled;
+                }
+
                 UpdatePauseResumeUI(isPaused);
             });
         }
@@ -911,6 +996,19 @@ namespace BitFightersLauncher
             if (resumeIcon != null)
             {
                 resumeIcon.Visibility = isPaused ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            var compactPauseIcon = this.FindName("CompactPauseIcon") as Canvas;
+            var compactResumeIcon = this.FindName("CompactResumeIcon") as System.Windows.Shapes.Path;
+
+            if (compactPauseIcon != null)
+            {
+                compactPauseIcon.Visibility = isPaused ? Visibility.Collapsed : Visibility.Visible;
+            }
+
+            if (compactResumeIcon != null)
+            {
+                compactResumeIcon.Visibility = isPaused ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -1297,6 +1395,10 @@ namespace BitFightersLauncher
             {
                 ButtonText.Text = "ÚJ VERZIÓ TELEPÍTÉSE...";
             }
+            if (CompactActionButton != null)
+            {
+                CompactActionButton.Content = "TELEPÍTÉS...";
+            }
 
             await Task.Run(() =>
             {
@@ -1600,6 +1702,11 @@ namespace BitFightersLauncher
                 ButtonText.Text = gameInstalled ? "JÁTÉK" : "LETÖLTÉS";
             }
 
+            if (CompactActionButton != null)
+            {
+                CompactActionButton.Content = gameInstalled ? "JÁTÉK" : "LETÖLTÉS";
+            }
+
             if (gameInstalled)
             {
                 gameInstallPath = Path.GetDirectoryName(executablePath)!;
@@ -1787,7 +1894,17 @@ namespace BitFightersLauncher
 
         private void DragWindow(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left) this.DragMove();
+            if (e.ChangedButton == MouseButton.Left && e.LeftButton == MouseButtonState.Pressed)
+            {
+                try
+                {
+                    this.DragMove();
+                }
+                catch (InvalidOperationException)
+                {
+                    // Ignore if DragMove is called when mouse button is not down
+                }
+            }
         }
 
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
@@ -1839,6 +1956,20 @@ namespace BitFightersLauncher
         {
             if (NewsScrollViewer == null) return;
             
+            if (!Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                var parentScrollViewer = FindParentScrollViewer(NewsScrollViewer);
+                if (parentScrollViewer != null)
+                {
+                    double target = parentScrollViewer.VerticalOffset - e.Delta;
+                    if (target < 0) target = 0;
+                    if (target > parentScrollViewer.ScrollableHeight) target = parentScrollViewer.ScrollableHeight;
+                    parentScrollViewer.ScrollToVerticalOffset(target);
+                    e.Handled = true;
+                }
+                return;
+            }
+            
             if (_reducedMotion)
             {
                 double target = NewsScrollViewer.HorizontalOffset - e.Delta;
@@ -1860,6 +1991,87 @@ namespace BitFightersLauncher
         private void NewsScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
         {
             // Scroll indikátorok eltávolítva
+        }
+
+        private void MainScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            UpdateCompactHeaderVisibility();
+        }
+
+        private void UpdateCompactHeaderVisibility()
+        {
+            if (_compactHeaderBar == null || _mainScrollViewer == null)
+            {
+                return;
+            }
+
+            if (currentView != "home")
+            {
+                SetCompactHeaderVisibility(false);
+                return;
+            }
+
+            // Using direct VerticalOffset instead of element position calculation for reliability
+            // Show compact header when user has scrolled down past the main hero section
+            bool shouldShow = _mainScrollViewer.VerticalOffset > 190;
+
+            SetCompactHeaderVisibility(shouldShow);
+        }
+
+        private void SetCompactHeaderVisibility(bool show)
+        {
+            if (_compactHeaderBar == null || _isCompactHeaderVisible == show)
+            {
+                return;
+            }
+
+            _isCompactHeaderVisible = show;
+            var translate = _compactHeaderBar.RenderTransform as TranslateTransform ?? new TranslateTransform();
+            _compactHeaderBar.RenderTransform = translate;
+
+            if (show)
+            {
+                _compactHeaderBar.Visibility = Visibility.Visible;
+                _compactHeaderBar.BeginAnimation(UIElement.OpacityProperty,
+                    new DoubleAnimation(1, TimeSpan.FromMilliseconds(200))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+                translate.BeginAnimation(TranslateTransform.YProperty,
+                    new DoubleAnimation(0, TimeSpan.FromMilliseconds(200))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+            }
+            else
+            {
+                _compactHeaderBar.BeginAnimation(UIElement.OpacityProperty,
+                    new DoubleAnimation(0, TimeSpan.FromMilliseconds(200))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+                translate.BeginAnimation(TranslateTransform.YProperty,
+                    new DoubleAnimation(-120, TimeSpan.FromMilliseconds(200))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+            }
+        }
+
+        private ScrollViewer? FindParentScrollViewer(DependencyObject child)
+        {
+            var parent = VisualTreeHelper.GetParent(child);
+            while (parent != null)
+            {
+                if (parent is ScrollViewer scrollViewer && !ReferenceEquals(scrollViewer, NewsScrollViewer))
+                {
+                    return scrollViewer;
+                }
+
+                parent = VisualTreeHelper.GetParent(parent);
+            }
+
+            return null;
         }
 
         private void ShowHomeView()
@@ -2028,6 +2240,54 @@ namespace BitFightersLauncher
         private void StarButton_Click(object sender, RoutedEventArgs e)
         {
             ShowLeaderboardView();
+        }
+
+        private void CompactHomeButton_Click(object sender, RoutedEventArgs e)
+        {
+            ShowHomeView();
+        }
+
+        private void CompactProfileButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.ContextMenu != null)
+            {
+                btn.ContextMenu.PlacementTarget = btn;
+                btn.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+                
+                // Keep menu within window bounds logic similar to main profile button if needed
+                // For now standard placement is likely fine as it is on the right
+                // But since it is on the far right, we might want to shift it left
+                btn.ContextMenu.HorizontalOffset = -(btn.ContextMenu.Width - btn.ActualWidth); // Align right edge
+                
+                btn.ContextMenu.IsOpen = true;
+            }
+        }
+
+        private void CompactHeaderBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // Forward scroll events to the main ScrollViewer so scrolling works even over the compact header
+            if (_mainScrollViewer != null)
+            {
+                double newOffset = _mainScrollViewer.VerticalOffset - e.Delta;
+                if (newOffset < 0) newOffset = 0;
+                if (newOffset > _mainScrollViewer.ScrollableHeight) newOffset = _mainScrollViewer.ScrollableHeight;
+                _mainScrollViewer.ScrollToVerticalOffset(newOffset);
+                e.Handled = true;
+            }
+        }
+
+        private void RootBorder_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            // Forward scroll events from anywhere in the window to the main ScrollViewer
+            // This allows scrolling even when the compact header is hidden or when clicking on empty areas
+            if (_mainScrollViewer != null && !e.Handled)
+            {
+                double newOffset = _mainScrollViewer.VerticalOffset - e.Delta;
+                if (newOffset < 0) newOffset = 0;
+                if (newOffset > _mainScrollViewer.ScrollableHeight) newOffset = _mainScrollViewer.ScrollableHeight;
+                _mainScrollViewer.ScrollToVerticalOffset(newOffset);
+                e.Handled = true;
+            }
         }
 
         protected override void OnClosed(EventArgs e)
