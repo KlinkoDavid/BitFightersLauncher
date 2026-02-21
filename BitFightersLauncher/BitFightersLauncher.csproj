@@ -33,6 +33,7 @@
     <None Remove="Resources\Logo.png" />
     <None Remove="Resources\BG.png" />
 	 <None Remove="Resources\Background.png" />
+    <None Remove="Resources\menu_trackszito.wav" />
     <None Remove="Fonts\Energize-Bold-Italic.otf" />
     <None Remove="Fonts\SourGummy_Expanded-Bold.ttf" />
 	<None Remove="Fonts\RussoOne-Regular.ttf" />
@@ -56,6 +57,9 @@
     <Resource Include="Resources\BG.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Content Include="Resources\menu_trackszito.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Resource Include="Fonts\Energize-Bold-Italic.otf">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
@@ -68,6 +72,10 @@
     <Resource Include="Icons\**\*.svg">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Converters\" />
   </ItemGroup>
 
 </Project>

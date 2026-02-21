@@ -223,8 +223,8 @@ try {
                 $limit = isset($data['limit']) ? (int)$data['limit'] : 20;
                 if ($limit > 100) $limit = 100;
                 
-                // Hírek lekérdezése a patchnotes táblából - csak title és created_at
-                $stmt = $conn->prepare("SELECT id, title, created_at FROM patchnotes ORDER BY created_at DESC LIMIT ?");
+                // Hírek lekérdezése a patchnotes táblából - title, content, created_at és image_base64
+                $stmt = $conn->prepare("SELECT id, title, content, created_at, image_base64 FROM patchnotes ORDER BY created_at DESC LIMIT ?");
                 $stmt->bind_param("i", $limit);
                 $stmt->execute();
                 $result = $stmt->get_result();
@@ -234,8 +234,9 @@ try {
                     $news[] = [
                         "id" => (int)$row['id'],
                         "title" => $row['title'],
-                        "content" => "", // Üres content - csak title használata
-                        "created_at" => $row['created_at']
+                        "content" => isset($row['content']) ? $row['content'] : "",
+                        "created_at" => $row['created_at'],
+                        "image_base64" => isset($row['image_base64']) ? $row['image_base64'] : null
                     ];
                 }
                 

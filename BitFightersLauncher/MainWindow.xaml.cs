@@ -24,6 +24,13 @@ namespace BitFightersLauncher
     {
         public string Title { get; set; } = string.Empty;
         public string Content { get; set; } = string.Empty;
+        public int Id { get; set; }
+
+        [JsonPropertyName("image_base64")]
+        public string? ImageBase64 { get; set; }
+
+        [JsonIgnore]
+        public System.Windows.Media.ImageSource? Image { get; set; }
 
         // Ha nincs content, akkor a title-t használjuk rövidített verzióként
         public string ShortContent => !string.IsNullOrEmpty(Content) && Content.Length > 100
@@ -98,19 +105,21 @@ namespace BitFightersLauncher
         private const string VersionCheckUrl = "https://bitfighters.eu/version.txt";
         private const string GameExecutableName = "BitFighters.exe";
         private const string ApiUrl = "https://bitfighters.eu/backend/Launcher/main_proxy.php";
+        private const string BackgroundMusicFileName = "menu_trackszito.wav";
 
         private string gameInstallPath = string.Empty;
         private string serverGameVersion = "0.0.0";
         private string localGameVersion = "0.0.0";
         private readonly string settingsFilePath;
 
-        // Optimalizált scroll változók - DispatcherTimer használata
-        private DispatcherTimer? _scrollTimer;
+        // Optimalizált scroll változók - render loop használata
         private double _targetVerticalOffset;
         private readonly bool _reducedMotion;
         private bool _isCompactHeaderVisible;
         private ScrollViewer? _mainScrollViewer;
         private Border? _compactHeaderBar;
+        private bool _isScrollAnimating;
+        private TimeSpan _lastRenderTimestamp = TimeSpan.Zero;
 
         // Cached HttpClient for better performance
         private static readonly HttpClient _httpClient = new HttpClient()
@@ -135,9 +144,20 @@ namespace BitFightersLauncher
         private int _lastDownloadPercentage;
         private string _currentDownloadStatusText = string.Empty;
 
+        private readonly MediaPlayer _backgroundMusicPlayer = new();
+        private bool _isBackgroundMusicInitialized;
+        private bool _isBackgroundMusicMuted;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            if (FindName("MuteButton") is Button muteButton)
+            {
+                muteButton.Click += MuteButton_Click;
+            }
+
+            UpdateMuteButtonState();
 
             _downloadPauseSource.TrySetResult(true);
             SetPauseResumeButtonState(false, false);
@@ -152,20 +172,91 @@ namespace BitFightersLauncher
             // Egyszer?sített inicializálás
             Loaded += MainWindow_Loaded;
             SizeChanged += (s, e) => UpdateBorderClip();
+            Closed += (s, e) => StopScrollAnimation();
 
-            // Optimalizált timerek inicializálása
+            // Optimalizált scroll render loop inicializálása
             InitializeTimers();
         }
 
         private void InitializeTimers()
         {
-            // Scroll timer optimalizálása
-            _scrollTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(_reducedMotion ? 50 : 16) // 60 FPS normál esetben, 20 FPS gyenge gépen
-            };
-            _scrollTimer.Tick += ScrollTimer_Tick;
+            _isScrollAnimating = false;
+            _lastRenderTimestamp = TimeSpan.Zero;
+        }
 
+        private string? GetBackgroundMusicPath()
+        {
+            var baseDir = AppContext.BaseDirectory;
+            var candidates = new[]
+            {
+                Path.Combine(baseDir, BackgroundMusicFileName),
+                Path.Combine(baseDir, "Resources", BackgroundMusicFileName)
+            };
+
+            return candidates.FirstOrDefault(File.Exists);
+        }
+
+        private void StartBackgroundMusic()
+        {
+            if (_isBackgroundMusicInitialized)
+            {
+                return;
+            }
+
+            var musicPath = GetBackgroundMusicPath();
+            if (string.IsNullOrWhiteSpace(musicPath))
+            {
+                Debug.WriteLine($"Háttérzene nem található: {BackgroundMusicFileName}");
+                return;
+            }
+
+            try
+            {
+                _isBackgroundMusicInitialized = true;
+                _backgroundMusicPlayer.Open(new Uri(musicPath, UriKind.Absolute));
+                _backgroundMusicPlayer.Volume = 0.35;
+                _backgroundMusicPlayer.IsMuted = _isBackgroundMusicMuted;
+                _backgroundMusicPlayer.MediaEnded += BackgroundMusicPlayer_MediaEnded;
+                _backgroundMusicPlayer.Play();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Hiba a háttérzene indításakor: {ex.Message}");
+                _isBackgroundMusicInitialized = false;
+            }
+        }
+
+        private void UpdateMuteButtonState()
+        {
+            var volumeIcon = FindName("VolumeIcon") as FrameworkElement;
+            var mutedIcon = FindName("MutedIcon") as FrameworkElement;
+
+            if (volumeIcon == null || mutedIcon == null)
+            {
+                return;
+            }
+
+            volumeIcon.Visibility = _isBackgroundMusicMuted ? Visibility.Collapsed : Visibility.Visible;
+            mutedIcon.Visibility = _isBackgroundMusicMuted ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void BackgroundMusicPlayer_MediaEnded(object? sender, EventArgs e)
+        {
+            _backgroundMusicPlayer.Position = TimeSpan.Zero;
+            _backgroundMusicPlayer.Play();
+        }
+
+        private void StopBackgroundMusic()
+        {
+            if (!_isBackgroundMusicInitialized)
+            {
+                return;
+            }
+
+            _backgroundMusicPlayer.MediaEnded -= BackgroundMusicPlayer_MediaEnded;
+            _backgroundMusicPlayer.Stop();
+            _backgroundMusicPlayer.Close();
+            _isBackgroundMusicInitialized = false;
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
@@ -210,6 +301,8 @@ namespace BitFightersLauncher
             {
                 MainContentGrid.Visibility = Visibility.Visible;
             }
+
+            StartBackgroundMusic();
         }
 
         public void SetUserInfo(string username, int userId, string createdAt = "")
@@ -391,35 +484,78 @@ namespace BitFightersLauncher
             RootBorder.Clip = new RectangleGeometry(new Rect(0, 0, RootBorder.ActualWidth, RootBorder.ActualHeight), radius, radius);
         }
 
-        // Optimalizált timer alapú scroll kezelés
-        private void ScrollTimer_Tick(object? sender, EventArgs e)
+        // Render loop alapú scroll kezelés (monitor frissítéséhez igazítva)
+        private void CompositionTarget_Rendering(object? sender, EventArgs e)
         {
             if (NewsScrollViewer == null) return;
-            
+
+            if (e is not RenderingEventArgs renderingArgs)
+            {
+                return;
+            }
+
+            if (_lastRenderTimestamp == TimeSpan.Zero)
+            {
+                _lastRenderTimestamp = renderingArgs.RenderingTime;
+                return;
+            }
+
+            double deltaSeconds = (renderingArgs.RenderingTime - _lastRenderTimestamp).TotalSeconds;
+            if (deltaSeconds <= 0)
+            {
+                return;
+            }
+
+            _lastRenderTimestamp = renderingArgs.RenderingTime;
+
             double currentOffset = NewsScrollViewer.HorizontalOffset;
             double difference = _targetVerticalOffset - currentOffset;
-            
-            if (Math.Abs(difference) < 1.0)
+
+            if (Math.Abs(difference) < 0.5)
             {
                 NewsScrollViewer.ScrollToHorizontalOffset(_targetVerticalOffset);
-                _scrollTimer?.Stop();
+                StopScrollAnimation();
+                return;
             }
-            else
+
+            double speed = Math.Clamp(Math.Abs(difference) * 8.0, 150.0, 3000.0);
+            double step = Math.Sign(difference) * speed * deltaSeconds;
+
+            if (Math.Abs(step) > Math.Abs(difference))
             {
-                double step = _reducedMotion ? Math.Sign(difference) * 5 : Math.Max(Math.Abs(difference) * 0.15, 1.0);
-                NewsScrollViewer.ScrollToHorizontalOffset(currentOffset + Math.Sign(difference) * step);
+                step = difference;
             }
+
+            NewsScrollViewer.ScrollToHorizontalOffset(currentOffset + step);
+        }
+
+        private void StartScrollAnimation()
+        {
+            if (_isScrollAnimating)
+            {
+                return;
+            }
+
+            _lastRenderTimestamp = TimeSpan.Zero;
+            CompositionTarget.Rendering += CompositionTarget_Rendering;
+            _isScrollAnimating = true;
+        }
+
+        private void StopScrollAnimation()
+        {
+            if (!_isScrollAnimating)
+            {
+                return;
+            }
+
+            CompositionTarget.Rendering -= CompositionTarget_Rendering;
+            _isScrollAnimating = false;
+            _lastRenderTimestamp = TimeSpan.Zero;
         }
 
         private void ApplyPerformanceModeIfNeeded()
         {
             if (!_reducedMotion) return;
-            
-            // Scroll indikátorok eltávolítása gyenge gépeken
-            // if (TopScrollIndicator != null) TopScrollIndicator.Visibility = Visibility.Collapsed;
-            // if (BottomScrollIndicator != null) BottomScrollIndicator.Visibility = Visibility.Collapsed;
-            
-            // TextBlock rendering optimalizálás kikapcsolása gyenge gépen
             OptimizeTextRendering(this);
         }
 
@@ -1180,7 +1316,6 @@ namespace BitFightersLauncher
                         if (!isValid)
                         {
                             // Create diagnostic dump
-                            await CreateDiagnosticDump(downloadPath);
                             throw new InvalidDataException("A letöltött fájl sérült vagy nem érvényes ZIP fájl.");
                         }
 
@@ -1233,45 +1368,7 @@ namespace BitFightersLauncher
             }
         }
 
-        private async Task CreateDiagnosticDump(string zipPath)
-        {
-            try
-            {
-                var fileInfo = new FileInfo(zipPath);
-                if (!fileInfo.Exists) return;
 
-                Debug.WriteLine($"\n=== DIAGNOSTIC DUMP ===");
-                Debug.WriteLine($"File: {zipPath}");
-                Debug.WriteLine($"Size: {fileInfo.Length} bytes");
-                Debug.WriteLine($"Created: {fileInfo.CreationTime}");
-                Debug.WriteLine($"Modified: {fileInfo.LastWriteTime}");
-
-                // Dump first and last bytes
-                await Task.Run(() =>
-                {
-                    using (var fs = new FileStream(zipPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    {
-                        byte[] firstBytes = new byte[Math.Min(64, fs.Length)];
-                        fs.Read(firstBytes, 0, firstBytes.Length);
-                        Debug.WriteLine($"First {firstBytes.Length} bytes (hex): {BitConverter.ToString(firstBytes)}");
-
-                        if (fs.Length > 64)
-                        {
-                            fs.Seek(-Math.Min(64, fs.Length), SeekOrigin.End);
-                            byte[] lastBytes = new byte[Math.Min(64, fs.Length)];
-                            fs.Read(lastBytes, 0, lastBytes.Length);
-                            Debug.WriteLine($"Last {lastBytes.Length} bytes (hex): {BitConverter.ToString(lastBytes)}");
-                        }
-                    }
-                });
-
-                Debug.WriteLine($"=== END DIAGNOSTIC DUMP ===\n");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Diagnostic dump failed: {ex.Message}");
-            }
-        }
 
         private async Task<string> CreateConfigBackupAsync()
         {
@@ -1377,13 +1474,10 @@ namespace BitFightersLauncher
                         {
                             Debug.WriteLine($"Nem sikerült törölni a könyvtárat: {directory} - {ex.Message}");
                         }
-                    }
-
-                    Debug.WriteLine("Régi fájlok törölve");
+                    }   
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Hiba a régi fájlok törlése során: {ex.Message}");
                     throw;
                 }
             });
@@ -1563,6 +1657,44 @@ namespace BitFightersLauncher
                 return Directory.GetFiles(path, GameExecutableName, SearchOption.AllDirectories).FirstOrDefault();
             }
             catch (UnauthorizedAccessException) { return null; }
+        }
+
+        private System.Windows.Media.ImageSource? LoadImageFromBase64(string? dataUri)
+        {
+            if (string.IsNullOrEmpty(dataUri)) return null;
+
+            // If the string has a data URI prefix like "data:image/png;base64,...." strip it
+            int idx = dataUri.IndexOf("base64,", StringComparison.OrdinalIgnoreCase);
+            string base64 = idx >= 0 ? dataUri.Substring(idx + 7) : dataUri;
+
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(base64);
+            }
+            catch
+            {
+                return null;
+            }
+
+            try
+            {
+                using (var ms = new MemoryStream(bytes))
+                {
+                    var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                    bitmap.StreamSource = ms;
+                    bitmap.EndInit();
+                    bitmap.Freeze();
+                    return bitmap;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"LoadImageFromBase64 failed: {ex.Message}");
+                return null;
+            }
         }
 
         private async Task<bool> IsValidZipFileAsync(string zipPath)
@@ -1760,6 +1892,13 @@ namespace BitFightersLauncher
                 UpdateProgressUI(_lastDownloadPercentage, "Szüneteltetve", "0 MB/s", true);
             }
         }
+
+        private void MuteButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isBackgroundMusicMuted = !_isBackgroundMusicMuted;
+            _backgroundMusicPlayer.IsMuted = _isBackgroundMusicMuted;
+            UpdateMuteButtonState();
+        }
         
         private void UpdateActionButtonIcon()
         {
@@ -1832,6 +1971,20 @@ namespace BitFightersLauncher
             }
         }
 
+        private void LearnMoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Open the official BitFighters website in the default browser
+                Process.Start(new ProcessStartInfo { FileName = "https://bitfighters.eu/", UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Hiba a weboldal megnyitásakor: {ex.Message}");
+                ShowNotification("Nem sikerült megnyitni a weboldalt.");
+            }
+        }
+
         private async Task LoadNewsUpdatesAsync()
         {
             try
@@ -1849,6 +2002,26 @@ namespace BitFightersLauncher
 
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 var updates = JsonSerializer.Deserialize<List<NewsUpdate>>(responseText, options);
+
+                // Decode base64 images (if present) into ImageSource objects
+                if (updates != null)
+                {
+                    foreach (var u in updates)
+                    {
+                        try
+                        {
+                            if (!string.IsNullOrEmpty(u.ImageBase64))
+                            {
+                                u.Image = LoadImageFromBase64(u.ImageBase64);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Failed to decode image for news id {u.Id}: {ex.Message}");
+                            u.Image = null;
+                        }
+                    }
+                }
 
                 if (updates == null || updates.Count == 0)
                 {
@@ -1868,6 +2041,60 @@ namespace BitFightersLauncher
                     if (NewsItemsControl != null)
                         NewsItemsControl.ItemsSource = updates.OrderByDescending(u => u.CreatedAt).Take(3);
                 });
+
+                // After UI elements are generated, apply decoded images as Backgrounds using ImageBrush
+                try
+                {
+                    _ = Dispatcher.InvokeAsync(async () =>
+                    {
+                        // small delay to allow item containers to be created
+                        await Task.Delay(50);
+                        if (NewsItemsControl == null || updates == null) return;
+
+                        foreach (var item in updates.OrderByDescending(u => u.CreatedAt).Take(3))
+                        {
+                            try
+                            {
+                                var container = NewsItemsControl.ItemContainerGenerator.ContainerFromItem(item) as ContentPresenter;
+                                if (container == null)
+                                {
+                                    // try to force generation
+                                    NewsItemsControl.UpdateLayout();
+                                    container = NewsItemsControl.ItemContainerGenerator.ContainerFromItem(item) as ContentPresenter;
+                                }
+
+                                if (container != null)
+                                {
+                                    var template = container.ContentTemplate;
+                                    if (template != null)
+                                    {
+                                        var bg = template.FindName("NewsImageBackground", container) as Border;
+                                        if (bg != null)
+                                        {
+                                            if (item.Image != null)
+                                            {
+                                                var brush = new System.Windows.Media.ImageBrush(item.Image) { Stretch = System.Windows.Media.Stretch.UniformToFill };
+                                                bg.Background = brush;
+                                            }
+                                            else
+                                            {
+                                                // keep default gradient (already in XAML)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine($"Failed to apply image to news visual: {ex.Message}");
+                            }
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Apply images to news visuals failed: {ex.Message}");
+                }
                 
                 Debug.WriteLine($"News loaded successfully: {updates.Count} items");
             }
@@ -1984,7 +2211,7 @@ namespace BitFightersLauncher
             if (_targetVerticalOffset < 0) _targetVerticalOffset = 0;
             if (_targetVerticalOffset > NewsScrollViewer.ScrollableWidth) _targetVerticalOffset = NewsScrollViewer.ScrollableWidth;
             
-            _scrollTimer?.Start();
+            StartScrollAnimation();
             e.Handled = true;
         }
 
@@ -2008,14 +2235,17 @@ namespace BitFightersLauncher
             if (currentView != "home")
             {
                 SetCompactHeaderVisibility(false);
+                ResetHeroElements();
                 return;
             }
 
             // Using direct VerticalOffset instead of element position calculation for reliability
             // Show compact header when user has scrolled down past the main hero section
-            bool shouldShow = _mainScrollViewer.VerticalOffset > 190;
+            double scrollOffset = _mainScrollViewer.VerticalOffset;
+            bool shouldShow = scrollOffset > 100;
 
             SetCompactHeaderVisibility(shouldShow);
+            AnimateHeroElements(scrollOffset);
         }
 
         private void SetCompactHeaderVisibility(bool show)
@@ -2055,6 +2285,193 @@ namespace BitFightersLauncher
                     {
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                     });
+            }
+        }
+
+        private void AnimateHeroElements(double scrollOffset)
+        {
+            // Get the UI elements dynamically
+            var heroTitle = this.FindName("HeroTitle") as TextBlock;
+            var actionButtonContainer = this.FindName("ActionButtonContainer") as Grid;
+            var progressIndicatorBorder = this.FindName("ProgressIndicatorBorder") as Border;
+
+            if (heroTitle == null || actionButtonContainer == null)
+                return;
+
+            // Get the transform objects
+            var heroTitleTransform = heroTitle.RenderTransform as TranslateTransform;
+            var actionButtonTransform = actionButtonContainer.RenderTransform as TranslateTransform;
+            var progressBarTransform = progressIndicatorBorder?.RenderTransform as TranslateTransform;
+
+            if (heroTitleTransform == null || actionButtonTransform == null)
+                return;
+
+            // Calculate animation progress (0 to 1) based on scroll
+            double animationProgress = Math.Min(scrollOffset / 190.0, 1.0);
+
+            // Smooth easing function
+            double easedProgress = 1 - Math.Pow(1 - animationProgress, 3);
+
+            // Calculate target positions to match compact header bar
+            // Title moves to top-left (approximately where it appears in CompactHeaderBar)
+            double titleTargetX = -440 * easedProgress; // Move left to align with left side
+            double titleTargetY = -230 * easedProgress; // Move up to align with top bar
+
+            // Play button moves to top-left (next to title in compact header)
+            double buttonTargetX = -435 * easedProgress; // Move left 
+            double buttonTargetY = -140 * easedProgress; // Move up
+
+            // Scale down elements as they move to compact size
+            double scaleProgress = 1.0 - (0.45 * easedProgress); // Scale from 1.0 to 0.55 (more dramatic)
+
+            // Apply transforms with animations
+            if (!_reducedMotion)
+            {
+                // Title animation
+                heroTitleTransform.BeginAnimation(TranslateTransform.XProperty,
+                    new DoubleAnimation(titleTargetX, TimeSpan.FromMilliseconds(150))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+                heroTitleTransform.BeginAnimation(TranslateTransform.YProperty,
+                    new DoubleAnimation(titleTargetY, TimeSpan.FromMilliseconds(150))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+
+                // Button animation
+                actionButtonTransform.BeginAnimation(TranslateTransform.XProperty,
+                    new DoubleAnimation(buttonTargetX, TimeSpan.FromMilliseconds(150))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+                actionButtonTransform.BeginAnimation(TranslateTransform.YProperty,
+                    new DoubleAnimation(buttonTargetY, TimeSpan.FromMilliseconds(150))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+
+                // Progress bar animation (if visible)
+                if (progressBarTransform != null && progressIndicatorBorder?.Visibility == Visibility.Visible)
+                {
+                    progressBarTransform.BeginAnimation(TranslateTransform.XProperty,
+                        new DoubleAnimation(buttonTargetX, TimeSpan.FromMilliseconds(150))
+                        {
+                            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                        });
+                    progressBarTransform.BeginAnimation(TranslateTransform.YProperty,
+                        new DoubleAnimation(buttonTargetY + 70, TimeSpan.FromMilliseconds(150))
+                        {
+                            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                        });
+                }
+
+                // Scale animations
+                var titleScale = heroTitle.LayoutTransform as ScaleTransform ?? new ScaleTransform(1, 1);
+                heroTitle.LayoutTransform = titleScale;
+                titleScale.BeginAnimation(ScaleTransform.ScaleXProperty,
+                    new DoubleAnimation(scaleProgress, TimeSpan.FromMilliseconds(150))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+                titleScale.BeginAnimation(ScaleTransform.ScaleYProperty,
+                    new DoubleAnimation(scaleProgress, TimeSpan.FromMilliseconds(150))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+
+                var buttonScale = actionButtonContainer.LayoutTransform as ScaleTransform ?? new ScaleTransform(1, 1);
+                actionButtonContainer.LayoutTransform = buttonScale;
+                buttonScale.BeginAnimation(ScaleTransform.ScaleXProperty,
+                    new DoubleAnimation(scaleProgress, TimeSpan.FromMilliseconds(150))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+                buttonScale.BeginAnimation(ScaleTransform.ScaleYProperty,
+                    new DoubleAnimation(scaleProgress, TimeSpan.FromMilliseconds(150))
+                    {
+                        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                    });
+            }
+            else
+            {
+                // Direct assignment for reduced motion
+                heroTitleTransform.X = titleTargetX;
+                heroTitleTransform.Y = titleTargetY;
+                actionButtonTransform.X = buttonTargetX;
+                actionButtonTransform.Y = buttonTargetY;
+                
+                if (progressBarTransform != null)
+                {
+                    progressBarTransform.X = buttonTargetX;
+                    progressBarTransform.Y = buttonTargetY + 70;
+                }
+
+                var titleScale = new ScaleTransform(scaleProgress, scaleProgress);
+                heroTitle.LayoutTransform = titleScale;
+
+                var buttonScale = new ScaleTransform(scaleProgress, scaleProgress);
+                actionButtonContainer.LayoutTransform = buttonScale;
+            }
+        }
+
+        private void ResetHeroElements()
+        {
+            // Get the UI elements dynamically
+            var heroTitle = this.FindName("HeroTitle") as TextBlock;
+            var actionButtonContainer = this.FindName("ActionButtonContainer") as Grid;
+            var progressIndicatorBorder = this.FindName("ProgressIndicatorBorder") as Border;
+
+            // Reset hero elements to center position
+            var heroTitleTransform = heroTitle?.RenderTransform as TranslateTransform;
+            var actionButtonTransform = actionButtonContainer?.RenderTransform as TranslateTransform;
+            var progressBarTransform = progressIndicatorBorder?.RenderTransform as TranslateTransform;
+
+            if (heroTitleTransform != null)
+            {
+                heroTitleTransform.BeginAnimation(TranslateTransform.XProperty, null);
+                heroTitleTransform.BeginAnimation(TranslateTransform.YProperty, null);
+                heroTitleTransform.X = 0;
+                heroTitleTransform.Y = 0;
+            }
+
+            if (actionButtonTransform != null)
+            {
+                actionButtonTransform.BeginAnimation(TranslateTransform.XProperty, null);
+                actionButtonTransform.BeginAnimation(TranslateTransform.YProperty, null);
+                actionButtonTransform.X = 0;
+                actionButtonTransform.Y = 0;
+            }
+
+            if (progressBarTransform != null)
+            {
+                progressBarTransform.BeginAnimation(TranslateTransform.XProperty, null);
+                progressBarTransform.BeginAnimation(TranslateTransform.YProperty, null);
+                progressBarTransform.X = 0;
+                progressBarTransform.Y = 0;
+            }
+
+            // Reset scales
+            if (heroTitle != null)
+            {
+                var titleScale = heroTitle.LayoutTransform as ScaleTransform;
+                if (titleScale != null)
+                {
+                    titleScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                    titleScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                }
+                heroTitle.LayoutTransform = new ScaleTransform(1, 1);
+            }
+
+            if (actionButtonContainer != null)
+            {
+                var buttonScale = actionButtonContainer.LayoutTransform as ScaleTransform;
+                if (buttonScale != null)
+                {
+                    buttonScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                    buttonScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                }
+                actionButtonContainer.LayoutTransform = new ScaleTransform(1, 1);
             }
         }
 
@@ -2187,15 +2604,21 @@ namespace BitFightersLauncher
                 ProfileMenuButton.ContextMenu.PlacementTarget = ProfileMenuButton;
                 ProfileMenuButton.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
                 
-                // Calculate offset to keep menu within window bounds
+                // Calculate position to keep menu INSIDE window bounds
                 var buttonPosition = ProfileMenuButton.TransformToAncestor(this).Transform(new Point(0, 0));
-                double menuWidth = 300;
+                double menuWidth = 340; // Match actual menu width from XAML
                 double windowWidth = this.ActualWidth;
+                double margin = 25; // Match window corner radius + small padding
                 
-                // Adjust horizontal offset if menu would go outside window
-                if (buttonPosition.X + menuWidth > windowWidth)
+                // Calculate how far right the menu would extend
+                double menuRightEdge = buttonPosition.X + menuWidth;
+                
+                // If menu would go outside window, shift it left
+                if (menuRightEdge > windowWidth - margin)
                 {
-                    ProfileMenuButton.ContextMenu.HorizontalOffset = -(menuWidth - ProfileMenuButton.ActualWidth);
+                    // Shift menu left so its right edge aligns with window edge minus margin
+                    double overflowAmount = menuRightEdge - (windowWidth - margin);
+                    ProfileMenuButton.ContextMenu.HorizontalOffset = -overflowAmount;
                 }
                 else
                 {
@@ -2292,7 +2715,8 @@ namespace BitFightersLauncher
 
         protected override void OnClosed(EventArgs e)
         {
-            _scrollTimer?.Stop();
+            StopScrollAnimation();
+            StopBackgroundMusic();
             // Ne dispose-oljuk a statikus HttpClient-et, mert több ablak között megosztott
             // _httpClient.Dispose();
             base.OnClosed(e);
