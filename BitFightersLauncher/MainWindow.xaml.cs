@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -147,6 +148,10 @@ namespace BitFightersLauncher
         private readonly MediaPlayer _backgroundMusicPlayer = new();
         private bool _isBackgroundMusicInitialized;
         private bool _isBackgroundMusicMuted;
+        private string? loggedInUserProfilePicturePath = null;
+        private const string ServerBaseUrl = "https://bitfighters.eu"; // adjust if your images are hosted elsewhere
+        private readonly string _profileCacheDir;
+        private const int ProfileCacheDays = 7; // number of days before re-downloading
 
         public MainWindow()
         {
@@ -176,6 +181,11 @@ namespace BitFightersLauncher
 
             // Optimalizált scroll render loop inicializálása
             InitializeTimers();
+
+            // Profile image cache directory
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            _profileCacheDir = Path.Combine(appData, "BitFightersLauncher", "profile_cache");
+            try { Directory.CreateDirectory(_profileCacheDir); } catch { }
         }
 
         private void InitializeTimers()
@@ -317,6 +327,19 @@ namespace BitFightersLauncher
             
             // Nem blokkoló profil betöltés
             _ = LoadUserProfileAsync();
+            // If the caller provided a profile picture path earlier via SetUserProfilePicturePath,
+            // attempt to load it now for the profile view.
+            if (!string.IsNullOrEmpty(loggedInUserProfilePicturePath))
+            {
+                _ = SetProfileImageAsync(loggedInUserProfilePicturePath);
+            }
+        }
+
+        public void SetUserProfilePicturePath(string relativeOrAbsolutePath)
+        {
+            if (string.IsNullOrWhiteSpace(relativeOrAbsolutePath)) return;
+            loggedInUserProfilePicturePath = relativeOrAbsolutePath.Trim();
+            _ = SetProfileImageAsync(loggedInUserProfilePicturePath);
         }
 
         private async Task LoadUserProfileAsync()
@@ -462,6 +485,8 @@ namespace BitFightersLauncher
             {
                 var mainWindow = new MainWindow();
                 mainWindow.SetUserInfo(e.Username, e.UserId, e.UserCreatedAt);
+                // Pass profile picture path from login to main window so it can load the avatar
+                try { mainWindow.SetUserProfilePicturePath(e.ProfilePicture); } catch { }
                 Application.Current.MainWindow = mainWindow;
                 mainWindow.Show();
             }
@@ -2179,6 +2204,21 @@ namespace BitFightersLauncher
             }
         }
 
+        // Open patchnote in browser when a news card is clicked
+        private void NewsItem_Click(object sender, MouseButtonEventArgs e)
+        {
+            try
+            {
+                // Always open the main website regardless of which news card was clicked
+                Process.Start(new ProcessStartInfo { FileName = "https://bitfighters.eu/", UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to open website: {ex.Message}");
+                ShowNotification("Nem sikerült megnyitni a weboldalt.");
+            }
+        }
+
         private void NewsScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (NewsScrollViewer == null) return;
@@ -2298,12 +2338,44 @@ namespace BitFightersLauncher
             if (heroTitle == null || actionButtonContainer == null)
                 return;
 
-            // Get the transform objects
-            var heroTitleTransform = heroTitle.RenderTransform as TranslateTransform;
-            var actionButtonTransform = actionButtonContainer.RenderTransform as TranslateTransform;
-            var progressBarTransform = progressIndicatorBorder?.RenderTransform as TranslateTransform;
+            // Get the transform objects (ensure progress transform exists if needed)
+            // For hero/title and action button we use TransformGroup(RenderTransform) containing ScaleTransform and TranslateTransform
+            TransformGroup? heroGroup = heroTitle.RenderTransform as TransformGroup;
+            if (heroGroup == null)
+            {
+                heroGroup = new TransformGroup();
+                heroGroup.Children.Add(new ScaleTransform(1, 1));
+                heroGroup.Children.Add(new TranslateTransform(0, 0));
+                heroTitle.RenderTransform = heroGroup;
+            }
 
-            if (heroTitleTransform == null || actionButtonTransform == null)
+            TransformGroup? actionGroup = actionButtonContainer.RenderTransform as TransformGroup;
+            if (actionGroup == null)
+            {
+                actionGroup = new TransformGroup();
+                actionGroup.Children.Add(new ScaleTransform(1, 1));
+                actionGroup.Children.Add(new TranslateTransform(0, 0));
+                actionButtonContainer.RenderTransform = actionGroup;
+            }
+
+            var heroTitleTranslate = heroGroup.Children.OfType<TranslateTransform>().FirstOrDefault();
+            var heroTitleScale = heroGroup.Children.OfType<ScaleTransform>().FirstOrDefault();
+
+            var actionButtonTranslate = actionGroup.Children.OfType<TranslateTransform>().FirstOrDefault();
+            var actionButtonScale = actionGroup.Children.OfType<ScaleTransform>().FirstOrDefault();
+
+            TranslateTransform? progressBarTransform = null;
+            if (progressIndicatorBorder != null)
+            {
+                // Ensure the progress indicator has a TranslateTransform so we can animate it predictably
+                if (progressIndicatorBorder.RenderTransform == null || !(progressIndicatorBorder.RenderTransform is TranslateTransform))
+                {
+                    progressIndicatorBorder.RenderTransform = new TranslateTransform();
+                }
+                progressBarTransform = progressIndicatorBorder.RenderTransform as TranslateTransform;
+            }
+
+            if (heroTitleTranslate == null || actionButtonTranslate == null || heroTitleScale == null || actionButtonScale == null)
                 return;
 
             // Calculate animation progress (0 to 1) based on scroll
@@ -2327,67 +2399,67 @@ namespace BitFightersLauncher
             // Apply transforms with animations
             if (!_reducedMotion)
             {
-                // Title animation
-                heroTitleTransform.BeginAnimation(TranslateTransform.XProperty,
+                // Title animation (translate)
+                heroTitleTranslate.BeginAnimation(TranslateTransform.XProperty,
                     new DoubleAnimation(titleTargetX, TimeSpan.FromMilliseconds(150))
                     {
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                     });
-                heroTitleTransform.BeginAnimation(TranslateTransform.YProperty,
+                heroTitleTranslate.BeginAnimation(TranslateTransform.YProperty,
                     new DoubleAnimation(titleTargetY, TimeSpan.FromMilliseconds(150))
                     {
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                     });
 
-                // Button animation
-                actionButtonTransform.BeginAnimation(TranslateTransform.XProperty,
+                // Button animation (translate)
+                actionButtonTranslate.BeginAnimation(TranslateTransform.XProperty,
                     new DoubleAnimation(buttonTargetX, TimeSpan.FromMilliseconds(150))
                     {
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                     });
-                actionButtonTransform.BeginAnimation(TranslateTransform.YProperty,
+                actionButtonTranslate.BeginAnimation(TranslateTransform.YProperty,
                     new DoubleAnimation(buttonTargetY, TimeSpan.FromMilliseconds(150))
                     {
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                     });
 
                 // Progress bar animation (if visible)
+                // Use easedProgress to move the progress bar proportionally so it stays centered at top (no jump at zero)
                 if (progressBarTransform != null && progressIndicatorBorder?.Visibility == Visibility.Visible)
                 {
+                    double pbTargetX = buttonTargetX * easedProgress;
+                    double pbTargetY = (buttonTargetY + 70) * easedProgress; // only apply offset proportional to progress
+
                     progressBarTransform.BeginAnimation(TranslateTransform.XProperty,
-                        new DoubleAnimation(buttonTargetX, TimeSpan.FromMilliseconds(150))
+                        new DoubleAnimation(pbTargetX, TimeSpan.FromMilliseconds(150))
                         {
                             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                         });
                     progressBarTransform.BeginAnimation(TranslateTransform.YProperty,
-                        new DoubleAnimation(buttonTargetY + 70, TimeSpan.FromMilliseconds(150))
+                        new DoubleAnimation(pbTargetY, TimeSpan.FromMilliseconds(150))
                         {
                             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                         });
                 }
 
-                // Scale animations
-                var titleScale = heroTitle.LayoutTransform as ScaleTransform ?? new ScaleTransform(1, 1);
-                heroTitle.LayoutTransform = titleScale;
-                titleScale.BeginAnimation(ScaleTransform.ScaleXProperty,
+                // Scale animations (render transform scale)
+                heroTitleScale.BeginAnimation(ScaleTransform.ScaleXProperty,
                     new DoubleAnimation(scaleProgress, TimeSpan.FromMilliseconds(150))
                     {
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                     });
-                titleScale.BeginAnimation(ScaleTransform.ScaleYProperty,
+                heroTitleScale.BeginAnimation(ScaleTransform.ScaleYProperty,
                     new DoubleAnimation(scaleProgress, TimeSpan.FromMilliseconds(150))
                     {
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                     });
 
-                var buttonScale = actionButtonContainer.LayoutTransform as ScaleTransform ?? new ScaleTransform(1, 1);
-                actionButtonContainer.LayoutTransform = buttonScale;
-                buttonScale.BeginAnimation(ScaleTransform.ScaleXProperty,
+                actionButtonScale.BeginAnimation(ScaleTransform.ScaleXProperty,
                     new DoubleAnimation(scaleProgress, TimeSpan.FromMilliseconds(150))
                     {
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
                     });
-                buttonScale.BeginAnimation(ScaleTransform.ScaleYProperty,
+                actionButtonScale.BeginAnimation(ScaleTransform.ScaleYProperty,
                     new DoubleAnimation(scaleProgress, TimeSpan.FromMilliseconds(150))
                     {
                         EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
@@ -2396,22 +2468,23 @@ namespace BitFightersLauncher
             else
             {
                 // Direct assignment for reduced motion
-                heroTitleTransform.X = titleTargetX;
-                heroTitleTransform.Y = titleTargetY;
-                actionButtonTransform.X = buttonTargetX;
-                actionButtonTransform.Y = buttonTargetY;
-                
+                heroTitleTranslate.X = titleTargetX;
+                heroTitleTranslate.Y = titleTargetY;
+                actionButtonTranslate.X = buttonTargetX;
+                actionButtonTranslate.Y = buttonTargetY;
+
                 if (progressBarTransform != null)
                 {
-                    progressBarTransform.X = buttonTargetX;
-                    progressBarTransform.Y = buttonTargetY + 70;
+                    // For reduced motion also apply proportional movement so it doesn't jump when scroll is zero
+                    progressBarTransform.X = buttonTargetX * easedProgress;
+                    progressBarTransform.Y = (buttonTargetY + 70) * easedProgress;
                 }
 
-                var titleScale = new ScaleTransform(scaleProgress, scaleProgress);
-                heroTitle.LayoutTransform = titleScale;
+                heroTitleScale.ScaleX = scaleProgress;
+                heroTitleScale.ScaleY = scaleProgress;
 
-                var buttonScale = new ScaleTransform(scaleProgress, scaleProgress);
-                actionButtonContainer.LayoutTransform = buttonScale;
+                actionButtonScale.ScaleX = scaleProgress;
+                actionButtonScale.ScaleY = scaleProgress;
             }
         }
 
@@ -2422,56 +2495,65 @@ namespace BitFightersLauncher
             var actionButtonContainer = this.FindName("ActionButtonContainer") as Grid;
             var progressIndicatorBorder = this.FindName("ProgressIndicatorBorder") as Border;
 
-            // Reset hero elements to center position
-            var heroTitleTransform = heroTitle?.RenderTransform as TranslateTransform;
-            var actionButtonTransform = actionButtonContainer?.RenderTransform as TranslateTransform;
-            var progressBarTransform = progressIndicatorBorder?.RenderTransform as TranslateTransform;
-
-            if (heroTitleTransform != null)
-            {
-                heroTitleTransform.BeginAnimation(TranslateTransform.XProperty, null);
-                heroTitleTransform.BeginAnimation(TranslateTransform.YProperty, null);
-                heroTitleTransform.X = 0;
-                heroTitleTransform.Y = 0;
-            }
-
-            if (actionButtonTransform != null)
-            {
-                actionButtonTransform.BeginAnimation(TranslateTransform.XProperty, null);
-                actionButtonTransform.BeginAnimation(TranslateTransform.YProperty, null);
-                actionButtonTransform.X = 0;
-                actionButtonTransform.Y = 0;
-            }
-
-            if (progressBarTransform != null)
-            {
-                progressBarTransform.BeginAnimation(TranslateTransform.XProperty, null);
-                progressBarTransform.BeginAnimation(TranslateTransform.YProperty, null);
-                progressBarTransform.X = 0;
-                progressBarTransform.Y = 0;
-            }
-
-            // Reset scales
+            // Reset hero elements to center position (handle TransformGroup with Scale + Translate)
             if (heroTitle != null)
             {
-                var titleScale = heroTitle.LayoutTransform as ScaleTransform;
-                if (titleScale != null)
+                var hGroup = heroTitle.RenderTransform as TransformGroup;
+                if (hGroup != null)
                 {
-                    titleScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
-                    titleScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                    var hTrans = hGroup.Children.OfType<TranslateTransform>().FirstOrDefault();
+                    var hScale = hGroup.Children.OfType<ScaleTransform>().FirstOrDefault();
+                    if (hTrans != null)
+                    {
+                        hTrans.BeginAnimation(TranslateTransform.XProperty, null);
+                        hTrans.BeginAnimation(TranslateTransform.YProperty, null);
+                        hTrans.X = 0;
+                        hTrans.Y = 0;
+                    }
+                    if (hScale != null)
+                    {
+                        hScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                        hScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                        hScale.ScaleX = 1;
+                        hScale.ScaleY = 1;
+                    }
                 }
-                heroTitle.LayoutTransform = new ScaleTransform(1, 1);
             }
 
             if (actionButtonContainer != null)
             {
-                var buttonScale = actionButtonContainer.LayoutTransform as ScaleTransform;
-                if (buttonScale != null)
+                var aGroup = actionButtonContainer.RenderTransform as TransformGroup;
+                if (aGroup != null)
                 {
-                    buttonScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
-                    buttonScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                    var aTrans = aGroup.Children.OfType<TranslateTransform>().FirstOrDefault();
+                    var aScale = aGroup.Children.OfType<ScaleTransform>().FirstOrDefault();
+                    if (aTrans != null)
+                    {
+                        aTrans.BeginAnimation(TranslateTransform.XProperty, null);
+                        aTrans.BeginAnimation(TranslateTransform.YProperty, null);
+                        aTrans.X = 0;
+                        aTrans.Y = 0;
+                    }
+                    if (aScale != null)
+                    {
+                        aScale.BeginAnimation(ScaleTransform.ScaleXProperty, null);
+                        aScale.BeginAnimation(ScaleTransform.ScaleYProperty, null);
+                        aScale.ScaleX = 1;
+                        aScale.ScaleY = 1;
+                    }
                 }
-                actionButtonContainer.LayoutTransform = new ScaleTransform(1, 1);
+            }
+
+            if (progressIndicatorBorder != null)
+            {
+                var progressBarTransform = progressIndicatorBorder.RenderTransform as TranslateTransform;
+                if (progressBarTransform != null)
+                {
+                    progressBarTransform.BeginAnimation(TranslateTransform.XProperty, null);
+                    progressBarTransform.BeginAnimation(TranslateTransform.YProperty, null);
+                    progressBarTransform.X = 0;
+                    progressBarTransform.Y = 0;
+                }
             }
         }
 
@@ -2585,6 +2667,182 @@ namespace BitFightersLauncher
                 
             if (ProfileRankText != null) 
                 ProfileRankText.Text = GetUserRank(loggedInUserHighestScore);
+
+            // Ensure profile image is shown if path available
+            if (!string.IsNullOrEmpty(loggedInUserProfilePicturePath))
+            {
+                _ = SetProfileImageAsync(loggedInUserProfilePicturePath);
+            }
+        }
+
+        private async Task SetProfileImageAsync(string relativeOrAbsolutePath)
+        {
+            var profileImage = this.FindName("ProfileImage") as System.Windows.Controls.Image;
+            var defaultViewbox = this.FindName("DefaultAvatarViewbox") as System.Windows.Controls.Viewbox;
+            if (profileImage == null || defaultViewbox == null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(relativeOrAbsolutePath))
+            {
+                // Show default avatar
+                Dispatcher.Invoke(() =>
+                {
+                    profileImage.Source = null;
+                    profileImage.Visibility = Visibility.Collapsed;
+                    defaultViewbox.Visibility = Visibility.Visible;
+                });
+                return;
+            }
+
+            // Build absolute URI if a relative path was provided
+            string trimmed = relativeOrAbsolutePath.Trim();
+            Uri uri;
+            if (Uri.IsWellFormedUriString(trimmed, UriKind.Absolute))
+            {
+                uri = new Uri(trimmed, UriKind.Absolute);
+            }
+            else
+            {
+                string combined = trimmed.StartsWith("/") ? trimmed.Substring(1) : trimmed;
+                uri = new Uri($"{ServerBaseUrl}/{combined}", UriKind.Absolute);
+            }
+
+            // Use local cache to avoid repeated downloads
+            string cachePath = GetProfileCacheFilePath(uri);
+
+            // If cache exists and is recent, try loading from cache first
+            if (File.Exists(cachePath))
+            {
+                try
+                {
+                    var fi = new FileInfo(cachePath);
+                    if ((DateTime.Now - fi.LastWriteTime).TotalDays <= ProfileCacheDays)
+                    {
+                        using (var fs = File.OpenRead(cachePath))
+                        {
+                            var bmpCached = new System.Windows.Media.Imaging.BitmapImage();
+                            bmpCached.BeginInit();
+                            bmpCached.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                            bmpCached.StreamSource = fs;
+                            bmpCached.EndInit();
+                            bmpCached.Freeze();
+
+                            Dispatcher.Invoke(() =>
+                            {
+                                profileImage.Source = bmpCached;
+                                profileImage.Visibility = Visibility.Visible;
+                                defaultViewbox.Visibility = Visibility.Collapsed;
+                            });
+                            return;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Failed to load cached profile image: {ex.Message}");
+                    try { File.Delete(cachePath); } catch { }
+                }
+            }
+
+            try
+            {
+                byte[] data = await _httpClient.GetByteArrayAsync(uri);
+                await Task.Yield();
+
+                // Save to cache atomically
+                try
+                {
+                    string tmp = cachePath + ".tmp";
+                    File.WriteAllBytes(tmp, data);
+                    if (File.Exists(cachePath)) File.Delete(cachePath);
+                    File.Move(tmp, cachePath);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Failed to save profile image to cache: {ex.Message}");
+                }
+
+                using (var ms = new MemoryStream(data))
+                {
+                    var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                    bmp.BeginInit();
+                    bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                    bmp.StreamSource = ms;
+                    bmp.EndInit();
+                    bmp.Freeze();
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        profileImage.Source = bmp;
+                        profileImage.Visibility = Visibility.Visible;
+                        defaultViewbox.Visibility = Visibility.Collapsed;
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to load profile image from {uri}: {ex.Message}");
+                // try fallback to cache if available
+                if (File.Exists(cachePath))
+                {
+                    try
+                    {
+                        using (var fs = File.OpenRead(cachePath))
+                        {
+                            var bmpCached = new System.Windows.Media.Imaging.BitmapImage();
+                            bmpCached.BeginInit();
+                            bmpCached.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                            bmpCached.StreamSource = fs;
+                            bmpCached.EndInit();
+                            bmpCached.Freeze();
+
+                            Dispatcher.Invoke(() =>
+                            {
+                                profileImage.Source = bmpCached;
+                                profileImage.Visibility = Visibility.Visible;
+                                defaultViewbox.Visibility = Visibility.Collapsed;
+                            });
+                            return;
+                        }
+                    }
+                    catch (Exception ex2)
+                    {
+                        Debug.WriteLine($"Failed to load fallback cached image: {ex2.Message}");
+                        try { File.Delete(cachePath); } catch { }
+                    }
+                }
+
+                Dispatcher.Invoke(() =>
+                {
+                    profileImage.Source = null;
+                    profileImage.Visibility = Visibility.Collapsed;
+                    defaultViewbox.Visibility = Visibility.Visible;
+                });
+            }
+        }
+
+        private string GetProfileCacheFilePath(Uri uri)
+        {
+            try
+            {
+                string ext = Path.GetExtension(uri.LocalPath);
+                if (string.IsNullOrEmpty(ext)) ext = ".jpg";
+                using (var sha = SHA256.Create())
+                {
+                    byte[] hash = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(uri.AbsoluteUri));
+                    string hex = BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
+                    string fileName = hex.Substring(0, 16) + ext;
+                    return Path.Combine(_profileCacheDir, fileName);
+                }
+            }
+            catch
+            {
+                // Fallback: use a safe filename derived from Base64 of uri
+                string safe = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(uri.AbsoluteUri));
+                foreach (var c in Path.GetInvalidFileNameChars()) safe = safe.Replace(c, '_');
+                if (safe.Length > 100) safe = safe.Substring(0, 100);
+                return Path.Combine(_profileCacheDir, safe + ".img");
+            }
         }
 
         private string GetUserRank(int score)

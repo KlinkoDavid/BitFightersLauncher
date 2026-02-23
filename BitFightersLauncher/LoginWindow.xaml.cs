@@ -26,6 +26,7 @@ namespace BitFightersLauncher
         public string username { get; set; } = string.Empty;
         public int highest_score { get; set; }
         public string created_at { get; set; } = string.Empty;
+        public string profile_picture { get; set; } = string.Empty;
     }
 
     // Event args for login events
@@ -34,6 +35,7 @@ namespace BitFightersLauncher
         public string Username { get; set; } = string.Empty;
         public int UserId { get; set; }
         public string UserCreatedAt { get; set; } = string.Empty;
+        public string ProfilePicture { get; set; } = string.Empty;
     }
 
     public partial class LoginWindow : Window
@@ -49,6 +51,7 @@ namespace BitFightersLauncher
         public string LoggedInUsername { get; private set; } = string.Empty;
         public int UserId { get; private set; } = 0;
         public string UserCreatedAt { get; private set; } = string.Empty;
+        public string LoggedInUserProfilePicture { get; private set; } = string.Empty;
 
         private bool isPasswordVisible = false;
 
@@ -88,7 +91,7 @@ namespace BitFightersLauncher
 
         private void SaveLogin(string username, string password, bool remember)
         {
-            AuthStorage.Save(username, password, remember, UserId, UserCreatedAt);
+            AuthStorage.Save(username, password, remember, UserId, UserCreatedAt, LoggedInUserProfilePicture);
         }
 
         private void FocusPassword()
@@ -175,7 +178,8 @@ namespace BitFightersLauncher
                     {
                         Username = LoggedInUsername,
                         UserId = UserId,
-                        UserCreatedAt = UserCreatedAt
+                        UserCreatedAt = UserCreatedAt,
+                        ProfilePicture = LoggedInUserProfilePicture
                     });
 
                     var fadeOutAnimation = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300));
@@ -225,6 +229,7 @@ namespace BitFightersLauncher
                         UserId = apiResponse.user.id;
                         LoggedInUsername = apiResponse.user.username;
                         UserCreatedAt = apiResponse.user.created_at;
+                        LoggedInUserProfilePicture = apiResponse.user.profile_picture ?? string.Empty;
 
                         return true;
                     }

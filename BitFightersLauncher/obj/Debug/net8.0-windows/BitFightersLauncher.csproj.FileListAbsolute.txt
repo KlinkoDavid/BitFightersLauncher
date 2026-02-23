@@ -49,7 +49,6 @@ C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\LoginWindow.g.cs
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\MainWindow.g.cs
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\App.g.cs
-C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher_Content.g.cs
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher_MarkupCompile.cache
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher.g.resources
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher.GeneratedMSBuildEditorConfig.editorconfig

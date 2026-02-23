@@ -36,6 +36,8 @@ namespace BitFightersLauncher
                     
                     var mainWindow = new MainWindow();
                     mainWindow.SetUserInfo(savedLogin.Username, savedLogin.UserId, savedLogin.UserCreatedAt);
+                    // Pass saved profile picture path so avatar loads on auto-login
+                    try { mainWindow.SetUserProfilePicturePath(savedLogin.ProfilePicture); } catch { }
                     
                     this.MainWindow = mainWindow;
                     this.ShutdownMode = ShutdownMode.OnMainWindowClose;
@@ -86,6 +88,8 @@ namespace BitFightersLauncher
                 // Create and show main window
                 var mainWindow = new MainWindow();
                 mainWindow.SetUserInfo(e.Username, e.UserId, e.UserCreatedAt);
+                // If login provided a profile picture path, pass it to the main window so avatar can load
+                try { mainWindow.SetUserProfilePicturePath(e.ProfilePicture); } catch { }
                 
                 // Set new main window
                 this.MainWindow = mainWindow;

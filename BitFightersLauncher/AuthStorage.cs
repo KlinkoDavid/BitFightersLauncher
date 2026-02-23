@@ -13,6 +13,7 @@ namespace BitFightersLauncher
         public bool RememberMe { get; set; } = false;
         public int UserId { get; set; } = 0;
         public string UserCreatedAt { get; set; } = string.Empty;
+        public string ProfilePicture { get; set; } = string.Empty;
     }
 
     public static class AuthStorage
@@ -47,7 +48,7 @@ namespace BitFightersLauncher
             }
         }
 
-        public static void Save(string username, string password, bool remember, int userId, string userCreatedAt)
+        public static void Save(string username, string password, bool remember, int userId, string userCreatedAt, string profilePicture = "")
         {
             try
             {
@@ -57,7 +58,8 @@ namespace BitFightersLauncher
                     PasswordHash = remember ? HashForStorage(password) : string.Empty,
                     RememberMe = remember,
                     UserId = remember ? userId : 0,
-                    UserCreatedAt = remember ? userCreatedAt : string.Empty
+                    UserCreatedAt = remember ? userCreatedAt : string.Empty,
+                    ProfilePicture = remember ? profilePicture : string.Empty
                 };
                 string json = JsonSerializer.Serialize(data);
                 string encrypted = EncryptString(json);

@@ -47,15 +47,29 @@
         </Storyboard>
 
         <!-- Minimál notification animációk -->
+        <!-- Modernized notification animations: translate + fade -->
         <Storyboard x:Key="ShowNotification">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15"/>
             <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" Duration="0">
                 <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}"/>
             </ObjectAnimationUsingKeyFrames>
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.18" />
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                             From="-12" To="0" Duration="0:0:0.22">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                             From="0.98" To="1" Duration="0:0:0.22" />
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                             From="0.98" To="1" Duration="0:0:0.22" />
         </Storyboard>
+
         <Storyboard x:Key="HideNotification">
-            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.15"/>
-            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" BeginTime="0:0:0.15" Duration="0">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.16" />
+            <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                             To="-12" Duration="0:0:0.16" />
+            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" BeginTime="0:0:0.16" Duration="0">
                 <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Collapsed}"/>
             </ObjectAnimationUsingKeyFrames>
         </Storyboard>
@@ -690,7 +704,8 @@
                                                   Data="M0,0 L0,14 L12,7 Z" 
                                                   Width="12" Height="14"
                                                   Stretch="Fill"
-                                                  Visibility="Collapsed"/>
+                                                  Visibility="Collapsed"
+                                                  Margin="2,0,0,0"/>
                                         </Grid>
                                     </Button>
                                 </Grid>
@@ -737,7 +752,11 @@
                                            VerticalAlignment="Center"
                                            Margin="0,0,0,350">
                                     <TextBlock.RenderTransform>
-                                        <TranslateTransform x:Name="HeroTitleTransform" X="0" Y="0"/>
+                                        <!-- Use TransformGroup so we can animate scale and translate via RenderTransform (no LayoutTransform jitter) -->
+                                        <TransformGroup>
+                                            <ScaleTransform ScaleX="1" ScaleY="1" />
+                                            <TranslateTransform X="0" Y="0" />
+                                        </TransformGroup>
                                     </TextBlock.RenderTransform>
                                     <TextBlock.Effect>
                                         <DropShadowEffect ShadowDepth="0" BlurRadius="15" Color="#FFFFA726" Opacity="0.7"/>
@@ -864,7 +883,11 @@
                                 <!-- Action button -->
                                 <Grid x:Name="ActionButtonContainer" Width="310" Height="310" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,0,0,160">
                                     <Grid.RenderTransform>
-                                        <TranslateTransform x:Name="ActionButtonTransform" X="0" Y="0"/>
+                                        <!-- Combine scale + translate in RenderTransform to avoid LayoutTransform layout passes -->
+                                        <TransformGroup>
+                                            <ScaleTransform ScaleX="1" ScaleY="1" />
+                                            <TranslateTransform X="0" Y="0" />
+                                        </TransformGroup>
                                     </Grid.RenderTransform>
                                     <Button x:Name="ActionButton" Cursor="Hand" Click="HandleActionButton_Click" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RenderTransformOrigin="0.5,0.5">
                                         <Button.RenderTransform>
@@ -884,7 +907,7 @@
                                                     <Setter.Value>
                                                         <ControlTemplate TargetType="{x:Type Button}">
                                                             <Grid>
-                                                                <Border x:Name="InnerBorder" Width="190" Height="60" CornerRadius="26" BorderThickness="0" BorderBrush="Transparent" Padding="0">
+                                                                <Border x:Name="InnerBorder" Width="190" Height="60" CornerRadius="28" BorderThickness="0" BorderBrush="Transparent" Padding="0">
                                                                     <Border.Background>
                                                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,2">
                                                                             <LinearGradientBrush.RelativeTransform>
@@ -927,9 +950,9 @@
                                                         </Grid>
                                                         <!-- Download Icon -->
                                                         <Grid x:Name="DownloadIconGrid" Visibility="Collapsed">
-                                                            <Ellipse Width="14" Height="14" Fill="#000000" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,0"/>
-                                                            <Rectangle Width="3" Height="1" Fill="#FFFFFF" RadiusX="0.5" RadiusY="0.5" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,9,0,0"/>
-                                                            <Path Fill="#FFFFFF" Data="M8.71,13.71,11.29,16.3a1,1,0,0,0,1.42,0l2.58-2.58a1,1,0,0,0-.7-1.72H9.41A1,1,0,0,0,8.71,13.71Z" Margin="0,-1,0,0"/>
+                                                            <Ellipse Width="14" Height="14" Fill="#000000" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                                                            <Rectangle Width="3" Height="1" Fill="#FFFFFF" RadiusX="0.5" RadiusY="0.5" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="1,9,0,0"/>
+                                                            <Path Fill="#FFFFFF" Data="M8.71,13.71,11.29,16.3a1,1,0,0,0,1.42,0l2.58-2.58a1,1,0,0,0-.7-1.72H9.41A1,1,0,0,0,8.71,13.71Z" Margin="1,-1,0,0"/>
                                                         </Grid>
                                                     </Grid>
                                                 </Viewbox>
@@ -1041,7 +1064,7 @@
                                                 <Viewbox x:Name="VolumeIcon" Width="25" Height="25">
                                                     <Path Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Data="M112 416L160 416L294.1 535.2C300.5 540.9 308.7 544 317.2 544C336.4 544 352 528.4 352 509.2L352 130.8C352 111.6 336.4 96 317.2 96C308.7 96 300.5 99.1 294.1 104.8L160 224L112 224C85.5 224 64 245.5 64 272L64 368C64 394.5 85.5 416 112 416zM505.1 171C494.8 162.6 479.7 164.2 471.3 174.5C462.9 184.8 464.5 199.9 474.8 208.3C507.3 234.7 528 274.9 528 320C528 365.1 507.3 405.3 474.8 431.8C464.5 440.2 463 455.3 471.3 465.6C479.6 475.9 494.8 477.4 505.1 469.1C548.3 433.9 576 380.2 576 320.1C576 260 548.3 206.3 505.1 171.1zM444.6 245.5C434.3 237.1 419.2 238.7 410.8 249C402.4 259.3 404 274.4 414.3 282.8C425.1 291.6 432 305 432 320C432 335 425.1 348.4 414.3 357.3C404 365.7 402.5 380.8 410.8 391.1C419.1 401.4 434.3 402.9 444.6 394.6C466.1 376.9 480 350.1 480 320C480 289.9 466.1 263.1 444.5 245.5z"/>
                                                 </Viewbox>
-                                                <Viewbox x:Name="MutedIcon" Width="26" Height="26" Visibility="Collapsed" Margin="0,0,0,1">
+                                                <Viewbox x:Name="MutedIcon" Width="26" Height="26" Visibility="Collapsed" Margin="0,0,-2,-1">
                                                     <Path Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Data="M80 416L128 416L262.1 535.2C268.5 540.9 276.7 544 285.2 544C304.4 544 320 528.4 320 509.2L320 130.8C320 111.6 304.4 96 285.2 96C276.7 96 268.5 99.1 262.1 104.8L128 224L80 224C53.5 224 32 245.5 32 272L32 368C32 394.5 53.5 416 80 416zM399 239C389.6 248.4 389.6 263.6 399 272.9L446 319.9L399 366.9C389.6 376.3 389.6 391.5 399 400.8C408.4 410.1 423.6 410.2 432.9 400.8L479.9 353.8L526.9 400.8C536.3 410.2 551.5 410.2 560.8 400.8C570.1 391.4 570.2 376.2 560.8 366.9L513.8 319.9L560.8 272.9C570.2 263.5 570.2 248.3 560.8 239C551.4 229.7 536.2 229.6 526.9 239L479.9 286L432.9 239C423.5 229.6 408.3 229.6 399 239z"/>
                                                 </Viewbox>
                                             </Grid>
@@ -1056,7 +1079,7 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Background="#DD000000" CornerRadius="10" Margin="10,0,10,5" Height="210" BorderBrush="#44FFFFFF" BorderThickness="0" Cursor="Hand">
+                                                    <Border Background="#DD000000" CornerRadius="10" Margin="10,0,10,5" Height="210" BorderBrush="#44FFFFFF" BorderThickness="0" Cursor="Hand" MouseLeftButtonDown="NewsItem_Click">
                                                         <Border.Style>
                                                             <Style TargetType="Border">
                                                                 <Style.Triggers>
@@ -1127,20 +1150,39 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
+                                    <!-- Avatar: fixed size circular image with orange gradient ring -->
                                     <Border Grid.Column="0" Width="120" Height="120" CornerRadius="60" 
-                                            Margin="0,0,30,0" ClipToBounds="True">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                <GradientStop Color="#FFE65100" Offset="0"/>
-                                                <GradientStop Color="#FFFF9800" Offset="0.5"/>
-                                                <GradientStop Color="#FFFFA726" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-                                        <Viewbox Width="80" Height="80" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Canvas Width="640" Height="640">
-                                                <Path Fill="#FF1A1C20" Data="M320 312C386.3 312 440 258.3 440 192C440 125.7 386.3 72 320 72C253.7 72 200 125.7 200 192C200 258.3 253.7 312 320 312zM290.3 368C191.8 368 112 447.8 112 546.3C112 562.7 125.3 576 141.7 576L498.3 576C514.7 576 528 562.7 528 546.3C528 447.8 448.2 368 349.7 368L290.3 368z"/>
-                                            </Canvas>
-                                        </Viewbox>
+                                            Margin="0,0,30,0" ClipToBounds="True" Background="Transparent">
+                                        <Grid Width="120" Height="120" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                            <!-- Background circle (subtle dark) -->
+                                            <Ellipse Fill="#FF0F1113" Width="120" Height="120" />
+
+                                            <!-- Actual profile image: keep Image control for existing code-behind, force size and clip -->
+                                            <Image x:Name="ProfileImage" Width="112" Height="112" Stretch="UniformToFill" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Image.Clip>
+                                                    <!-- ensure image is circular -->
+                                                    <EllipseGeometry Center="56,56" RadiusX="56" RadiusY="56"/>
+                                                </Image.Clip>
+                                            </Image>
+
+                                            <!-- Default vector avatar shown when no profile image available -->
+                                            <Viewbox x:Name="DefaultAvatarViewbox" Width="80" Height="80" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Canvas Width="640" Height="640">
+                                                    <Path Fill="#FF1A1C20" Data="M320 312C386.3 312 440 258.3 440 192C440 125.7 386.3 72 320 72C253.7 72 200 125.7 200 192C200 258.3 253.7 312 320 312zM290.3 368C191.8 368 112 447.8 112 546.3C112 562.7 125.3 576 141.7 576L498.3 576C514.7 576 528 562.7 528 546.3C528 447.8 448.2 368 349.7 368L290.3 368z"/>
+                                                </Canvas>
+                                            </Viewbox>
+
+                                            <!-- Orange gradient ring (stroke) -->
+                                            <Ellipse Width="115" Height="115" Fill="Transparent" StrokeThickness="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <Ellipse.Stroke>
+                                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                        <GradientStop Color="#FFE65100" Offset="0"/>
+                                                        <GradientStop Color="#FFFF9800" Offset="0.5"/>
+                                                        <GradientStop Color="#FFFFA726" Offset="1"/>
+                                                    </LinearGradientBrush>
+                                                </Ellipse.Stroke>
+                                            </Ellipse>
+                                        </Grid>
                                     </Border>
 
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -1236,9 +1278,57 @@
                 </Grid>
                 </ScrollViewer>
 
-                <!-- Notification border -->
-                <Border x:Name="NotificationBorder" Grid.Row="0" Grid.RowSpan="2" Height="50" Opacity="0" Background="#55000000" BorderBrush="#FFFFA726" BorderThickness="1.5" CornerRadius="10" Margin="25,90,20,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed">
-                    <TextBlock x:Name="NotificationText" Foreground="White" FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20,0"/>
+                <!-- Modern notification border -->
+                <Border x:Name="NotificationBorder" Grid.Row="0" Grid.RowSpan="2" MinHeight="56" Opacity="0" CornerRadius="28" Margin="25,90,20,0" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed"
+                        RenderTransformOrigin="0.5,0.5">
+                    <Border.RenderTransform>
+                        <!-- Combine translate + scale for storyboard targeting -->
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
+                            <TranslateTransform Y="-12"/>
+                        </TransformGroup>
+                    </Border.RenderTransform>
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="20" ShadowDepth="6" Color="#FF000000" Opacity="0.45"/>
+                    </Border.Effect>
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#CC111315" Offset="0"/>
+                            <GradientStop Color="#AA151618" Offset="0.5"/>
+                            <GradientStop Color="#99121314" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Padding>18,10</Border.Padding>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="12"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Accent circle with centered check icon (vector for precise centering) -->
+                        <Grid Grid.Column="0" Width="36" Height="36" HorizontalAlignment="Left" VerticalAlignment="Center">
+                            <Ellipse Fill="#111" Stroke="#FFFFA726" StrokeThickness="2" Opacity="0.95"/>
+                            <Viewbox Margin="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Canvas Width="24" Height="24">
+                                    <!-- Simple vector check path, stroked to ensure perfect centering -->
+                                    <Path Data="M6,12 L10,16 L18,8"
+                                          Stroke="#FFFFA726"
+                                          StrokeThickness="2.6"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round"
+                                          Fill="Transparent"/>
+                                </Canvas>
+                            </Viewbox>
+                        </Grid>
+
+                        <!-- Spacer -->
+                        <Grid Grid.Column="1"/>
+
+                        <!-- Message text -->
+                        <TextBlock x:Name="NotificationText" Grid.Column="2" Foreground="White" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontFamily="{StaticResource CustomFont2}"/>
+                    </Grid>
                 </Border>
             </Grid>
         </Grid>
