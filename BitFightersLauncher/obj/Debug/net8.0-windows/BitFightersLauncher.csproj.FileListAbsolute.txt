@@ -90,3 +90,4 @@ C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher.pdb
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher.genruntimeconfig.cache
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\ref\BitFightersLauncher.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher_Content.g.cs

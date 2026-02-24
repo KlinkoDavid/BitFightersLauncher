@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BitFightersLauncher")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+eea25e35934d44ae185134af825d13a946be7381")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8f3b1ef08a39d974f80da890afa645f083da2fb8")]
 [assembly: System.Reflection.AssemblyProductAttribute("BitFightersLauncher")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BitFightersLauncher")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -310,6 +310,36 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
+                <!-- Back button on the left — appears on Profile and Leaderboard views -->
+                <Button x:Name="BackButton" Width="50" Height="50" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="14,45,0,0" Visibility="Collapsed" Click="BackButton_Click" Cursor="Hand" Panel.ZIndex="100">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="#45d2cdcf"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="#7b7a7f"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="ProfileBorder" Background="{TemplateBinding Background}" CornerRadius="16">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ProfileBorder" Property="Background" Value="#80FFFFFF"/>
+                                                <Setter Property="Foreground" Value="#FF1A1C20"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                    <Viewbox Width="28" Height="28">
+                        <!-- Simple left arrow icon, uses Foreground for color -->
+                        <Path Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Data="M41.4 342.6C28.9 330.1 28.9 309.8 41.4 297.3L169.4 169.3C178.6 160.1 192.3 157.4 204.3 162.4C216.3 167.4 224 179.1 224 192L224 256L560 256C586.5 256 608 277.5 608 304L608 336C608 362.5 586.5 384 560 384L224 384L224 448C224 460.9 216.2 472.6 204.2 477.6C192.2 482.6 178.5 479.8 169.3 470.7L41.3 342.7z"/>
+                    </Viewbox>
+                </Button>
+
 
 
                     <!-- Jobb oldali panel -->
@@ -1104,7 +1134,7 @@
                                                             
                                                             <!-- Top label (GAME UPDATE) -->
                                                             <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,10,0" 
-                                                                    Background="#66d2cdcf" CornerRadius="12" Padding="5,2" 
+                                                                    Background="#FFd2cdcf" CornerRadius="12" Padding="5,2" 
                                                                     BorderThickness="1">
                                                                 <TextBlock Text="GAME UPDATE" Foreground="Black" FontSize="12" 
                                                                            FontFamily="{StaticResource CustomFont2}" />

@@ -2590,6 +2590,9 @@ namespace BitFightersLauncher
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
             if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Collapsed;
 
+            // Hide back button on home
+            try { if (BackButton != null) BackButton.Visibility = Visibility.Collapsed; } catch { }
+
         }
 
         private void ShowProfileView()
@@ -2604,6 +2607,8 @@ namespace BitFightersLauncher
                 ProfileViewGrid.Visibility = Visibility.Visible;
                 UpdateProfileView();
             }
+            // Show back button on profile
+            try { if (BackButton != null) BackButton.Visibility = Visibility.Visible; } catch { }
         }
 
         private void ShowLeaderboardView()
@@ -2615,6 +2620,8 @@ namespace BitFightersLauncher
             if (ProfileViewGrid != null) ProfileViewGrid.Visibility = Visibility.Collapsed;
             if (LeaderboardViewGrid != null) LeaderboardViewGrid.Visibility = Visibility.Visible;
 
+            // Show back button on leaderboard
+            try { if (BackButton != null) BackButton.Visibility = Visibility.Visible; } catch { }
             _ = LoadLeaderboardAsync();
         }
 
@@ -2942,6 +2949,11 @@ namespace BitFightersLauncher
                 
                 btn.ContextMenu.IsOpen = true;
             }
+        }
+
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            ShowHomeView();
         }
 
         private void CompactHeaderBar_PreviewMouseWheel(object sender, MouseWheelEventArgs e)

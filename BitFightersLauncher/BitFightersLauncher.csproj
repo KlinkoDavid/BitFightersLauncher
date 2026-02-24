@@ -76,6 +76,7 @@
 
   <ItemGroup>
     <Folder Include="Converters\" />
+    <Folder Include="Resources\icons\" />
   </ItemGroup>
 
 </Project>
