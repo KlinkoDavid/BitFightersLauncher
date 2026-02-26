@@ -10,6 +10,7 @@
         "dependencies": {
           "Microsoft-WindowsAPICodePack-Shell": "1.1.5",
           "MySql.Data": "9.4.0",
+          "SharpVectors.Wpf": "1.8.0",
           "System.Text.Json": "10.0.2",
           "WindowsAPICodePack": "8.0.9"
         },
@@ -114,6 +115,38 @@
             "rid": "win-x64",
             "assetType": "native",
             "fileVersion": "4.3.0.1"
+          }
+        }
+      },
+      "SharpVectors.Wpf/1.8.0": {
+        "runtime": {
+          "lib/net6.0-windows7.0/SharpVectors.Converters.Wpf.dll": {
+            "assemblyVersion": "1.8.0.0",
+            "fileVersion": "1.8.0.0"
+          },
+          "lib/net6.0-windows7.0/SharpVectors.Core.dll": {
+            "assemblyVersion": "1.8.0.0",
+            "fileVersion": "1.8.0.0"
+          },
+          "lib/net6.0-windows7.0/SharpVectors.Css.dll": {
+            "assemblyVersion": "1.8.0.0",
+            "fileVersion": "1.8.0.0"
+          },
+          "lib/net6.0-windows7.0/SharpVectors.Dom.dll": {
+            "assemblyVersion": "1.8.0.0",
+            "fileVersion": "1.8.0.0"
+          },
+          "lib/net6.0-windows7.0/SharpVectors.Model.dll": {
+            "assemblyVersion": "1.8.0.0",
+            "fileVersion": "1.8.0.0"
+          },
+          "lib/net6.0-windows7.0/SharpVectors.Rendering.Wpf.dll": {
+            "assemblyVersion": "1.8.0.0",
+            "fileVersion": "1.8.0.0"
+          },
+          "lib/net6.0-windows7.0/SharpVectors.Runtime.Wpf.dll": {
+            "assemblyVersion": "1.8.0.0",
+            "fileVersion": "1.8.0.0"
           }
         }
       },
@@ -248,6 +281,13 @@
       "sha512": "sha512-yGfcv5TSj72rwUdywZqtM90qlZ9AuSNckG2Fb9OxuXkskhnqi/DGBaOji9z2G4q3BgFfddbm/WmZzFfAggjbSw==",
       "path": "mysql.data/9.4.0",
       "hashPath": "mysql.data.9.4.0.nupkg.sha512"
+    },
+    "SharpVectors.Wpf/1.8.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-EwZj0f+zR73gm17utVMZiLojRZDx2HYZbcI6ar46MhOelzDdUr3MFGZsyRHucfJLDeLowhWzqRvsQC9XMLZ8RQ==",
+      "path": "sharpvectors.wpf/1.8.0",
+      "hashPath": "sharpvectors.wpf.1.8.0.nupkg.sha512"
     },
     "System.IO.Pipelines/10.0.2": {
       "type": "package",

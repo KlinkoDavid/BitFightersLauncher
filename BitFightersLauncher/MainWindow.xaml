@@ -410,7 +410,7 @@
                                                 <ControlTemplate TargetType="Button">
                                                     <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
                                                             CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="2">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,1,0,0"/>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">

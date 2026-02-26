@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "ZwYHRmp7m8o=",
+  "dgSpecHash": "gVsFv5+7xfs=",
   "success": true,
   "projectFilePath": "C:\\Users\\Administrator\\source\\repos\\BitFightersLauncher\\BitFightersLauncher\\BitFightersLauncher.csproj",
   "expectedPackageFiles": [
@@ -29,6 +29,7 @@
     "C:\\Users\\Administrator\\.nuget\\packages\\runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl\\4.3.2\\runtime.ubuntu.14.04-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl\\4.3.2\\runtime.ubuntu.16.04-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl\\4.3.2\\runtime.ubuntu.16.10-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
+    "C:\\Users\\Administrator\\.nuget\\packages\\sharpvectors.wpf\\1.8.0\\sharpvectors.wpf.1.8.0.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\system.collections\\4.3.0\\system.collections.4.3.0.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\system.collections.concurrent\\4.3.0\\system.collections.concurrent.4.3.0.nupkg.sha512",
@@ -77,5 +78,18 @@
     "C:\\Users\\Administrator\\.nuget\\packages\\windowsapicodepack\\8.0.9\\windowsapicodepack.8.0.9.nupkg.sha512",
     "C:\\Users\\Administrator\\.nuget\\packages\\zstdsharp.port\\0.8.5\\zstdsharp.port.0.8.5.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "message": "BitFightersLauncher depends on SharpVectors.Wpf (>= 1.7.0) but SharpVectors.Wpf 1.7.0 was not found. SharpVectors.Wpf 1.8.0 was resolved instead.",
+      "projectPath": "C:\\Users\\Administrator\\source\\repos\\BitFightersLauncher\\BitFightersLauncher\\BitFightersLauncher.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Administrator\\source\\repos\\BitFightersLauncher\\BitFightersLauncher\\BitFightersLauncher.csproj",
+      "libraryId": "SharpVectors.Wpf",
+      "targetGraphs": [
+        "net8.0-windows"
+      ]
+    }
+  ]
 }

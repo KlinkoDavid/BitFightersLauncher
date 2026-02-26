@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Diagnostics;
 
 namespace BitFightersLauncher
 {
@@ -149,6 +150,32 @@ namespace BitFightersLauncher
             LoginCancelled?.Invoke(this, EventArgs.Empty);
         }
 
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Minimize the window to the taskbar
+            this.WindowState = WindowState.Minimized;
+        }
+
+        private void GoogleAuthButton_Click(object sender, RoutedEventArgs e)
+        {
+            // TODO: Replace clientId and redirectUri with your OAuth credentials and proper redirect handling.
+            string clientId = "YOUR_GOOGLE_CLIENT_ID";
+            string redirectUri = "urn:ietf:wg:oauth:2.0:oob"; // or your registered redirect URI
+            string scope = Uri.EscapeDataString("openid email profile");
+            string state = Guid.NewGuid().ToString("N");
+
+            string authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type=code&scope={scope}&state={state}&access_type=offline&prompt=select_account";
+
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = authUrl, UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                ShowError("Nem sikerült megnyitni a böngészőt: " + ex.Message);
+            }
+        }
+
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
             string username = UsernameTextBox.Text.Trim();
@@ -244,18 +271,35 @@ namespace BitFightersLauncher
             }
         }
 
-        private void ShowError(string message)
+        private void ShowError(string message, Thickness? margin = null)
         {
             ErrorText.Text = message;
+
+            // If a margin is provided, apply it before showing the error so it appears at the desired position
+            if (margin.HasValue)
+            {
+                ErrorBorder.Margin = margin.Value;
+            }
+
+            // Make sure the border doesn't block input while hidden; enable when shown
+            ErrorBorder.IsHitTestVisible = true;
+
             var showStoryboard = (Storyboard)this.FindResource("ShowError");
             showStoryboard.Begin(ErrorBorder);
 
+            // After some time hide again
             Task.Delay(4000).ContinueWith(_ =>
             {
                 Dispatcher.Invoke(() =>
                 {
                     var hideStoryboard = (Storyboard)this.FindResource("HideError");
                     hideStoryboard.Begin(ErrorBorder);
+
+                    // After the hide animation (200ms) disable hit testing so it won't block clicks
+                    Task.Delay(200).ContinueWith(__ =>
+                    {
+                        Dispatcher.Invoke(() => ErrorBorder.IsHitTestVisible = false);
+                    });
                 });
             });
         }

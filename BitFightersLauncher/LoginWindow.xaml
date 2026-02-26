@@ -1,18 +1,20 @@
 ﻿<Window x:Class="BitFightersLauncher.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:svg="clr-namespace:SharpVectors.Converters;assembly=SharpVectors.Converters.Wpf"
         Title="BitFighters Launcher" Height="700" Width="1200"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Icon="/Resources/Logo.png"
         WindowStartupLocation="CenterScreen"
         x:Name="LoginWindowRoot"
-        Opacity="0">
+        Opacity="1">
 
     <Window.Triggers>
         <EventTrigger RoutedEvent="Loaded">
             <BeginStoryboard>
                 <Storyboard>
-                    <DoubleAnimation Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.5"/>
+                    <!-- Animate the main content Border instead of the Window to avoid layout/jump issues during window composition -->
+                    <DoubleAnimation Storyboard.TargetName="RootBorder" Storyboard.TargetProperty="Opacity" From="0" To="1" Duration="0:0:0.5"/>
                 </Storyboard>
             </BeginStoryboard>
         </EventTrigger>
@@ -29,20 +31,12 @@
 
         <Storyboard x:Key="ShowError">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
-            <ThicknessAnimation Storyboard.TargetProperty="Margin" 
-                               From="0,-5,0,15" To="0,0,0,15" Duration="0:0:0.2"/>
-            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" Duration="0">
-                <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}"/>
-            </ObjectAnimationUsingKeyFrames>
+            <!-- Show: animate opacity only. Visibility/isHitTest handled in code-behind. -->
         </Storyboard>
 
         <Storyboard x:Key="HideError">
             <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
-            <ThicknessAnimation Storyboard.TargetProperty="Margin" 
-                               To="0,-5,0,15" Duration="0:0:0.2"/>
-            <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility" BeginTime="0:0:0.2" Duration="0">
-                <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Collapsed}"/>
-            </ObjectAnimationUsingKeyFrames>
+            <!-- Hide: animate opacity only. Visibility/isHitTest handled in code-behind. -->
         </Storyboard>
 
         <Storyboard x:Key="FloatLabelUp" Storyboard.TargetName="UsernameLabel">
@@ -74,7 +68,7 @@
         </Storyboard>
     </Window.Resources>
 
-    <Border x:Name="RootBorder" CornerRadius="25" BorderBrush="#44CCCCCC" BorderThickness="2" ClipToBounds="True" Background="#FF1A1C20">
+    <Border x:Name="RootBorder" CornerRadius="25" BorderBrush="#00CCCCCC" BorderThickness="2" ClipToBounds="True" Background="#FF1A1C20" Opacity="0">
         <Border.Effect>
             <DropShadowEffect Color="#000000" BlurRadius="0" ShadowDepth="0" Opacity="1"/>
         </Border.Effect>
@@ -113,32 +107,10 @@
                     </LinearGradientBrush>
                 </Border.Background>
             </Border>
-            <Ellipse Width="400" Height="200" VerticalAlignment="Top" Margin="0,-100,0,0" HorizontalAlignment="Center">
-                <Ellipse.Fill>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#33FFA726" Offset="0"/>
-                        <GradientStop Color="#00FFA726" Offset="1"/>
-                    </RadialGradientBrush>
-                </Ellipse.Fill>
-            </Ellipse>
 
-            <Ellipse Width="300" Height="150" VerticalAlignment="Top" Margin="0,-75,0,0" HorizontalAlignment="Center">
-                <Ellipse.Fill>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#22FFCC44" Offset="0"/>
-                        <GradientStop Color="#00FFCC44" Offset="0.8"/>
-                    </RadialGradientBrush>
-                </Ellipse.Fill>
-            </Ellipse>
 
-            <Ellipse Width="500" Height="100" VerticalAlignment="Bottom" Margin="0,0,0,-50" HorizontalAlignment="Center">
-                <Ellipse.Fill>
-                    <RadialGradientBrush>
-                        <GradientStop Color="#11FF8F00" Offset="0"/>
-                        <GradientStop Color="#00FF8F00" Offset="1"/>
-                    </RadialGradientBrush>
-                </Ellipse.Fill>
-            </Ellipse>
+
+
 
             <Grid Panel.ZIndex="2">
                 <Grid.RowDefinitions>
@@ -153,52 +125,59 @@
                         <ColumnDefinition Width="50"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Border Background="#22FFA726" CornerRadius="20" Padding="8" Margin="0,0,15,0">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#FFFFA726" BlurRadius="20" ShadowDepth="0" Opacity="0.6"/>
-                            </Border.Effect>
-                            <Image x:Name="LogoImage" Source="/Resources/Logo.png" Width="40" Height="40">
-                                <Image.Effect>
-                                    <DropShadowEffect Color="#FFFFA726" BlurRadius="25" ShadowDepth="0" Opacity="0.8"/>
-                                </Image.Effect>
-                            </Image>
-                        </Border>
 
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="BITFIGHTERS" FontSize="32" FontWeight="Bold" Foreground="#FFFFA726" FontFamily="{StaticResource CustomFont}" 
-                                     Margin="0,-2,0,0" VerticalAlignment="Center">
-                                <TextBlock.Effect>
-                                    <DropShadowEffect ShadowDepth="0" Opacity="1.0" Color="#FFFFA726" BlurRadius="15"/>
-                                </TextBlock.Effect>
-                            </TextBlock>
-                            <TextBlock Text="Game Launcher" FontSize="20" Foreground="#AAFFA726" FontFamily="{StaticResource CustomFont}"
-                                     FontWeight="SemiBold" Margin="0,-4,0,0"/>
-                        </StackPanel>
-                    </StackPanel>
-
-                    <Button Grid.Column="2" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
-                            HorizontalAlignment="Right" VerticalAlignment="Center" 
-                            Margin="0,0,10,29" Click="CloseButton_Click" 
-                            Height="30" Width="30">
+                    <!-- Minimize button placed to the left of the close button (styled same as MainWindow) -->
+                    <Button Grid.Column="1" Content="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="12" 
+                            Click="MinimizeButton_Click" Height="30" Width="30" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-7,35">
                         <Button.Style>
                             <Style TargetType="Button">
-                                <Setter Property="Background" Value="#22FFFFFF"/>
+                                <Setter Property="Background" Value="#45d2cdcf"/>
                                 <Setter Property="BorderBrush" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="#CCFFA726"/>
+                                <Setter Property="Foreground" Value="#45d2cdcf"/>
                                 <Setter Property="Cursor" Value="Hand"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
                                             <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
                                                     CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6,9,6,0"/>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Foreground" Value="#FFFF4444"/>
-                                                    <Setter TargetName="ButtonBorder" Property="Background" Value="#33FF4444"/>
-                                                    <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFFF4444"/>
+                                                    <Setter Property="Foreground" Value="#FF1A1C20"/>
+                                                    <Setter TargetName="ButtonBorder" Property="Background" Value="#80FFFFFF"/>
+                                                    <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FF1A1C20"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
+                    <Button Grid.Column="2" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="16" 
+                            HorizontalAlignment="Right" VerticalAlignment="Center" 
+                            Margin="0,0,10,35" Click="CloseButton_Click" 
+                            Height="30" Width="30">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#45d2cdcf"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="#45d2cdcf"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
+                                                    CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,1,0,0"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Foreground" Value="#FF1A1C20"/>
+                                                    <Setter TargetName="ButtonBorder" Property="Background" Value="#80FFFFFF"/>
+                                                    <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FF1A1C20"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -220,7 +199,7 @@
                     <!-- Left: Login controls (moved up and further left) -->
                     <StackPanel Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="300" Margin="-80,-40,0,0">
                         <!-- Title above login (moved from right side) -->
-                        <Border Background="Transparent" CornerRadius="10" Padding="10,0" Margin="45,-100,0,80" HorizontalAlignment="Center">
+                        <Border Background="Transparent" CornerRadius="10" Padding="10,0" Margin="45,0,0,40" HorizontalAlignment="Center">
                             <StackPanel HorizontalAlignment="Center">
                                 <TextBlock Text="Üdvözöljük!" FontSize="30" FontWeight="Bold" FontFamily="{StaticResource CustomFont3}"
                                            Foreground="White" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,5">
@@ -312,18 +291,39 @@
                             </Grid>
                         </Border>
 
-                        <Border x:Name="ErrorBorder" Background="#22FF4444" CornerRadius="10" 
-                                BorderBrush="#FFFF4444" BorderThickness="1"
-                                Padding="15,10" Margin="20,0,-20,18" Opacity="0" Visibility="Collapsed">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="⚠" FontSize="14" Foreground="#FFFF4444" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="ErrorText" Text="Hiba üzenet" 
-                                           Foreground="White" FontSize="14" FontWeight="Medium" 
-                                           FontFamily="{StaticResource CustomFont3}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
+                        <!-- Google Authentication Button placed directly under the password field -->
+                        <Button x:Name="GoogleButton" Click="GoogleAuthButton_Click" Height="50" Margin="20,-10,-20,15" Cursor="Hand" HorizontalAlignment="Stretch">
+                            <Button.Background>
+                                <SolidColorBrush Color="White"/>
+                            </Button.Background>
+                            <Button.BorderBrush>
+                                <SolidColorBrush Color="#FFE0E0E0"/>
+                            </Button.BorderBrush>
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="border" CornerRadius="12" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1">
+                                        <Grid Margin="10,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="40"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <!-- Google icon rendered via SharpVectors SvgViewbox -->
+                                            <svg:SvgViewbox Source="pack://application:,,,/Icons/google.svg" Width="26" Height="26" Margin="-10,0,0,0" Stretch="Uniform" Grid.Column="0"/>
+                                            <ContentPresenter Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="border" Property="Background" Value="#FFF7F7F7"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                            <TextBlock Text="BEJELENTKEZÉS GOOGLE-EL" FontFamily="{StaticResource CustomFont3}" FontWeight="Bold" Foreground="#FF1A1C20" FontSize="16" Margin="0,1,0,0"/>
+                        </Button>
 
-                        <CheckBox x:Name="RememberMeCheckBox" Margin="20,0,0,30" HorizontalAlignment="Left">
+                        <!-- Move: Remember checkbox placed under Google auth button -->
+                        <CheckBox x:Name="RememberMeCheckBox" Margin="30,8,0,20" HorizontalAlignment="Left">
                             <CheckBox.Style>
                                 <Style TargetType="CheckBox">
                                     <Setter Property="Foreground" Value="#CCCCCC"/>
@@ -337,7 +337,7 @@
                                                     <Border x:Name="CheckBorder" Width="22" Height="22" 
                                                             Background="#15FFFFFF" BorderBrush="#44FFFFFF" 
                                                             BorderThickness="2" CornerRadius="6" Margin="0,0,12,0">
-                                                        <TextBlock x:Name="CheckMark" Text="✓" FontSize="14" FontWeight="Bold"
+                                                        <TextBlock x:Name="CheckMark" Text="✓" FontSize="14" FontWeight="Bold" Margin="0,1,0,0"
                                                                    Foreground="#FFFFA726" HorizontalAlignment="Center" 
                                                                    VerticalAlignment="Center" Opacity="0"/>
                                                     </Border>
@@ -362,6 +362,18 @@
                                 </Style>
                             </CheckBox.Style>
                         </CheckBox>
+
+                        <Border x:Name="ErrorBorder" Background="#22FF4444" CornerRadius="12"
+                                BorderBrush="#FFFF4444" BorderThickness="2"
+                                Padding="15,10" Opacity="0" Visibility="Visible" IsHitTestVisible="False"
+                                Margin="20,7,-20,50" Height="50" VerticalAlignment="Top">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <TextBlock Text="⚠" FontSize="16" Foreground="#FFFF4444" Margin="0,-3,8,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="ErrorText" Text="Hiba üzenet" 
+                                           Foreground="White" FontSize="14" FontWeight="Medium" 
+                                           FontFamily="{StaticResource CustomFont3}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
 
                         <Button x:Name="LoginButton" Click="LoginButton_Click" Height="55" Margin="20,0,-20,15" Cursor="Hand">
                             <Button.Style>
@@ -421,6 +433,9 @@
                             </Button.Style>
                             <TextBlock x:Name="LoginButtonText" Text="BEJELENTKEZÉS" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="{StaticResource CustomFont3}"/>
                         </Button>
+
+                        <!-- Google Authentication Button (same size as LoginButton) -->
+                        
 
                         <TextBlock Text="BitFighters © 2026" FontSize="12" Foreground="#66CCCCCC" FontFamily="{StaticResource CustomFont3}"
                                    HorizontalAlignment="Center" FontWeight="Medium" Margin="45,0,0,0"/>

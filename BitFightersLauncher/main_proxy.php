@@ -109,8 +109,8 @@ try {
                 // Debug mode - csak teszteléshez, később távolítsd el!
                 $debug_mode = isset($data['debug']) && $data['debug'] === true;
                 
-                // Felhasználó lekérdezése a users táblából
-                $stmt = $conn->prepare("SELECT id, username, highest_score, password FROM users WHERE username = ?");
+                // Felhasználó lekérdezése a users táblából (profile_picture visszaadása is)
+                $stmt = $conn->prepare("SELECT id, username, highest_score, password, profile_picture FROM users WHERE username = ?");
                 $stmt->bind_param("s", $data['username']);
                 $stmt->execute();
                 $result = $stmt->get_result();
@@ -141,6 +141,8 @@ try {
                                 "id" => (int)$row['id'],
                                 "username" => $row['username'],
                                 "highest_score" => (int)$row['highest_score'],
+                                // Ha van profile_picture mező, adjuk vissza, különben null
+                                "profile_picture" => isset($row['profile_picture']) ? $row['profile_picture'] : null,
                                 "created_at" => "2024-01-01 00:00:00" // Mivel nincs created_at mező a táblában
                             ]
                         ], JSON_UNESCAPED_UNICODE);

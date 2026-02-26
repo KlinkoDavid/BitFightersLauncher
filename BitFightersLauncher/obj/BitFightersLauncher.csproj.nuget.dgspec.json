@@ -26,7 +26,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -58,6 +57,10 @@
             "MySql.Data": {
               "target": "Package",
               "version": "[9.4.0, )"
+            },
+            "SharpVectors.Wpf": {
+              "target": "Package",
+              "version": "[1.7.0, )"
             },
             "System.Text.Json": {
               "target": "Package",

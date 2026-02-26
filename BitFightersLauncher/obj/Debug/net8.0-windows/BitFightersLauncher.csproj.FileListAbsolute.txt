@@ -91,3 +91,10 @@ C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher.genruntimeconfig.cache
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\ref\BitFightersLauncher.dll
 C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\obj\Debug\net8.0-windows\BitFightersLauncher_Content.g.cs
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\SharpVectors.Converters.Wpf.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\SharpVectors.Core.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\SharpVectors.Css.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\SharpVectors.Dom.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\SharpVectors.Model.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\SharpVectors.Rendering.Wpf.dll
+C:\Users\Administrator\source\repos\BitFightersLauncher\BitFightersLauncher\bin\Debug\net8.0-windows\SharpVectors.Runtime.Wpf.dll
