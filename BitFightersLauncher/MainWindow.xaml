@@ -4,7 +4,7 @@
         xmlns:sys="clr-namespace:System;assembly=System.Runtime"
         Title="BitFighters Launcher" Height="700" Width="1200"
         WindowStyle="None" ResizeMode="NoResize" WindowState="Normal" AllowsTransparency="True" Background="Transparent"
-        Icon="/Resources/Logo.png"
+        Icon="pack://application:,,,/Resources/Logo.png"
         x:Name="BitFightersWindow"
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True" SnapsToDevicePixels="True"
@@ -367,8 +367,7 @@
                             </Border>
 
                             <!-- Minimize button -->
-                            <Button x:Name="MinimizeBtn" Content="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="12" 
-                                    Click="MinimizeButton_Click" Height="30" Width="30" Margin="0,0,3,0">
+                            <Button x:Name="MinimizeBtn" Click="MinimizeButton_Click" Height="30" Width="30" Margin="0,0,3,0">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Background" Value="#45d2cdcf"/>
@@ -380,7 +379,12 @@
                                                 <ControlTemplate TargetType="Button">
                                                     <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
                                                             CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="2">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6,9,6,0"/>
+                                                        <Viewbox Width="18" Height="20" Stretch="Uniform">
+                                                            <Canvas Width="640" Height="640">
+                                                                <Path Fill="{TemplateBinding Foreground}"
+                                                                      Data="M64 480C64 462.3 78.3 448 96 448L544 448C561.7 448 576 462.3 576 480C576 497.7 561.7 512 544 512L96 512C78.3 512 64 497.7 64 480z"/>
+                                                            </Canvas>
+                                                        </Viewbox>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -397,8 +401,7 @@
                             </Button>
 
                             <!-- Exit button egyszerűsítve -->
-                            <Button x:Name="ExitBtn" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="16"
-                                    Click="ExitButton_Click" Height="30" Width="30">
+                            <Button x:Name="ExitBtn" Click="ExitButton_Click" Height="30" Width="30">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Background" Value="#45d2cdcf"/>
@@ -410,7 +413,12 @@
                                                 <ControlTemplate TargetType="Button">
                                                     <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" 
                                                             CornerRadius="15" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="2">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,1,0,0"/>
+                                                        <Viewbox Width="20" Height="20" Stretch="Uniform">
+                                                            <Canvas Width="640" Height="620">
+                                                                <Path Fill="{TemplateBinding Foreground}"
+                                                                      Data="M183.1 137.4C170.6 124.9 150.3 124.9 137.8 137.4C125.3 149.9 125.3 170.2 137.8 182.7L275.2 320L137.9 457.4C125.4 469.9 125.4 490.2 137.9 502.7C150.4 515.2 170.7 515.2 183.2 502.7L320.5 365.3L457.9 502.6C470.4 515.1 490.7 515.1 503.2 502.6C515.7 490.1 515.7 469.8 503.2 457.3L365.8 320L503.1 182.6C515.6 170.1 515.6 149.8 503.1 137.3C490.6 124.8 470.3 124.8 457.8 137.3L320.5 274.7L183.1 137.4z"/>
+                                                            </Canvas>
+                                                        </Viewbox>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
@@ -602,7 +610,7 @@
                                                                                 <Setter Property="Margin" Value="-4,0,0,0"/>
                                                                             </Trigger>
                                                                             <Trigger Property="Text" Value="LETÖLTÉS">
-                                                                                <Setter Property="FontSize" Value="13"/>
+                                                                                <Setter Property="FontSize" Value="14"/>
                                                                                 <Setter Property="Margin" Value="0,1,0,0"/>
                                                                             </Trigger>
                                                                             <Trigger Property="Text" Value="FRISSÍTÉS">
@@ -666,11 +674,11 @@
                                     <!-- Percentage -->
                                     <Grid Grid.Column="0" Width="36" Height="36" Margin="0,0,5,0">
                                         <Ellipse Fill="Black"/>
-                                        <Ellipse Stroke="#634d1a" StrokeThickness="5"/>
+                                        <Ellipse Stroke="#46391c" StrokeThickness="5.5"/>
                                         <Ellipse Stroke="Black" StrokeThickness="3"/>
                                         <Path x:Name="CompactProgressRingPath"
                                               Stroke="#f1b324"
-                                              StrokeThickness="3"
+                                              StrokeThickness="2.5"
                                               StrokeStartLineCap="Round"
                                               StrokeEndLineCap="Round"
                                               StrokeDashArray="0 100"
@@ -821,11 +829,11 @@
                                         <!-- Left: Percentage circle -->
                                         <Grid Grid.Column="0" Width="38" Height="38" VerticalAlignment="Center" Margin="0,0,14,0">
                                             <Ellipse Fill="Black"/>
-                                            <Ellipse Stroke="#634d1a" StrokeThickness="5.3"/>
+                                            <Ellipse Stroke="#46391c" StrokeThickness="5.5"/>
                                             <Ellipse Stroke="Black" StrokeThickness="3"/>
                                             <Path x:Name="ProgressRingPath"
                                                   Stroke="#f1b324"
-                                                  StrokeThickness="3"
+                                                  StrokeThickness="2.5"
                                                   StrokeStartLineCap="Round"
                                                   StrokeEndLineCap="Round"
                                                   StrokeDashArray="0 31.416"

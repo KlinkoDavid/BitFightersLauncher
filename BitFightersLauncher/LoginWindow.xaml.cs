@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -41,8 +42,10 @@ namespace BitFightersLauncher
 
     public partial class LoginWindow : Window
     {
-        // MySQL Proxy API - Updated to use the real database
-        private const string ApiUrl = "https://bitfighters.eu/backend/Launcher/main_proxy.php";
+        // MySQL Proxy API
+        private static readonly string ApiUrl = SecureEnv.ApiUrl;
+        private static readonly string GoogleClientId = SecureEnv.GoogleClientId;
+        private static readonly string GoogleRedirectUri = SecureEnv.GoogleRedirectUri;
 
         // Events for login success/failure
         public event EventHandler<LoginEventArgs>? LoginSucceeded;
@@ -156,23 +159,96 @@ namespace BitFightersLauncher
             this.WindowState = WindowState.Minimized;
         }
 
-        private void GoogleAuthButton_Click(object sender, RoutedEventArgs e)
+        private async void GoogleAuthButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: Replace clientId and redirectUri with your OAuth credentials and proper redirect handling.
-            string clientId = "YOUR_GOOGLE_CLIENT_ID";
-            string redirectUri = "urn:ietf:wg:oauth:2.0:oob"; // or your registered redirect URI
             string scope = Uri.EscapeDataString("openid email profile");
             string state = Guid.NewGuid().ToString("N");
+            string nonce = Guid.NewGuid().ToString("N");
+            string language = Uri.EscapeDataString(GetGoogleAuthLanguage());
+            string responseType = Uri.EscapeDataString("code id_token");
 
-            string authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={clientId}&redirect_uri={Uri.EscapeDataString(redirectUri)}&response_type=code&scope={scope}&state={state}&access_type=offline&prompt=select_account";
+            string authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={GoogleClientId}&redirect_uri={Uri.EscapeDataString(GoogleRedirectUri)}&response_type={responseType}&scope={scope}&state={state}&nonce={nonce}&access_type=offline&prompt=select_account&hl={language}";
 
+            var oauthWindow = new OAuthWindow(authUrl, GoogleRedirectUri) { Owner = this };
+            bool? result = oauthWindow.ShowDialog();
+
+            if (result == true && !string.IsNullOrEmpty(oauthWindow.AuthorizationCode))
+            {
+                await HandleGoogleAuthCodeAsync(oauthWindow.AuthorizationCode);
+            }
+        }
+
+        private static string GetGoogleAuthLanguage()
+        {
+            var uiCulture = CultureInfo.CurrentUICulture;
+
+            if (!string.IsNullOrWhiteSpace(uiCulture.Name))
+                return uiCulture.Name;
+
+            if (!string.IsNullOrWhiteSpace(uiCulture.TwoLetterISOLanguageName))
+                return uiCulture.TwoLetterISOLanguageName;
+
+            return "en";
+        }
+
+        private async Task HandleGoogleAuthCodeAsync(string code)
+        {
+            GoogleButton.IsEnabled = false;
             try
             {
-                Process.Start(new ProcessStartInfo { FileName = authUrl, UseShellExecute = true });
+                using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(15);
+
+                var payload = new
+                {
+                    action = "google_login",
+                    google_token = code,
+                    google_code = code,
+                    client_id = GoogleClientId,
+                    redirect_uri = GoogleRedirectUri
+                };
+                string json = JsonSerializer.Serialize(payload);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await httpClient.PostAsync(ApiUrl, content);
+                string responseText = await response.Content.ReadAsStringAsync();
+
+                var apiResponse = JsonSerializer.Deserialize<LoginApiResponse>(responseText);
+
+                if (apiResponse?.success == true && apiResponse.user != null)
+                {
+                    UserId = apiResponse.user.id;
+                    LoggedInUsername = apiResponse.user.username;
+                    UserCreatedAt = apiResponse.user.created_at;
+                    LoggedInUserProfilePicture = apiResponse.user.profile_picture ?? string.Empty;
+
+                    SaveLogin(LoggedInUsername, string.Empty, true);
+
+                    LoginSuccessful = true;
+                    LoginSucceeded?.Invoke(this, new LoginEventArgs
+                    {
+                        Username = LoggedInUsername,
+                        UserId = UserId,
+                        UserCreatedAt = UserCreatedAt,
+                        ProfilePicture = LoggedInUserProfilePicture
+                    });
+
+                    var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(300));
+                    fadeOut.Completed += (s, a) => Close();
+                    BeginAnimation(Window.OpacityProperty, fadeOut);
+                }
+                else
+                {
+                    ShowError(apiResponse?.message ?? "Google bejelentkezés sikertelen!");
+                }
             }
             catch (Exception ex)
             {
-                ShowError("Nem sikerült megnyitni a böngészőt: " + ex.Message);
+                ShowError($"Google bejelentkezési hiba: {ex.Message}");
+            }
+            finally
+            {
+                GoogleButton.IsEnabled = true;
             }
         }
 

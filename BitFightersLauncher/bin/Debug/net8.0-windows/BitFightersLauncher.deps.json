@@ -9,10 +9,14 @@
       "BitFightersLauncher/1.0.0": {
         "dependencies": {
           "Microsoft-WindowsAPICodePack-Shell": "1.1.5",
+          "Microsoft.Web.WebView2": "1.0.3800.47",
           "MySql.Data": "9.4.0",
           "SharpVectors.Wpf": "1.8.0",
           "System.Text.Json": "10.0.2",
-          "WindowsAPICodePack": "8.0.9"
+          "WindowsAPICodePack": "8.0.9",
+          "Microsoft.Web.WebView2.Core": "1.0.3800.47",
+          "Microsoft.Web.WebView2.WinForms": "1.0.3800.47",
+          "Microsoft.Web.WebView2.Wpf": "1.0.3800.47"
         },
         "runtime": {
           "BitFightersLauncher.dll": {}
@@ -74,6 +78,25 @@
       "Microsoft-WindowsAPICodePack-Shell/1.1.5": {
         "dependencies": {
           "Microsoft-WindowsAPICodePack-Core": "1.1.5"
+        }
+      },
+      "Microsoft.Web.WebView2/1.0.3800.47": {
+        "runtimeTargets": {
+          "runtimes/win-arm64/native/WebView2Loader.dll": {
+            "rid": "win-arm64",
+            "assetType": "native",
+            "fileVersion": "1.0.3800.47"
+          },
+          "runtimes/win-x64/native/WebView2Loader.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "1.0.3800.47"
+          },
+          "runtimes/win-x86/native/WebView2Loader.dll": {
+            "rid": "win-x86",
+            "assetType": "native",
+            "fileVersion": "1.0.3800.47"
+          }
         }
       },
       "MySql.Data/9.4.0": {
@@ -217,6 +240,30 @@
             "fileVersion": "0.8.5.0"
           }
         }
+      },
+      "Microsoft.Web.WebView2.Core/1.0.3800.47": {
+        "runtime": {
+          "Microsoft.Web.WebView2.Core.dll": {
+            "assemblyVersion": "1.0.3800.47",
+            "fileVersion": "1.0.3800.47"
+          }
+        }
+      },
+      "Microsoft.Web.WebView2.WinForms/1.0.3800.47": {
+        "runtime": {
+          "Microsoft.Web.WebView2.WinForms.dll": {
+            "assemblyVersion": "1.0.3800.47",
+            "fileVersion": "1.0.3800.47"
+          }
+        }
+      },
+      "Microsoft.Web.WebView2.Wpf/1.0.3800.47": {
+        "runtime": {
+          "Microsoft.Web.WebView2.Wpf.dll": {
+            "assemblyVersion": "1.0.3800.47",
+            "fileVersion": "1.0.3800.47"
+          }
+        }
       }
     }
   },
@@ -275,6 +322,13 @@
       "path": "microsoft-windowsapicodepack-shell/1.1.5",
       "hashPath": "microsoft-windowsapicodepack-shell.1.1.5.nupkg.sha512"
     },
+    "Microsoft.Web.WebView2/1.0.3800.47": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vluoF9sqb72AB02yYs1UXW/2/VsxOMl2idiFJNvG993sOw3bHJvjHXmd3tqevTd9s3Md/9FgEzkOXoUl2Nb/ww==",
+      "path": "microsoft.web.webview2/1.0.3800.47",
+      "hashPath": "microsoft.web.webview2.1.0.3800.47.nupkg.sha512"
+    },
     "MySql.Data/9.4.0": {
       "type": "package",
       "serviceable": true,
@@ -323,6 +377,21 @@
       "sha512": "sha512-TR4j17WeVSEb3ncgL2NqlXEqcy04I+Kk9CaebNDplUeL8XOgjkZ7fP4Wg4grBdPLIqsV86p2QaXTkZoRMVOsew==",
       "path": "zstdsharp.port/0.8.5",
       "hashPath": "zstdsharp.port.0.8.5.nupkg.sha512"
+    },
+    "Microsoft.Web.WebView2.Core/1.0.3800.47": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Web.WebView2.WinForms/1.0.3800.47": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Web.WebView2.Wpf/1.0.3800.47": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
     }
   }
 }

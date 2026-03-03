@@ -102,10 +102,10 @@ namespace BitFightersLauncher
 
     public partial class MainWindow : Window
     {
-        private const string GameDownloadUrl = "https://bitfighters.eu/BitFighters.zip";
-        private const string VersionCheckUrl = "https://bitfighters.eu/version.txt";
+        private static readonly string GameDownloadUrl = SecureEnv.GameDownloadUrl;
+        private static readonly string VersionCheckUrl = SecureEnv.VersionCheckUrl;
         private const string GameExecutableName = "BitFighters.exe";
-        private const string ApiUrl = "https://bitfighters.eu/backend/Launcher/main_proxy.php";
+        private static readonly string ApiUrl = SecureEnv.ApiUrl;
         private const string BackgroundMusicFileName = "menu_trackszito.wav";
 
         private string gameInstallPath = string.Empty;
@@ -148,6 +148,7 @@ namespace BitFightersLauncher
         private readonly MediaPlayer _backgroundMusicPlayer = new();
         private bool _isBackgroundMusicInitialized;
         private bool _isBackgroundMusicMuted;
+        private bool _isBackgroundMusicPausedByWindowState;
         private string? loggedInUserProfilePicturePath = null;
         private const string ServerBaseUrl = "https://bitfighters.eu"; // adjust if your images are hosted elsewhere
         private readonly string _profileCacheDir;
@@ -178,6 +179,8 @@ namespace BitFightersLauncher
             Loaded += MainWindow_Loaded;
             SizeChanged += (s, e) => UpdateBorderClip();
             Closed += (s, e) => StopScrollAnimation();
+            Activated += MainWindow_Activated;
+            Deactivated += MainWindow_Deactivated;
 
             // Optimalizált scroll render loop inicializálása
             InitializeTimers();
@@ -267,6 +270,37 @@ namespace BitFightersLauncher
             _backgroundMusicPlayer.Stop();
             _backgroundMusicPlayer.Close();
             _isBackgroundMusicInitialized = false;
+            _isBackgroundMusicPausedByWindowState = false;
+        }
+
+        private void MainWindow_Deactivated(object? sender, EventArgs e)
+        {
+            if (!_isBackgroundMusicInitialized)
+            {
+                return;
+            }
+
+            _backgroundMusicPlayer.Pause();
+            _isBackgroundMusicPausedByWindowState = true;
+        }
+
+        private void MainWindow_Activated(object? sender, EventArgs e)
+        {
+            if (!_isBackgroundMusicPausedByWindowState)
+            {
+                return;
+            }
+
+            if (!_isBackgroundMusicInitialized)
+            {
+                StartBackgroundMusic();
+            }
+            else
+            {
+                _backgroundMusicPlayer.Play();
+            }
+
+            _isBackgroundMusicPausedByWindowState = false;
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)

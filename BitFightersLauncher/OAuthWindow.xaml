@@ -1,0 +1,77 @@
+<Window x:Class="BitFightersLauncher.OAuthWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="Google Bejelentkezés" Height="650" Width="480"
+        WindowStyle="None" Background="#FF1A1C20"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Icon="pack://application:,,,/Resources/Logo.png">
+    
+    <Window.Resources>
+        <FontFamily x:Key="CustomFont">pack://application:,,,/Fonts/Energize-Bold-Italic.otf#Energize</FontFamily>
+        <FontFamily x:Key="CustomFont2">pack://application:,,,/Fonts/SourGummy_Expanded-Bold.ttf#Sour Gummy Expanded</FontFamily>
+        <FontFamily x:Key="CustomFont3">pack://application:,,,/Fonts/RussoOne-Regular.ttf#Russo One</FontFamily>
+        <FontFamily x:Key="Number">pack://application:,,,/Fonts/RussoOne-Regular.ttf#Russo One</FontFamily>
+    </Window.Resources>
+
+
+    <Border x:Name="RootBorder" CornerRadius="15" Background="#FF1A1C20"
+            BorderBrush="#33FFFFFF" BorderThickness="1" ClipToBounds="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="45"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="DragWindow">
+                <TextBlock x:Name="TitleText" Text="Google bejelentkezés" Foreground="#CCCCCCCC" FontFamily="{StaticResource CustomFont3}"
+                           VerticalAlignment="Center" Margin="15,0,0,0" FontSize="14"/>
+                <Button x:Name="CloseButton" Width="30" Height="30"
+                        HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"
+                        Click="CloseButton_Click" Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="#AACCCCCC"/>
+                            <Setter Property="FontSize" Value="14"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="5">
+                                            <Viewbox Width="20" Height="20" Stretch="Uniform">
+                                                <Canvas Width="640" Height="620">
+                                                    <Path Fill="{TemplateBinding Foreground}"
+                                                          Data="M183.1 137.4C170.6 124.9 150.3 124.9 137.8 137.4C125.3 149.9 125.3 170.2 137.8 182.7L275.2 320L137.9 457.4C125.4 469.9 125.4 490.2 137.9 502.7C150.4 515.2 170.7 515.2 183.2 502.7L320.5 365.3L457.9 502.6C470.4 515.1 490.7 515.1 503.2 502.6C515.7 490.1 515.7 469.8 503.2 457.3L365.8 320L503.1 182.6C515.6 170.1 515.6 149.8 503.1 137.3C490.6 124.8 470.3 124.8 457.8 137.3L320.5 274.7L183.1 137.4z"/>
+                                                </Canvas>
+                                            </Viewbox>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#44FF4444"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
+
+            <!-- Separator -->
+            <Border Grid.Row="0" Height="1" VerticalAlignment="Bottom" Background="#22FFFFFF"/>
+
+            <!-- WebView2 -->
+            <wv2:WebView2 x:Name="AuthBrowser" Grid.Row="1" Margin="0,0,0,0"/>
+
+            <!-- Loading overlay (hidden once navigation completes) -->
+            <Border x:Name="LoadingOverlay" Grid.Row="1" Background="#FF1A1C20" Margin="0,0,0,0">
+                <TextBlock x:Name="LoadingText" Text="Loading..." Foreground="#88CCCCCC"
+                           FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
