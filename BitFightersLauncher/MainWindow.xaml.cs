@@ -158,6 +158,20 @@ namespace BitFightersLauncher
         {
             InitializeComponent();
 
+            try
+            {
+                var exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                var icon = System.Drawing.Icon.ExtractAssociatedIcon(exePath);
+                if (icon != null)
+                {
+                    Icon = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                        icon.Handle,
+                        System.Windows.Int32Rect.Empty,
+                        System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+                }
+            }
+            catch { }
+
             if (FindName("MuteButton") is Button muteButton)
             {
                 muteButton.Click += MuteButton_Click;

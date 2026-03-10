@@ -4457,7 +4457,7 @@
       "message": "BitFightersLauncher depends on SharpVectors.Wpf (>= 1.7.0) but SharpVectors.Wpf 1.7.0 was not found. SharpVectors.Wpf 1.8.0 was resolved instead.",
       "libraryId": "SharpVectors.Wpf",
       "targetGraphs": [
-        "net8.0-windows7.0"
+        "net8.0-windows"
       ]
     }
   ]

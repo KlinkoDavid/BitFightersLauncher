@@ -20,24 +20,36 @@
     <!-- Debug settings -->
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
+
+    <!-- Application icon -->
+    <ApplicationIcon>Resources\BitFIghters.ico</ApplicationIcon>
   </PropertyGroup>
 
   <!-- Release optimizations -->
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
-    <Optimize>true</Optimize>
-    <DebugType>none</DebugType>
+	<Optimize>true</Optimize>
+	<DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\Logo.png" />
-    <None Remove="Resources\BG.png" />
-	 <None Remove="Resources\Background.png" />
+	<None Remove="Resources\Logo.png" />
+	<None Remove="Resources\BG.png" />
+	<None Remove="Resources\Background.png" />
+	<None Remove="Resources\BitFIghters.ico" />
     <None Remove="Resources\menu_trackszito.wav" />
     <None Remove="Fonts\Energize-Bold-Italic.otf" />
     <None Remove="Fonts\SourGummy_Expanded-Bold.ttf" />
 	<None Remove="Fonts\RussoOne-Regular.ttf" />
+	<Compile Remove="Converters\**" />
+	<Compile Remove="Resources\icons\**" />
+	<EmbeddedResource Remove="Converters\**" />
+	<EmbeddedResource Remove="Resources\icons\**" />
+	<None Remove="Converters\**" />
     <None Remove="Icons\**\*.svg" />
+    <None Remove="Resources\icons\**" />
+    <Page Remove="Converters\**" />
+    <Page Remove="Resources\icons\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,12 +65,12 @@
     <Resource Include="Resources\Logo.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Resources\BitFIghters.ico">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
 	  <Resource Include="Resources\Background.png">
 		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
 	  </Resource>
-    <Resource Include="Resources\BG.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
     <Content Include="Resources\menu_trackszito.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -74,11 +86,6 @@
     <Resource Include="Icons\**\*.svg">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Converters\" />
-    <Folder Include="Resources\icons\" />
   </ItemGroup>
 
 </Project>

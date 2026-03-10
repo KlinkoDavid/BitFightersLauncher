@@ -164,7 +164,7 @@ namespace BitFightersLauncher
             string scope = Uri.EscapeDataString("openid email profile");
             string state = Guid.NewGuid().ToString("N");
             string nonce = Guid.NewGuid().ToString("N");
-            string language = Uri.EscapeDataString(GetGoogleAuthLanguage());
+            string language = "hu";
             string responseType = Uri.EscapeDataString("code id_token");
 
             string authUrl = $"https://accounts.google.com/o/oauth2/v2/auth?client_id={GoogleClientId}&redirect_uri={Uri.EscapeDataString(GoogleRedirectUri)}&response_type={responseType}&scope={scope}&state={state}&nonce={nonce}&access_type=offline&prompt=select_account&hl={language}";
@@ -176,19 +176,6 @@ namespace BitFightersLauncher
             {
                 await HandleGoogleAuthCodeAsync(oauthWindow.AuthorizationCode);
             }
-        }
-
-        private static string GetGoogleAuthLanguage()
-        {
-            var uiCulture = CultureInfo.CurrentUICulture;
-
-            if (!string.IsNullOrWhiteSpace(uiCulture.Name))
-                return uiCulture.Name;
-
-            if (!string.IsNullOrWhiteSpace(uiCulture.TwoLetterISOLanguageName))
-                return uiCulture.TwoLetterISOLanguageName;
-
-            return "en";
         }
 
         private async Task HandleGoogleAuthCodeAsync(string code)

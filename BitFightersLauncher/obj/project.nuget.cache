@@ -89,7 +89,7 @@
       "filePath": "C:\\Users\\Administrator\\source\\repos\\BitFightersLauncher\\BitFightersLauncher\\BitFightersLauncher.csproj",
       "libraryId": "SharpVectors.Wpf",
       "targetGraphs": [
-        "net8.0-windows7.0"
+        "net8.0-windows"
       ]
     }
   ]

@@ -18,16 +18,33 @@ $username = "c86218BitFighter";
 $password = "Alosos123";
 $dbname = "c86218game_users";
 
-// HTTP metódus ellenõrzése
+// HTTP metódus ellenőrzése
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Debug információk gyûjtése
+// Debug információk gyűjtése
 $debug_info = [
     "method" => $method,
     "content_type" => $_SERVER['CONTENT_TYPE'] ?? 'not set',
     "php_version" => phpversion(),
     "timestamp" => date('Y-m-d H:i:s')
 ];
+
+function buildProfilePictureUrl($profilePath) {
+    if (empty($profilePath)) {
+        return null;
+    }
+
+    $profilePath = trim($profilePath);
+    if (preg_match('#^https?://#i', $profilePath)) {
+        return $profilePath;
+    }
+
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $profilePath = ltrim($profilePath, '/');
+
+    return !empty($host) ? ($scheme . '://' . $host . '/' . $profilePath) : ('/' . $profilePath);
+}
 
 try {
     // Kérés típusa szerint adatok kinyerése
@@ -45,15 +62,15 @@ try {
         }
     }
 
-    // Action paraméter ellenõrzése
+    // Action paraméter ellenőrzése
     if (!isset($data['action']) || empty($data['action'])) {
         http_response_code(400);
         echo json_encode([
             "success" => false, 
             "message" => "Hiányzó 'action' paraméter",
             "available_actions" => [
-                "login", "get_user_score", "get_user_score_by_id", 
-                "update_user_score", "get_users", "get_leaderboard", "get_user_rank", "get_news", "test"
+                "login", "google_login", "get_user_score", "get_user_score_by_id", 
+                "update_user_score", "get_users", "get_leaderboard", "get_user_rank", "get_news", "get_patchnotes", "test"
             ]
         ], JSON_UNESCAPED_UNICODE);
         exit;
@@ -106,33 +123,14 @@ try {
             }
             
             try {
-                // Debug mode - csak teszteléshez, később távolítsd el!
-                $debug_mode = isset($data['debug']) && $data['debug'] === true;
-                
-                // Felhasználó lekérdezése a users táblából (profile_picture visszaadása is)
+                // Felhasználó lekérdezése a users táblából
                 $stmt = $conn->prepare("SELECT id, username, highest_score, password, profile_picture FROM users WHERE username = ?");
                 $stmt->bind_param("s", $data['username']);
                 $stmt->execute();
                 $result = $stmt->get_result();
                 
                 if ($row = $result->fetch_assoc()) {
-                    // Debug információk
-                    if ($debug_mode) {
-                        echo json_encode([
-                            "success" => false,
-                            "debug" => true,
-                            "message" => "Debug info",
-                            "username_found" => true,
-                            "username_in_db" => $row['username'],
-                            "password_hash_prefix" => substr($row['password'], 0, 7),
-                            "password_hash_length" => strlen($row['password']),
-                            "input_password_length" => strlen($data['password']),
-                            "password_verify_result" => password_verify($data['password'], $row['password'])
-                        ], JSON_UNESCAPED_UNICODE);
-                        break;
-                    }
-                    
-                    // Jelszó ellenőrzése bcrypt hash-sel
+                    // Jelszó ellenőrzése bcrypt hash ellen
                     if (password_verify($data['password'], $row['password'])) {
                         echo json_encode([
                             "success" => true,
@@ -141,9 +139,8 @@ try {
                                 "id" => (int)$row['id'],
                                 "username" => $row['username'],
                                 "highest_score" => (int)$row['highest_score'],
-                                // Ha van profile_picture mező, adjuk vissza, különben null
-                                "profile_picture" => isset($row['profile_picture']) ? $row['profile_picture'] : null,
-                                "created_at" => "2024-01-01 00:00:00" // Mivel nincs created_at mező a táblában
+                                "created_at" => "2024-01-01 00:00:00", // Mivel nincs created_at mező a táblában
+                                "profile_picture" => buildProfilePictureUrl($row['profile_picture'] ?? null)
                             ]
                         ], JSON_UNESCAPED_UNICODE);
                     } else {
@@ -153,17 +150,6 @@ try {
                         ], JSON_UNESCAPED_UNICODE);
                     }
                 } else {
-                    if ($debug_mode) {
-                        echo json_encode([
-                            "success" => false,
-                            "debug" => true,
-                            "message" => "Debug info",
-                            "username_found" => false,
-                            "input_username" => $data['username']
-                        ], JSON_UNESCAPED_UNICODE);
-                        break;
-                    }
-                    
                     echo json_encode([
                         "success" => false, 
                         "message" => "Hibás felhasználónév vagy jelszó"
@@ -220,13 +206,15 @@ try {
             }
             break;
             
+        case 'get_patchnotes':
         case 'get_news':
             try {
                 $limit = isset($data['limit']) ? (int)$data['limit'] : 20;
+                if ($limit < 1) $limit = 1;
                 if ($limit > 100) $limit = 100;
                 
-                // Hírek lekérdezése a patchnotes táblából - title, content, created_at és image_base64
-                $stmt = $conn->prepare("SELECT id, title, content, created_at, image_base64 FROM patchnotes ORDER BY created_at DESC LIMIT ?");
+                // Hírek lekérdezése a patchnotes táblából
+                $stmt = $conn->prepare("SELECT id, title, content, created_at, image_base64 FROM patchnotes ORDER BY created_at DESC, id DESC LIMIT ?");
                 $stmt->bind_param("i", $limit);
                 $stmt->execute();
                 $result = $stmt->get_result();
@@ -236,9 +224,9 @@ try {
                     $news[] = [
                         "id" => (int)$row['id'],
                         "title" => $row['title'],
-                        "content" => isset($row['content']) ? $row['content'] : "",
+                        "content" => $row['content'] ?? "",
                         "created_at" => $row['created_at'],
-                        "image_base64" => isset($row['image_base64']) ? $row['image_base64'] : null
+                        "image_base64" => $row['image_base64'] ?? null
                     ];
                 }
                 
@@ -247,8 +235,9 @@ try {
                     $news[] = [
                         "id" => 0,
                         "title" => "Üdvözöljük a BitFighters világában!",
-                        "content" => "",
-                        "created_at" => date('Y-m-d H:i:s')
+                        "content" => "Még nincs elérhető patch note bejegyzés.",
+                        "created_at" => date('Y-m-d H:i:s'),
+                        "image_base64" => null
                     ];
                 }
                 
@@ -260,8 +249,9 @@ try {
                     [
                         "id" => 0,
                         "title" => "Hiba történt",
-                        "content" => "",
-                        "created_at" => date('Y-m-d H:i:s')
+                        "content" => "A patch note-ok betöltése sikertelen.",
+                        "created_at" => date('Y-m-d H:i:s'),
+                        "image_base64" => null
                     ]
                 ], JSON_UNESCAPED_UNICODE);
             }
@@ -303,7 +293,7 @@ try {
             
         case 'get_leaderboard':
             try {
-                $limit = isset($data['limit']) ? (int)$data['limit'] : 10;
+                $limit = isset($data['limit']) ? (int)$data['limit'] : 15;
                 if ($limit > 100) $limit = 100;
                 
                 $stmt = $conn->prepare("SELECT id, username, highest_score FROM users WHERE highest_score > 0 ORDER BY highest_score DESC LIMIT ?");
@@ -477,14 +467,105 @@ try {
             }
             break;
             
+        case 'google_login':
+            if (empty($data['google_token'])) {
+                http_response_code(400);
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Hiányzó google_token paraméter"
+                ], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+
+            try {
+                $token = $data['google_token'];
+                $parts = explode('.', $token);
+
+                if (count($parts) !== 3) {
+                    throw new Exception("Érvénytelen Google token formátum");
+                }
+
+                // Base64url dekódolás
+                $payload_b64 = $parts[1];
+                $payload_b64 = str_replace(['-', '_'], ['+', '/'], $payload_b64);
+                $padding = strlen($payload_b64) % 4;
+                if ($padding) {
+                    $payload_b64 .= str_repeat('=', 4 - $padding);
+                }
+                $google_data = json_decode(base64_decode($payload_b64), true);
+
+                if (!$google_data || !isset($google_data['email'])) {
+                    throw new Exception("Nem sikerült kiolvasni a Google token adatait");
+                }
+
+                $google_email = strtolower(trim($google_data['email']));
+
+                // Felhasználó keresése - támogatjuk a username/email alapú tárolást is
+                $has_email_column = false;
+                $email_col_result = $conn->query("SHOW COLUMNS FROM users LIKE 'email'");
+                if ($email_col_result && $email_col_result->num_rows > 0) {
+                    $has_email_column = true;
+                }
+
+                if ($has_email_column) {
+                    $stmt = $conn->prepare("SELECT id, username, highest_score, profile_picture FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1");
+                    $stmt->bind_param("ss", $google_email, $google_email);
+                } else {
+                    $stmt = $conn->prepare("SELECT id, username, highest_score, profile_picture FROM users WHERE LOWER(username) = ? LIMIT 1");
+                    $stmt->bind_param("s", $google_email);
+                }
+
+                $stmt->execute();
+                $result = $stmt->get_result();
+
+                // Fallback: ha a username az email előtti rész (pl. bela@gmail.com -> bela)
+                if (!$result->num_rows && strpos($google_email, '@') !== false) {
+                    $local_part = strstr($google_email, '@', true);
+
+                    if (!empty($local_part)) {
+                        $stmt->close();
+                        $stmt = $conn->prepare("SELECT id, username, highest_score, profile_picture FROM users WHERE LOWER(username) = ? LIMIT 1");
+                        $stmt->bind_param("s", $local_part);
+                        $stmt->execute();
+                        $result = $stmt->get_result();
+                    }
+                }
+
+                if ($row = $result->fetch_assoc()) {
+                    echo json_encode([
+                        "success" => true,
+                        "message" => "Sikeres Google bejelentkezés",
+                        "user" => [
+                            "id" => (int)$row['id'],
+                            "username" => $row['username'],
+                            "highest_score" => (int)$row['highest_score'],
+                            "created_at" => "2024-01-01 00:00:00",
+                            "profile_picture" => buildProfilePictureUrl($row['profile_picture'] ?? null)
+                        ]
+                    ], JSON_UNESCAPED_UNICODE);
+                } else {
+                    echo json_encode([
+                        "success" => false,
+                        "message" => "Nincs regisztrálva, hozzon létre fiókot a weboldalon!"
+                    ], JSON_UNESCAPED_UNICODE);
+                }
+                $stmt->close();
+            } catch (Exception $e) {
+                echo json_encode([
+                    "success" => false,
+                    "message" => "Google bejelentkezési hiba: " . $e->getMessage()
+                ], JSON_UNESCAPED_UNICODE);
+            }
+            break;
+
         default:
             http_response_code(400);
             echo json_encode([
                 "success" => false, 
                 "message" => "Ismeretlen action: " . $data['action'],
                 "available_actions" => [
-                    "login", "get_user_score", "get_user_score_by_id", 
-                    "update_user_score", "get_users", "get_leaderboard", "get_user_rank", "get_news", "test"
+                    "login", "google_login", "get_user_score", "get_user_score_by_id", 
+                    "update_user_score", "get_users", "get_leaderboard", "get_user_rank", "get_news", "get_patchnotes", "test"
                 ]
             ], JSON_UNESCAPED_UNICODE);
             break;
